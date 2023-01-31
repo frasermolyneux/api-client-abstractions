@@ -5,7 +5,7 @@ using Microsoft.Extensions.Options;
 
 using RestSharp;
 
-namespace MX.ApiClient
+namespace MxIO.ApiClient
 {
     public class BaseApi
     {

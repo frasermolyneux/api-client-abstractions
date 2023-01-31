@@ -2,11 +2,11 @@
 
   <PropertyGroup>
     <TargetFramework>net7.0</TargetFramework>
-    <RootNamespace>MX.ApiClient.Abstractions</RootNamespace>
+    <RootNamespace>MxIO.ApiClient.Abstractions</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <PackageId>MX.ApiClient.Abstractions</PackageId>
+    <PackageId>MxIO.ApiClient.Abstractions</PackageId>
     <Authors>Fraser Molyneux</Authors>
     <Company>Molyneux.IO</Company>
     <Product>Molyneux.IO ApiClient</Product>

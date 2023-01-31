@@ -1,12 +1,12 @@
 ﻿using System.Net;
 
-using MX.ApiClient.Abstractions;
+using MxIO.ApiClient.Abstractions;
 
 using Newtonsoft.Json;
 
 using RestSharp;
 
-namespace MX.ApiClient.Extensions
+namespace MxIO.ApiClient.Extensions
 {
     public static class RestResponseExtensions
     {

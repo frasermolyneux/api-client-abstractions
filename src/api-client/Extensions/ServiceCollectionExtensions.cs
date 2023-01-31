@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 
-namespace MX.ApiClient.Extensions
+using MxIO.ApiClient;
+
+namespace MxIO.ApiClient.Extensions
 {
     public static class ServiceCollectionExtensions
     {

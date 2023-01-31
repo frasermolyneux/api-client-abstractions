@@ -2,11 +2,11 @@
 
   <PropertyGroup>
     <TargetFramework>net7.0</TargetFramework>
-    <RootNamespace>MX.ApiClient</RootNamespace>
+    <RootNamespace>MxIO.ApiClient</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <PackageId>MX.ApiClient</PackageId>
+    <PackageId>MxIO.ApiClient</PackageId>
     <Authors>Fraser Molyneux</Authors>
     <Company>Molyneux.IO</Company>
     <Product>Molyneux.IO ApiClient</Product>

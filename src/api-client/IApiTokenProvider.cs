@@ -1,4 +1,4 @@
-﻿namespace MX.ApiClient;
+﻿namespace MxIO.ApiClient;
 
 public interface IApiTokenProvider
 {

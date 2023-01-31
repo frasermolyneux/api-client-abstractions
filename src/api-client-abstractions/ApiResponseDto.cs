@@ -3,7 +3,7 @@ using System.Net;
 
 using Newtonsoft.Json;
 
-namespace MX.ApiClient.Abstractions
+namespace MxIO.ApiClient.Abstractions
 {
     public class ApiResponseDto
     {

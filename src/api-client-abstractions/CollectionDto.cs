@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace MX.ApiClient.Abstractions
+namespace MxIO.ApiClient.Abstractions
 {
     public class CollectionDto<T>
     {
