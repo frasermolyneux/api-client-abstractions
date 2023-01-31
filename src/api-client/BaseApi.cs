@@ -16,7 +16,7 @@ namespace MxIO.ApiClient
 
         private readonly string apimSubscriptionKey;
 
-        public BaseApi(ILogger logger, IApiTokenProvider apiTokenProvider, IOptions<ApiClientOptions> options)
+        public BaseApi(ILogger logger, IApiTokenProvider apiTokenProvider, IOptions<IApiClientOptions> options)
         {
             this.logger = logger;
             this.apiTokenProvider = apiTokenProvider;
