@@ -14,6 +14,9 @@ namespace MxIO.ApiClient.Extensions
         {
             ApiResponseDto? apiResponseDto;
 
+            if (response.Request?.Method == Method.Head)
+                return new ApiResponseDto(response.StatusCode);
+
             if (response.Content == null)
             {
                 apiResponseDto = new ApiResponseDto(HttpStatusCode.InternalServerError);
@@ -21,6 +24,7 @@ namespace MxIO.ApiClient.Extensions
                 return apiResponseDto;
             }
             else
+            {
                 try
                 {
                     apiResponseDto = JsonConvert.DeserializeObject<ApiResponseDto>(response.Content);
@@ -30,6 +34,7 @@ namespace MxIO.ApiClient.Extensions
                     apiResponseDto = new ApiResponseDto(HttpStatusCode.InternalServerError);
                     apiResponseDto.Errors.Add(ex.Message);
                 }
+            }
 
             if (apiResponseDto == null)
             {
@@ -51,6 +56,7 @@ namespace MxIO.ApiClient.Extensions
                 return apiResponseDto;
             }
             else
+            {
                 try
                 {
                     apiResponseDto = JsonConvert.DeserializeObject<ApiResponseDto<T>>(response.Content);
@@ -60,6 +66,7 @@ namespace MxIO.ApiClient.Extensions
                     apiResponseDto = new ApiResponseDto<T>(HttpStatusCode.InternalServerError);
                     apiResponseDto.Errors.Add(ex.Message);
                 }
+            }
 
             if (apiResponseDto == null)
             {
