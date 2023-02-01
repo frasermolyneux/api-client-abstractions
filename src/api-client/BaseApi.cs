@@ -44,15 +44,14 @@ namespace MxIO.ApiClient
         {
             var response = await restClient.ExecuteAsync(request);
 
-            if (response.ErrorException != null)
-            {
-                logger.LogError(response.ErrorException, $"Failed {request.Method} to '{request.Resource}' with code '{response.StatusCode}'");
-                throw response.ErrorException;
-            }
-
             if (new[] { HttpStatusCode.OK, HttpStatusCode.NotFound }.Contains(response.StatusCode))
             {
                 return response;
+            }
+            else if (response.ErrorException != null)
+            {
+                logger.LogError(response.ErrorException, $"Failed {request.Method} to '{request.Resource}' with code '{response.StatusCode}'");
+                throw response.ErrorException;
             }
             else
             {
