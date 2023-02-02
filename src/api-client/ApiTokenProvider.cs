@@ -14,7 +14,7 @@ public class ApiTokenProvider : IApiTokenProvider
 
     private readonly string apiAudience;
 
-    public ApiTokenProvider(ILogger<ApiTokenProvider> logger, IMemoryCache memoryCache, IOptions<IApiClientOptions> options)
+    public ApiTokenProvider(ILogger<ApiTokenProvider> logger, IMemoryCache memoryCache, IOptions<ApiClientOptions> options)
     {
         this.logger = logger;
         this.memoryCache = memoryCache;
