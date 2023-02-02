@@ -60,6 +60,13 @@ namespace MxIO.ApiClient.Abstractions
             Result = result;
         }
 
+        public ApiResponseDto(HttpStatusCode statusCode, T result, List<string> errors) : base(statusCode)
+        {
+            StatusCode = statusCode;
+            Result = result;
+            Errors = errors;
+        }
+
         [JsonProperty]
         public T? Result { get; private set; }
 
