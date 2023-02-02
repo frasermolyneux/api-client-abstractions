@@ -2,7 +2,7 @@
 
 using MxIO.ApiClient.Abstractions;
 
-namespace MX.GeoLocation.LookupWebApi.Extensions
+namespace api_client_web_extensions
 {
     public static class ApiResponseDtoExtensions
     {

@@ -11,19 +11,24 @@ namespace MxIO.ApiClient
     {
         private readonly ILogger logger;
         private readonly IApiTokenProvider apiTokenProvider;
-
-        private readonly RestClient restClient;
+        private readonly IRestClientSingleton restClientSingleton;
 
         private readonly string apimSubscriptionKey;
 
-        public BaseApi(ILogger logger, IApiTokenProvider apiTokenProvider, IOptions<IApiClientOptions> options)
+        public BaseApi(ILogger logger, IApiTokenProvider apiTokenProvider, IOptions<IApiClientOptions> options, IRestClientSingleton restClientSingleton)
         {
             this.logger = logger;
             this.apiTokenProvider = apiTokenProvider;
+            this.restClientSingleton = restClientSingleton;
 
-            restClient = string.IsNullOrWhiteSpace(options.Value.ApiPathPrefix)
-                ? new RestClient($"{options.Value.BaseUrl}")
-                : new RestClient($"{options.Value.BaseUrl}/{options.Value.ApiPathPrefix}");
+            if (string.IsNullOrWhiteSpace(options.Value.ApiPathPrefix))
+            {
+                this.restClientSingleton.ConfigureBaseUrl(options.Value.BaseUrl);
+            }
+            else
+            {
+                this.restClientSingleton.ConfigureBaseUrl($"{options.Value.BaseUrl}/{options.Value.ApiPathPrefix}");
+            }
 
             apimSubscriptionKey = options.Value.ApiKey;
         }
@@ -42,7 +47,7 @@ namespace MxIO.ApiClient
 
         public async Task<RestResponse> ExecuteAsync(RestRequest request)
         {
-            var response = await restClient.ExecuteAsync(request);
+            var response = await restClientSingleton.ExecuteAsync(request);
 
             if (new[] { HttpStatusCode.OK, HttpStatusCode.NotFound }.Contains(response.StatusCode))
             {
