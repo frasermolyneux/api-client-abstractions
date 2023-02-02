@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net7.0</TargetFramework>
-    <RootNamespace>api_client_web_extensions</RootNamespace>
+    <RootNamespace>MxIO.ApiClient.WebExtensions</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
 	<Nullable>enable</Nullable>
 	<GeneratePackageOnBuild>true</GeneratePackageOnBuild>

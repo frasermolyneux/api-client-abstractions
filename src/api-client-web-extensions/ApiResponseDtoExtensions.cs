@@ -2,7 +2,7 @@
 
 using MxIO.ApiClient.Abstractions;
 
-namespace api_client_web_extensions
+namespace MxIO.ApiClient.WebExtensions
 {
     public static class ApiResponseDtoExtensions
     {
