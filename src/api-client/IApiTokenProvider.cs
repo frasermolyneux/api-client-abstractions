@@ -2,5 +2,5 @@
 
 public interface IApiTokenProvider
 {
-    Task<string> GetAccessToken();
+    Task<string> GetAccessToken(string audience);
 }

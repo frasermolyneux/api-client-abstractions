@@ -23,11 +23,16 @@ namespace MxIO.ApiClient
         {
             get
             {
+                if (string.IsNullOrEmpty(BaseUrl))
+                {
+                    throw new NullReferenceException(nameof(BaseUrl));
+                }
+
                 lock (padlock)
                 {
                     if (instance == null)
                     {
-                        instance = new RestClient(BaseUrl ?? "");
+                        instance = new RestClient(BaseUrl);
                     }
                     return instance;
                 }

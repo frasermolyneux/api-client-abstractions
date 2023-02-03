@@ -14,6 +14,7 @@ namespace MxIO.ApiClient
         private readonly IRestClientSingleton restClientSingleton;
 
         private readonly string apimSubscriptionKey;
+        private readonly string apiAudience;
 
         public BaseApi(ILogger logger, IApiTokenProvider apiTokenProvider, IRestClientSingleton restClientSingleton, IOptions<ApiClientOptions> options)
         {
@@ -31,11 +32,12 @@ namespace MxIO.ApiClient
             }
 
             apimSubscriptionKey = options.Value.ApiKey;
+            apiAudience = options.Value.ApiAudience;
         }
 
         public async Task<RestRequest> CreateRequest(string resource, Method method)
         {
-            var accessToken = await apiTokenProvider.GetAccessToken();
+            var accessToken = await apiTokenProvider.GetAccessToken(apiAudience);
 
             var request = new RestRequest(resource, method);
 
