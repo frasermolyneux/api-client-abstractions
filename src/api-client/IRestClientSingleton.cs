@@ -4,7 +4,6 @@ namespace MxIO.ApiClient
 {
     public interface IRestClientSingleton
     {
-        void ConfigureBaseUrl(string baseUrl);
-        Task<RestResponse> ExecuteAsync(RestRequest request, CancellationToken cancellationToken = default);
+        Task<RestResponse> ExecuteAsync(string baseUrl, RestRequest request, CancellationToken cancellationToken = default);
     }
 }

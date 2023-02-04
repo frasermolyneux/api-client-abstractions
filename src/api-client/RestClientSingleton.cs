@@ -4,39 +4,20 @@ namespace MxIO.ApiClient
 {
     public class RestClientSingleton : IRestClientSingleton
     {
-        private static string? BaseUrl { get; set; }
-
-        private static RestClient? instance = null;
+        private static Dictionary<string, RestClient> instances = new Dictionary<string, RestClient>();
         private static readonly object padlock = new object();
 
-        public void ConfigureBaseUrl(string baseUrl)
+        public Task<RestResponse> ExecuteAsync(string baseUrl, RestRequest request, CancellationToken cancellationToken = default)
         {
-            BaseUrl = baseUrl;
-        }
-
-        public Task<RestResponse> ExecuteAsync(RestRequest request, CancellationToken cancellationToken = default)
-        {
-            return Instance.ExecuteAsync(request, cancellationToken);
-        }
-
-        private static RestClient Instance
-        {
-            get
+            lock (padlock)
             {
-                if (string.IsNullOrEmpty(BaseUrl))
+                if (!instances.ContainsKey(baseUrl))
                 {
-                    throw new NullReferenceException(nameof(BaseUrl));
-                }
-
-                lock (padlock)
-                {
-                    if (instance == null)
-                    {
-                        instance = new RestClient(BaseUrl);
-                    }
-                    return instance;
+                    instances.Add(baseUrl, new RestClient(baseUrl));
                 }
             }
+
+            return instances[baseUrl].ExecuteAsync(request, cancellationToken);
         }
     }
 }

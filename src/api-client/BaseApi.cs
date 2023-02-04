@@ -13,6 +13,7 @@ namespace MxIO.ApiClient
         private readonly IApiTokenProvider apiTokenProvider;
         private readonly IRestClientSingleton restClientSingleton;
 
+        private readonly string baseUrl;
         private readonly string apimSubscriptionKey;
         private readonly string apiAudience;
 
@@ -24,11 +25,11 @@ namespace MxIO.ApiClient
 
             if (string.IsNullOrWhiteSpace(options.Value.ApiPathPrefix))
             {
-                this.restClientSingleton.ConfigureBaseUrl(options.Value.BaseUrl);
+                baseUrl = options.Value.BaseUrl;
             }
             else
             {
-                this.restClientSingleton.ConfigureBaseUrl($"{options.Value.BaseUrl}/{options.Value.ApiPathPrefix}");
+                baseUrl = $"{options.Value.BaseUrl}/{options.Value.ApiPathPrefix}";
             }
 
             apimSubscriptionKey = options.Value.ApiKey;
@@ -49,7 +50,7 @@ namespace MxIO.ApiClient
 
         public async Task<RestResponse> ExecuteAsync(RestRequest request)
         {
-            var response = await restClientSingleton.ExecuteAsync(request);
+            var response = await restClientSingleton.ExecuteAsync(baseUrl, request);
 
             if (new[] { HttpStatusCode.OK, HttpStatusCode.NotFound }.Contains(response.StatusCode))
             {
