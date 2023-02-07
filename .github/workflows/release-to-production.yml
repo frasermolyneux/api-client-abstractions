@@ -13,6 +13,16 @@ permissions:
   security-events: write # Required by CodeQL
   
 jobs:
+  dependency-review:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 'Checkout Repository'
+        uses: actions/checkout@v3
+        
+      - name: 'Dependency Review'
+        uses: actions/dependency-review-action@v2
+        
   dotnet-ci:
     runs-on: ubuntu-latest
 
