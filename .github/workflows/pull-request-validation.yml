@@ -65,7 +65,7 @@ jobs:
       with:
         dotnet-version: 7.0.x
         src-folder: "src"
-        majorMinorVersion: "1.0"
+        majorMinorVersion: "1.1"
 
     - name: End SonarScanner
       shell: bash
