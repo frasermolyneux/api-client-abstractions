@@ -11,7 +11,8 @@
 				"ms-dotnettools.csharp",
 				"ms-dotnettools.csdevkit",
 				"ms-dotnettools.vscodeintellicode-csharp",
-				"GitHub.vscode-github-actions"
+				"GitHub.vscode-github-actions",
+				"aliasadidev.nugetpackagemanagergui"
 			]
 		}
 	}
