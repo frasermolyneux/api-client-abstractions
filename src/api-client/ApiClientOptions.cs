@@ -2,9 +2,35 @@
 {
     public class ApiClientOptions
     {
+        private string _primaryApiKey = null!;
+
         public string BaseUrl { get; set; }
 
-        public string ApiKey { get; set; }
+        [Obsolete("This is now obsolete, please use PrimaryApiKey instead")]
+        public string ApiKey
+        {
+            get
+            {
+                return _primaryApiKey;
+            }
+            set
+            {
+                _primaryApiKey = value;
+            }
+        }
+
+        public string PrimaryApiKey
+        {
+            get
+            {
+                return _primaryApiKey;
+            }
+            set
+            {
+                _primaryApiKey = value;
+            }
+        }
+        public string SecondaryApiKey { get; set; }
 
         public string ApiAudience { get; set; }
 
