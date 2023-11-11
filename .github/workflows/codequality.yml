@@ -56,7 +56,7 @@ jobs:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       run: |
         cd src
-        .\.sonar\scanner\dotnet-sonarscanner begin /k:"frasermolyneux_api-client-abstractions" /o:"frasermolyneux" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io"
+        dotnet-sonarscanner begin /k:"frasermolyneux_api-client-abstractions" /o:"frasermolyneux" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io"
 
     - uses: frasermolyneux/actions/dotnet-ci@main
       with:
@@ -71,7 +71,7 @@ jobs:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       run: |
         cd src
-        .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+        dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v2
