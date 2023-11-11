@@ -17,9 +17,8 @@ jobs:
         fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
 
     - name: Install SonarCloud scanner
-      shell: powershell
-      run: |
-        dotnet tool install --global dotnet-sonarscanner
+      shell: bash
+      run: dotnet tool install --global dotnet-sonarscanner
 
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v2
