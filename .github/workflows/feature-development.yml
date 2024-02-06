@@ -18,7 +18,7 @@ jobs:
 
     - uses: frasermolyneux/actions/dotnet-ci@main
       with:
-        dotnet-version: 7.0.x
+        dotnet-version: 8.0.x
         src-folder: "src"
         majorMinorVersion: "1.1"
 
