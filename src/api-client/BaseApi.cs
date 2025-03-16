@@ -4,6 +4,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 using RestSharp;
+using Polly;
+using Polly.Retry;
 
 namespace MxIO.ApiClient
 {
@@ -17,6 +19,8 @@ namespace MxIO.ApiClient
         private readonly string primaryApiKey;
         private readonly string secondaryApiKey;
         private readonly string apiAudience;
+
+        private readonly AsyncRetryPolicy<RestResponse> retryPolicy;
 
         public BaseApi(ILogger logger, IApiTokenProvider apiTokenProvider, IRestClientSingleton restClientSingleton, IOptions<ApiClientOptions> options)
         {
@@ -36,6 +40,13 @@ namespace MxIO.ApiClient
             primaryApiKey = options.Value.PrimaryApiKey;
             secondaryApiKey = options.Value.SecondaryApiKey;
             apiAudience = options.Value.ApiAudience;
+
+            retryPolicy = Policy
+                .HandleResult<RestResponse>(r => !new[] { HttpStatusCode.OK, HttpStatusCode.NotFound, HttpStatusCode.Unauthorized }.Contains(r.StatusCode))
+                .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), (response, timespan, retryCount, context) =>
+                {
+                    logger.LogWarning($"Request failed with {response.Result.StatusCode}. Waiting {timespan} before next retry. Retry attempt {retryCount}");
+                });
         }
 
         public async Task<RestRequest> CreateRequest(string resource, Method method)
@@ -58,7 +69,7 @@ namespace MxIO.ApiClient
                 request.AddOrUpdateHeader("Ocp-Apim-Subscription-Key", secondaryApiKey);
             }
 
-            var response = await restClientSingleton.ExecuteAsync(baseUrl, request);
+            var response = await retryPolicy.ExecuteAsync(() => restClientSingleton.ExecuteAsync(baseUrl, request));
 
             if (response.StatusCode == HttpStatusCode.Unauthorized && !useSecondaryApiKey)
             {
