@@ -10,11 +10,13 @@ public class ApiTokenProvider : IApiTokenProvider
 {
     private readonly ILogger<ApiTokenProvider> logger;
     private readonly IMemoryCache memoryCache;
+    private readonly ITokenCredentialProvider tokenCredentialProvider;
 
-    public ApiTokenProvider(ILogger<ApiTokenProvider> logger, IMemoryCache memoryCache)
+    public ApiTokenProvider(ILogger<ApiTokenProvider> logger, IMemoryCache memoryCache, ITokenCredentialProvider tokenCredentialProvider)
     {
         this.logger = logger;
         this.memoryCache = memoryCache;
+        this.tokenCredentialProvider = tokenCredentialProvider;
     }
 
     public async Task<string> GetAccessToken(string audience)
@@ -25,11 +27,14 @@ public class ApiTokenProvider : IApiTokenProvider
                 return accessToken.Token;
         }
 
-        var tokenCredential = new DefaultAzureCredential();
+        var tokenCredential = tokenCredentialProvider.GetTokenCredential();
 
         try
         {
-            accessToken = await tokenCredential.GetTokenAsync(new TokenRequestContext(new[] { $"{audience}/.default" }));
+            accessToken = await tokenCredential.GetTokenAsync(
+                new TokenRequestContext(new[] { $"{audience}/.default" }),
+                CancellationToken.None);
+
             memoryCache.Set(audience, accessToken);
         }
         catch (Exception ex)

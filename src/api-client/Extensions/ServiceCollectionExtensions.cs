@@ -6,7 +6,13 @@ namespace MxIO.ApiClient.Extensions
     {
         public static void AddApiClient(this IServiceCollection serviceCollection)
         {
+            // Register the token credential provider
+            serviceCollection.AddSingleton<ITokenCredentialProvider, DefaultTokenCredentialProvider>();
+
+            // Register the API token provider
             serviceCollection.AddSingleton<IApiTokenProvider, ApiTokenProvider>();
+
+            // Register the REST client singleton
             serviceCollection.AddSingleton<IRestClientSingleton, RestClientSingleton>();
         }
     }
