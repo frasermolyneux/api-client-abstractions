@@ -118,7 +118,7 @@ namespace MxIO.ApiClient
         }
 
         [Fact]
-        public void ExecuteAsync_IsThreadSafe()
+        public async Task ExecuteAsync_IsThreadSafe()
         {
             // This test verifies that the lock prevents race conditions when creating clients
 
@@ -138,7 +138,7 @@ namespace MxIO.ApiClient
             }
 
             // Wait for all tasks to complete
-            Task.WaitAll(tasks.ToArray());
+            await Task.WhenAll(tasks);
 
             // Assert - Verify only one instance was created despite concurrent access
             var instancesField = typeof(RestClientSingleton).GetField("instances", BindingFlags.NonPublic | BindingFlags.Static);

@@ -10,7 +10,7 @@ namespace MxIO.ApiClient
     /// </summary>
     public class TestMemoryCache : IMemoryCache
     {
-        private readonly Dictionary<object, object> _cache = new Dictionary<object, object>();
+        private readonly Dictionary<object, object?> _cache = new Dictionary<object, object?>();
 
         public ICacheEntry CreateEntry(object key)
         {
@@ -27,18 +27,19 @@ namespace MxIO.ApiClient
             _cache.Remove(key);
         }
 
-        public bool TryGetValue(object key, out object value)
+        public bool TryGetValue(object key, out object? value)
         {
-            if (_cache.TryGetValue(key, out value))
+            if (_cache.TryGetValue(key, out var cachedValue))
             {
+                value = cachedValue;
                 return true;
             }
 
-            value = default;
+            value = null;
             return false;
         }
 
-        public void Set(object key, object value)
+        public void Set(object key, object? value)
         {
             _cache[key] = value;
         }
@@ -53,7 +54,6 @@ namespace MxIO.ApiClient
         {
             _key = key;
             _cache = cache;
-            Value = null;
         }
 
         public DateTimeOffset? AbsoluteExpiration { get; set; }
@@ -63,15 +63,12 @@ namespace MxIO.ApiClient
         public IList<PostEvictionCallbackRegistration> PostEvictionCallbacks { get; } = new List<PostEvictionCallbackRegistration>();
         public CacheItemPriority Priority { get; set; }
         public TimeSpan? SlidingExpiration { get; set; }
-        public object Value { get; set; }
+        public object? Value { get; set; }
         public long? Size { get; set; }
 
         public void Dispose()
         {
-            if (Value != null)
-            {
-                _cache.Set(_key, Value);
-            }
+            _cache.Set(_key, Value);
         }
     }
 }

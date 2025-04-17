@@ -75,8 +75,9 @@ namespace MxIO.ApiClient
                 Times.Once);
 
             // Verify token was cached
-            memoryCache.TryGetValue(audience, out object cachedValue).Should().BeTrue();
-            ((AccessToken)cachedValue).Token.Should().Be("mock-token-value");
+            memoryCache.TryGetValue(audience, out object? cachedValue).Should().BeTrue();
+            cachedValue.Should().NotBeNull();
+            ((AccessToken)cachedValue!).Token.Should().Be("mock-token-value");
         }
 
         [Fact]
@@ -134,8 +135,9 @@ namespace MxIO.ApiClient
             tokenCredentialProviderMock.Verify(tcp => tcp.GetTokenCredential(), Times.Once);
 
             // Verify the new token was cached
-            memoryCache.TryGetValue(audience, out object cachedValue).Should().BeTrue();
-            ((AccessToken)cachedValue).Token.Should().Be("new-token");
+            memoryCache.TryGetValue(audience, out object? cachedValue).Should().BeTrue();
+            cachedValue.Should().NotBeNull();
+            ((AccessToken)cachedValue!).Token.Should().Be("new-token");
         }
 
         [Fact]
