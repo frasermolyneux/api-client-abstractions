@@ -6,20 +6,19 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Xunit;
 
 namespace MxIO.ApiClient
 {
-    [TestFixture]
-    public class ApiTokenProviderTests
+    public class ApiTokenProviderTests : IDisposable
     {
-        private Mock<ILogger<ApiTokenProvider>> loggerMock;
-        private TestMemoryCache memoryCache;
-        private Mock<ITokenCredentialProvider> tokenCredentialProviderMock;
-        private Mock<TokenCredential> tokenCredentialMock;
-        private ApiTokenProvider apiTokenProvider;
+        private readonly Mock<ILogger<ApiTokenProvider>> loggerMock;
+        private readonly TestMemoryCache memoryCache;
+        private readonly Mock<ITokenCredentialProvider> tokenCredentialProviderMock;
+        private readonly Mock<TokenCredential> tokenCredentialMock;
+        private readonly ApiTokenProvider apiTokenProvider;
 
-        [SetUp]
-        public void SetUp()
+        public ApiTokenProviderTests()
         {
             loggerMock = new Mock<ILogger<ApiTokenProvider>>();
             memoryCache = new TestMemoryCache();
@@ -34,13 +33,12 @@ namespace MxIO.ApiClient
             apiTokenProvider = new ApiTokenProvider(loggerMock.Object, memoryCache, tokenCredentialProviderMock.Object);
         }
 
-        [TearDown]
-        public void TearDown()
+        public void Dispose()
         {
             memoryCache.Dispose();
         }
 
-        [Test]
+        [Fact]
         public void ApiTokenProvider_Constructor_InitializesCorrectly()
         {
             // Act & Assert - Just verify that the constructor doesn't throw exceptions
@@ -48,7 +46,7 @@ namespace MxIO.ApiClient
             instance.Should().NotBeNull();
         }
 
-        [Test]
+        [Fact]
         public async Task GetAccessToken_WhenNotCached_AcquiresNewToken()
         {
             // Arrange
@@ -81,7 +79,7 @@ namespace MxIO.ApiClient
             ((AccessToken)cachedValue).Token.Should().Be("mock-token-value");
         }
 
-        [Test]
+        [Fact]
         public async Task GetAccessToken_WhenCached_ReturnsFromCache()
         {
             // Arrange
@@ -108,7 +106,7 @@ namespace MxIO.ApiClient
             Times.Never);
         }
 
-        [Test]
+        [Fact]
         public async Task GetAccessToken_WhenCacheExpired_GetsNewToken()
         {
             // Arrange
@@ -140,7 +138,7 @@ namespace MxIO.ApiClient
             ((AccessToken)cachedValue).Token.Should().Be("new-token");
         }
 
-        [Test]
+        [Fact]
         public void GetAccessToken_WhenTokenAcquisitionFails_LogsErrorAndRethrows()
         {
             // Arrange

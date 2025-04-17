@@ -4,13 +4,13 @@ using MxIO.ApiClient.Extensions;
 using Newtonsoft.Json;
 using RestSharp;
 using System.Net;
+using Xunit;
 
 namespace MxIO.ApiClient
 {
-    [TestFixture]
     public class RestResponseExtensionsTests
     {
-        [Test]
+        [Fact]
         public void ToApiResponse_WithHeadRequest_ReturnsApiResponseWithStatusCode()
         {
             // Arrange
@@ -29,7 +29,7 @@ namespace MxIO.ApiClient
             apiResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         }
 
-        [Test]
+        [Fact]
         public void ToApiResponse_WithNullContent_ReturnsErrorResponse()
         {
             // Arrange
@@ -48,7 +48,7 @@ namespace MxIO.ApiClient
             apiResponse.Errors.Should().Contain("Response content received by client api was null. (client error).");
         }
 
-        [Test]
+        [Fact]
         public void ToApiResponse_WithValidContent_ReturnsDeserializedResponse()
         {
             // Arrange
@@ -68,7 +68,7 @@ namespace MxIO.ApiClient
             apiResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         }
 
-        [Test]
+        [Fact]
         public void ToApiResponse_WithInvalidJsonContent_ReturnsErrorResponse()
         {
             // Arrange
@@ -87,7 +87,7 @@ namespace MxIO.ApiClient
             apiResponse.Errors.Should().NotBeEmpty(); // Will contain the JSON parsing error
         }
 
-        [Test]
+        [Fact]
         public void ToApiResponseGeneric_WithNullContent_ReturnsErrorResponse()
         {
             // Arrange
@@ -106,7 +106,7 @@ namespace MxIO.ApiClient
             apiResponse.Errors.Should().Contain("Response content received by client api was null. (client error).");
         }
 
-        [Test]
+        [Fact]
         public void ToApiResponseGeneric_WithValidContent_ReturnsDeserializedResponse()
         {
             // Arrange
@@ -132,7 +132,7 @@ namespace MxIO.ApiClient
             apiResponse.Result.Should().Be("test data");
         }
 
-        [Test]
+        [Fact]
         public void ToApiResponseGeneric_WithInvalidJsonContent_ReturnsErrorResponse()
         {
             // Arrange
@@ -151,7 +151,7 @@ namespace MxIO.ApiClient
             apiResponse.Errors.Should().NotBeEmpty(); // Will contain the JSON parsing error
         }
 
-        [Test]
+        [Fact]
         public void ToApiResponseGeneric_WithMismatchedType_HandlesErrorGracefully()
         {
             // Arrange

@@ -3,11 +3,13 @@ using RestSharp;
 using System.Reflection;
 using System.Net;
 using Moq;
+using System.Threading.Tasks;
+using System.Collections.Generic;
+using Xunit;
 
 namespace MxIO.ApiClient
 {
-    [TestFixture]
-    public class RestClientSingletonTests
+    public class RestClientSingletonTests : IDisposable
     {
         // Test subclass that allows us to mock the RestClient creation
         private class TestableRestClientSingleton : RestClientSingleton
@@ -33,10 +35,9 @@ namespace MxIO.ApiClient
             }
         }
 
-        private RestClient mockRestClient;
+        private readonly RestClient mockRestClient;
 
-        [SetUp]
-        public void SetUp()
+        public RestClientSingletonTests()
         {
             // Clear the static instances dictionary before each test to ensure isolation
             RestClientSingleton.ClearInstances();
@@ -46,14 +47,13 @@ namespace MxIO.ApiClient
             mockRestClient = new RestClient();
         }
 
-        [TearDown]
-        public void TearDown()
+        public void Dispose()
         {
             // Dispose mockRestClient if it implements IDisposable
             (mockRestClient as IDisposable)?.Dispose();
         }
 
-        [Test]
+        [Fact]
         public async Task ExecuteAsync_CreatesNewClientForUnknownBaseUrl()
         {
             // Arrange
@@ -72,7 +72,7 @@ namespace MxIO.ApiClient
             instances.Should().ContainKey(baseUrl);
         }
 
-        [Test]
+        [Fact]
         public async Task ExecuteAsync_ReusesSameClientForSameBaseUrl()
         {
             // Arrange
@@ -94,7 +94,7 @@ namespace MxIO.ApiClient
             instances.Count.Should().Be(1);
         }
 
-        [Test]
+        [Fact]
         public async Task ExecuteAsync_CreatesDifferentClientsForDifferentBaseUrls()
         {
             // Arrange
@@ -117,7 +117,7 @@ namespace MxIO.ApiClient
             instances.Count.Should().Be(2);
         }
 
-        [Test]
+        [Fact]
         public void ExecuteAsync_IsThreadSafe()
         {
             // This test verifies that the lock prevents race conditions when creating clients
@@ -149,7 +149,7 @@ namespace MxIO.ApiClient
             instances.Count.Should().Be(1);
         }
 
-        [Test]
+        [Fact]
         public void ExecuteAsync_UsesOverriddenClientCreation()
         {
             // Arrange

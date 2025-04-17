@@ -5,20 +5,21 @@ using RestSharp;
 using FluentAssertions;
 using System.Net;
 using System;
+using System.Threading;
+using System.Threading.Tasks;
+using Xunit;
 
 namespace MxIO.ApiClient
 {
-    [TestFixture]
     public class BaseApiTests
     {
-        private Mock<ILogger> loggerMock;
-        private Mock<IApiTokenProvider> apiTokenProviderMock;
-        private Mock<IRestClientSingleton> restClientSingletonMock;
-        private Mock<IOptions<ApiClientOptions>> optionsMock;
-        private BaseApi baseApi;
+        private readonly Mock<ILogger> loggerMock;
+        private readonly Mock<IApiTokenProvider> apiTokenProviderMock;
+        private readonly Mock<IRestClientSingleton> restClientSingletonMock;
+        private readonly Mock<IOptions<ApiClientOptions>> optionsMock;
+        private readonly BaseApi baseApi;
 
-        [SetUp]
-        public void SetUp()
+        public BaseApiTests()
         {
             loggerMock = new Mock<ILogger>();
             apiTokenProviderMock = new Mock<IApiTokenProvider>();
@@ -40,7 +41,7 @@ namespace MxIO.ApiClient
             baseApi = new BaseApi(loggerMock.Object, apiTokenProviderMock.Object, restClientSingletonMock.Object, optionsMock.Object);
         }
 
-        [Test]
+        [Fact]
         public void Constructor_WithApiPathPrefix_SetsCorrectBaseUrl()
         {
             // Arrange
@@ -65,7 +66,7 @@ namespace MxIO.ApiClient
                 Times.Once);
         }
 
-        [Test]
+        [Fact]
         public void Constructor_WithoutApiPathPrefix_SetsCorrectBaseUrl()
         {
             // Arrange
@@ -90,7 +91,7 @@ namespace MxIO.ApiClient
                 Times.Once);
         }
 
-        [Test]
+        [Fact]
         public async Task CreateRequest_ShouldCorrectlyConstructRestRequest()
         {
             // Arrange
@@ -107,7 +108,7 @@ namespace MxIO.ApiClient
             request.Parameters.Should().ContainSingle(p => p.Name == "Authorization" && p.Value != null && (string)p.Value == "Bearer fake_access_token");
         }
 
-        [Test]
+        [Fact]
         public async Task ExecuteAsync_WithValidRequest_ReturnsOkResponse()
         {
             // Arrange
@@ -125,7 +126,7 @@ namespace MxIO.ApiClient
             response.StatusCode.Should().Be(HttpStatusCode.OK);
         }
 
-        [Test]
+        [Fact]
         public async Task ExecuteAsync_WithUnauthorizedResponseAndSecondaryKey_RetriesAndReturnsOk()
         {
             // Arrange
@@ -161,7 +162,7 @@ namespace MxIO.ApiClient
             response.StatusCode.Should().Be(HttpStatusCode.OK);
         }
 
-        [Test]
+        [Fact]
         public async Task ExecuteAsync_WithNotFoundResponse_ReturnsNotFound()
         {
             // Arrange
@@ -179,7 +180,7 @@ namespace MxIO.ApiClient
             response.StatusCode.Should().Be(HttpStatusCode.NotFound);
         }
 
-        [Test]
+        [Fact]
         public async Task ExecuteAsync_WithErrorException_ThrowsException()
         {
             // Arrange
@@ -199,7 +200,7 @@ namespace MxIO.ApiClient
                 .WithMessage("Test exception");
         }
 
-        [Test]
+        [Fact]
         public async Task ExecuteAsync_WithNonOkNonNotFoundResponse_ThrowsApplicationException()
         {
             // Arrange
@@ -215,7 +216,7 @@ namespace MxIO.ApiClient
                 .WithMessage($"Failed {request.Method} to '{request.Resource}' with code '{HttpStatusCode.BadRequest}'");
         }
 
-        [Test]
+        [Fact]
         public async Task ExecuteAsync_WithRetryableError_RetriesBeforeSucceeding()
         {
             // Arrange
@@ -239,7 +240,7 @@ namespace MxIO.ApiClient
             sequenceMock.Verify(rcs => rcs.ExecuteAsync(It.IsAny<string>(), request, It.IsAny<CancellationToken>()), Times.Exactly(2));
         }
 
-        [Test]
+        [Fact]
         public async Task ExecuteAsync_WithoutSecondaryApiKey_DoesNotRetryWithSecondaryKey()
         {
             // Arrange
@@ -274,7 +275,7 @@ namespace MxIO.ApiClient
                 Times.AtLeastOnce());
         }
 
-        [Test]
+        [Fact]
         public async Task ExecuteAsync_WithUnauthorizedButDifferentMessage_DoesNotRetryWithSecondaryKey()
         {
             // Arrange

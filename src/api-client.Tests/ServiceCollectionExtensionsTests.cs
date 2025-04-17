@@ -1,13 +1,13 @@
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using MxIO.ApiClient.Extensions;
+using Xunit;
 
 namespace MxIO.ApiClient
 {
-    [TestFixture]
     public class ServiceCollectionExtensionsTests
     {
-        [Test]
+        [Fact]
         public void AddApiClient_RegistersRequiredServices()
         {
             // Arrange
