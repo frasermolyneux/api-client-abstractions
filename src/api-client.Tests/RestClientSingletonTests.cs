@@ -2,7 +2,7 @@ using FluentAssertions;
 using RestSharp;
 using System.Reflection;
 using System.Net;
-using FakeItEasy;
+using Moq;
 
 namespace MxIO.ApiClient
 {
@@ -41,18 +41,16 @@ namespace MxIO.ApiClient
             // Clear the static instances dictionary before each test to ensure isolation
             RestClientSingleton.ClearInstances();
 
-            // Create mock RestClient
-            mockRestClient = A.Fake<RestClient>();
+            // Create a real RestClient instead of trying to mock it
+            // RestSharp.RestClient doesn't have a parameterless constructor which is causing issues with Moq
+            mockRestClient = new RestClient();
         }
 
         [TearDown]
         public void TearDown()
         {
             // Dispose mockRestClient if it implements IDisposable
-            if (mockRestClient is IDisposable disposable)
-            {
-                disposable.Dispose();
-            }
+            (mockRestClient as IDisposable)?.Dispose();
         }
 
         [Test]

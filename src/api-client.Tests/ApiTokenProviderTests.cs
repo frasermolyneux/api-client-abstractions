@@ -1,5 +1,5 @@
 using Azure.Core;
-using FakeItEasy;
+using Moq;
 using FluentAssertions;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
@@ -12,25 +12,26 @@ namespace MxIO.ApiClient
     [TestFixture]
     public class ApiTokenProviderTests
     {
-        private ILogger<ApiTokenProvider> logger;
+        private Mock<ILogger<ApiTokenProvider>> loggerMock;
         private TestMemoryCache memoryCache;
-        private ITokenCredentialProvider tokenCredentialProvider;
-        private TokenCredential mockTokenCredential;
+        private Mock<ITokenCredentialProvider> tokenCredentialProviderMock;
+        private Mock<TokenCredential> tokenCredentialMock;
         private ApiTokenProvider apiTokenProvider;
 
         [SetUp]
         public void SetUp()
         {
-            logger = A.Fake<ILogger<ApiTokenProvider>>();
+            loggerMock = new Mock<ILogger<ApiTokenProvider>>();
             memoryCache = new TestMemoryCache();
 
             // Create a mock token credential provider and token credential
-            tokenCredentialProvider = A.Fake<ITokenCredentialProvider>();
-            mockTokenCredential = A.Fake<TokenCredential>();
+            tokenCredentialProviderMock = new Mock<ITokenCredentialProvider>();
+            tokenCredentialMock = new Mock<TokenCredential>();
 
-            A.CallTo(() => tokenCredentialProvider.GetTokenCredential()).Returns(mockTokenCredential);
+            tokenCredentialProviderMock.Setup(tcp => tcp.GetTokenCredential())
+                .Returns(tokenCredentialMock.Object);
 
-            apiTokenProvider = new ApiTokenProvider(logger, memoryCache, tokenCredentialProvider);
+            apiTokenProvider = new ApiTokenProvider(loggerMock.Object, memoryCache, tokenCredentialProviderMock.Object);
         }
 
         [TearDown]
@@ -43,7 +44,7 @@ namespace MxIO.ApiClient
         public void ApiTokenProvider_Constructor_InitializesCorrectly()
         {
             // Act & Assert - Just verify that the constructor doesn't throw exceptions
-            var instance = new ApiTokenProvider(logger, memoryCache, tokenCredentialProvider);
+            var instance = new ApiTokenProvider(loggerMock.Object, memoryCache, tokenCredentialProviderMock.Object);
             instance.Should().NotBeNull();
         }
 
@@ -55,10 +56,10 @@ namespace MxIO.ApiClient
             var expiresOn = DateTimeOffset.UtcNow.AddHours(1);
             var mockToken = new AccessToken("mock-token-value", expiresOn);
 
-            A.CallTo(() => mockTokenCredential.GetTokenAsync(
-                    A<TokenRequestContext>.That.Matches(c => c.Scopes[0] == $"{audience}/.default"),
-                    A<CancellationToken>._))
-                .Returns(mockToken);
+            tokenCredentialMock.Setup(tc => tc.GetTokenAsync(
+                    It.Is<TokenRequestContext>(c => c.Scopes[0] == $"{audience}/.default"),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync(mockToken);
 
             // Act
             var result = await apiTokenProvider.GetAccessToken(audience);
@@ -67,13 +68,13 @@ namespace MxIO.ApiClient
             result.Should().Be("mock-token-value");
 
             // Verify token credential provider was called
-            A.CallTo(() => tokenCredentialProvider.GetTokenCredential()).MustHaveHappenedOnceExactly();
+            tokenCredentialProviderMock.Verify(tcp => tcp.GetTokenCredential(), Times.Once);
 
             // Verify GetTokenAsync was called with the correct scope
-            A.CallTo(() => mockTokenCredential.GetTokenAsync(
-                    A<TokenRequestContext>.That.Matches(c => c.Scopes[0] == $"{audience}/.default"),
-                    A<CancellationToken>._))
-                .MustHaveHappenedOnceExactly();
+            tokenCredentialMock.Verify(tc => tc.GetTokenAsync(
+                    It.Is<TokenRequestContext>(c => c.Scopes[0] == $"{audience}/.default"),
+                    It.IsAny<CancellationToken>()),
+                Times.Once);
 
             // Verify token was cached
             memoryCache.TryGetValue(audience, out object cachedValue).Should().BeTrue();
@@ -98,11 +99,13 @@ namespace MxIO.ApiClient
             result.Should().Be("cached-token-value");
 
             // Verify token credential provider was NOT called
-            A.CallTo(() => tokenCredentialProvider.GetTokenCredential()).MustNotHaveHappened();
+            tokenCredentialProviderMock.Verify(tcp => tcp.GetTokenCredential(), Times.Never);
 
             // Verify GetTokenAsync was NOT called
-            A.CallTo(() => mockTokenCredential.GetTokenAsync(A<TokenRequestContext>._, A<CancellationToken>._))
-                .MustNotHaveHappened();
+            tokenCredentialMock.Verify(tc => tc.GetTokenAsync(
+                It.IsAny<TokenRequestContext>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
         }
 
         [Test]
@@ -118,10 +121,10 @@ namespace MxIO.ApiClient
 
             // Setup new token to be returned by the credential
             var newToken = new AccessToken("new-token", DateTimeOffset.UtcNow.AddHours(1));
-            A.CallTo(() => mockTokenCredential.GetTokenAsync(
-                    A<TokenRequestContext>.That.Matches(c => c.Scopes[0] == $"{audience}/.default"),
-                    A<CancellationToken>._))
-                .Returns(newToken);
+            tokenCredentialMock.Setup(tc => tc.GetTokenAsync(
+                    It.Is<TokenRequestContext>(c => c.Scopes[0] == $"{audience}/.default"),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync(newToken);
 
             // Act
             var result = await apiTokenProvider.GetAccessToken(audience);
@@ -130,7 +133,7 @@ namespace MxIO.ApiClient
             result.Should().Be("new-token");
 
             // Verify token credential provider was called
-            A.CallTo(() => tokenCredentialProvider.GetTokenCredential()).MustHaveHappenedOnceExactly();
+            tokenCredentialProviderMock.Verify(tcp => tcp.GetTokenCredential(), Times.Once);
 
             // Verify the new token was cached
             memoryCache.TryGetValue(audience, out object cachedValue).Should().BeTrue();
@@ -144,9 +147,9 @@ namespace MxIO.ApiClient
             var audience = "test-audience";
             var expectedException = new Exception("Authentication failed");
 
-            A.CallTo(() => mockTokenCredential.GetTokenAsync(
-                    A<TokenRequestContext>._,
-                    A<CancellationToken>._))
+            tokenCredentialMock.Setup(tc => tc.GetTokenAsync(
+                    It.IsAny<TokenRequestContext>(),
+                    It.IsAny<CancellationToken>()))
                 .ThrowsAsync(expectedException);
 
             // Act & Assert

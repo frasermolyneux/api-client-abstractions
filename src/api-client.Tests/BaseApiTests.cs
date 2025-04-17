@@ -1,4 +1,4 @@
-using FakeItEasy;
+using Moq;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RestSharp;
@@ -11,22 +11,24 @@ namespace MxIO.ApiClient
     [TestFixture]
     public class BaseApiTests
     {
-        private ILogger logger;
-        private IApiTokenProvider apiTokenProvider;
-        private IRestClientSingleton restClientSingleton;
-        private IOptions<ApiClientOptions> options;
+        private Mock<ILogger> loggerMock;
+        private Mock<IApiTokenProvider> apiTokenProviderMock;
+        private Mock<IRestClientSingleton> restClientSingletonMock;
+        private Mock<IOptions<ApiClientOptions>> optionsMock;
         private BaseApi baseApi;
 
         [SetUp]
         public void SetUp()
         {
-            logger = A.Fake<ILogger>();
-            apiTokenProvider = A.Fake<IApiTokenProvider>();
-            restClientSingleton = A.Fake<IRestClientSingleton>();
-            options = A.Fake<IOptions<ApiClientOptions>>();
+            loggerMock = new Mock<ILogger>();
+            apiTokenProviderMock = new Mock<IApiTokenProvider>();
+            restClientSingletonMock = new Mock<IRestClientSingleton>();
+            optionsMock = new Mock<IOptions<ApiClientOptions>>();
 
-            A.CallTo(() => apiTokenProvider.GetAccessToken(A<string>.Ignored)).Returns(Task.FromResult("fake_access_token"));
-            A.CallTo(() => options.Value).Returns(new ApiClientOptions
+            apiTokenProviderMock.Setup(atp => atp.GetAccessToken(It.IsAny<string>()))
+                .ReturnsAsync("fake_access_token");
+
+            optionsMock.Setup(o => o.Value).Returns(new ApiClientOptions
             {
                 BaseUrl = "https://api.example.com",
                 ApiPathPrefix = "v1",
@@ -35,15 +37,15 @@ namespace MxIO.ApiClient
                 ApiAudience = "api_audience"
             });
 
-            baseApi = new BaseApi(logger, apiTokenProvider, restClientSingleton, options);
+            baseApi = new BaseApi(loggerMock.Object, apiTokenProviderMock.Object, restClientSingletonMock.Object, optionsMock.Object);
         }
 
         [Test]
         public void Constructor_WithApiPathPrefix_SetsCorrectBaseUrl()
         {
             // Arrange
-            var testOptions = A.Fake<IOptions<ApiClientOptions>>();
-            A.CallTo(() => testOptions.Value).Returns(new ApiClientOptions
+            var testOptionsMock = new Mock<IOptions<ApiClientOptions>>();
+            testOptionsMock.Setup(o => o.Value).Returns(new ApiClientOptions
             {
                 BaseUrl = "https://api.example.com",
                 ApiPathPrefix = "v2",
@@ -53,22 +55,22 @@ namespace MxIO.ApiClient
             });
 
             // Act
-            var testApi = new BaseApi(logger, apiTokenProvider, restClientSingleton, testOptions);
+            var testApi = new BaseApi(loggerMock.Object, apiTokenProviderMock.Object, restClientSingletonMock.Object, testOptionsMock.Object);
 
             // Assert - We can test the base URL by making a request and checking the URL passed to the RestClientSingleton
             var request = new RestRequest("/test", Method.Get);
             testApi.ExecuteAsync(request);
 
-            A.CallTo(() => restClientSingleton.ExecuteAsync("https://api.example.com/v2", A<RestRequest>._, A<CancellationToken>._))
-                .MustHaveHappened();
+            restClientSingletonMock.Verify(rcs => rcs.ExecuteAsync("https://api.example.com/v2", It.IsAny<RestRequest>(), It.IsAny<CancellationToken>()),
+                Times.Once);
         }
 
         [Test]
         public void Constructor_WithoutApiPathPrefix_SetsCorrectBaseUrl()
         {
             // Arrange
-            var testOptions = A.Fake<IOptions<ApiClientOptions>>();
-            A.CallTo(() => testOptions.Value).Returns(new ApiClientOptions
+            var testOptionsMock = new Mock<IOptions<ApiClientOptions>>();
+            testOptionsMock.Setup(o => o.Value).Returns(new ApiClientOptions
             {
                 BaseUrl = "https://api.example.com",
                 ApiPathPrefix = "", // Empty prefix
@@ -78,14 +80,14 @@ namespace MxIO.ApiClient
             });
 
             // Act
-            var testApi = new BaseApi(logger, apiTokenProvider, restClientSingleton, testOptions);
+            var testApi = new BaseApi(loggerMock.Object, apiTokenProviderMock.Object, restClientSingletonMock.Object, testOptionsMock.Object);
 
             // Assert - We can test the base URL by making a request and checking the URL passed to the RestClientSingleton
             var request = new RestRequest("/test", Method.Get);
             testApi.ExecuteAsync(request);
 
-            A.CallTo(() => restClientSingleton.ExecuteAsync("https://api.example.com", A<RestRequest>._, A<CancellationToken>._))
-                .MustHaveHappened();
+            restClientSingletonMock.Verify(rcs => rcs.ExecuteAsync("https://api.example.com", It.IsAny<RestRequest>(), It.IsAny<CancellationToken>()),
+                Times.Once);
         }
 
         [Test]
@@ -112,8 +114,8 @@ namespace MxIO.ApiClient
             var request = new RestRequest("/test", Method.Get);
             var expectedResponse = new RestResponse { StatusCode = HttpStatusCode.OK };
 
-            A.CallTo(() => restClientSingleton.ExecuteAsync(A<string>.Ignored, A<RestRequest>.Ignored, A<CancellationToken>.Ignored))
-                .Returns(Task.FromResult(expectedResponse));
+            restClientSingletonMock.Setup(rcs => rcs.ExecuteAsync(It.IsAny<string>(), It.IsAny<RestRequest>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(expectedResponse);
 
             // Act
             var response = await baseApi.ExecuteAsync(request);
@@ -131,15 +133,29 @@ namespace MxIO.ApiClient
             var unauthorizedResponse = new RestResponse { StatusCode = HttpStatusCode.Unauthorized, Content = "Access denied due to invalid subscription key. Make sure to provide a valid key for an active subscription." };
             var okResponse = new RestResponse { StatusCode = HttpStatusCode.OK };
 
-            A.CallTo(() => restClientSingleton.ExecuteAsync(A<string>.Ignored, A<RestRequest>.Ignored, A<CancellationToken>.Ignored))
-                .ReturnsNextFromSequence(Task.FromResult(unauthorizedResponse), Task.FromResult(okResponse));
+            var sequenceMock = new Mock<IRestClientSingleton>();
+
+            sequenceMock.SetupSequence(rcs => rcs.ExecuteAsync(It.IsAny<string>(), It.IsAny<RestRequest>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(unauthorizedResponse)
+                .ReturnsAsync(okResponse);
+
+            var testOptionsValue = new ApiClientOptions
+            {
+                BaseUrl = "https://api.example.com",
+                ApiPathPrefix = "v1",
+                PrimaryApiKey = "primary_key",
+                SecondaryApiKey = "secondary_key",
+                ApiAudience = "api_audience"
+            };
+
+            optionsMock.Setup(o => o.Value).Returns(testOptionsValue);
+            var testApi = new BaseApi(loggerMock.Object, apiTokenProviderMock.Object, sequenceMock.Object, optionsMock.Object);
 
             // Act
-            var response = await baseApi.ExecuteAsync(request);
+            var response = await testApi.ExecuteAsync(request);
 
             // Assert
-            A.CallTo(() => restClientSingleton.ExecuteAsync(A<string>.Ignored, request, A<CancellationToken>.Ignored))
-                .MustHaveHappenedTwiceExactly();
+            sequenceMock.Verify(rcs => rcs.ExecuteAsync(It.IsAny<string>(), request, It.IsAny<CancellationToken>()), Times.Exactly(2));
 
             response.Should().NotBeNull();
             response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -152,8 +168,8 @@ namespace MxIO.ApiClient
             var request = new RestRequest("/test", Method.Get);
             var notFoundResponse = new RestResponse { StatusCode = HttpStatusCode.NotFound };
 
-            A.CallTo(() => restClientSingleton.ExecuteAsync(A<string>.Ignored, A<RestRequest>.Ignored, A<CancellationToken>.Ignored))
-                .Returns(Task.FromResult(notFoundResponse));
+            restClientSingletonMock.Setup(rcs => rcs.ExecuteAsync(It.IsAny<string>(), It.IsAny<RestRequest>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(notFoundResponse);
 
             // Act
             var response = await baseApi.ExecuteAsync(request);
@@ -174,8 +190,8 @@ namespace MxIO.ApiClient
                 ErrorException = new Exception("Test exception")
             };
 
-            A.CallTo(() => restClientSingleton.ExecuteAsync(A<string>.Ignored, A<RestRequest>.Ignored, A<CancellationToken>.Ignored))
-                .Returns(Task.FromResult(exceptionResponse));
+            restClientSingletonMock.Setup(rcs => rcs.ExecuteAsync(It.IsAny<string>(), It.IsAny<RestRequest>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(exceptionResponse);
 
             // Act & Assert
             await FluentActions.Invoking(() => baseApi.ExecuteAsync(request))
@@ -190,8 +206,8 @@ namespace MxIO.ApiClient
             var request = new RestRequest("/test", Method.Get);
             var badRequestResponse = new RestResponse { StatusCode = HttpStatusCode.BadRequest };
 
-            A.CallTo(() => restClientSingleton.ExecuteAsync(A<string>.Ignored, A<RestRequest>.Ignored, A<CancellationToken>.Ignored))
-                .Returns(Task.FromResult(badRequestResponse));
+            restClientSingletonMock.Setup(rcs => rcs.ExecuteAsync(It.IsAny<string>(), It.IsAny<RestRequest>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(badRequestResponse);
 
             // Act & Assert
             await FluentActions.Invoking(() => baseApi.ExecuteAsync(request))
@@ -207,27 +223,28 @@ namespace MxIO.ApiClient
             var serverErrorResponse = new RestResponse { StatusCode = HttpStatusCode.ServiceUnavailable };
             var okResponse = new RestResponse { StatusCode = HttpStatusCode.OK };
 
-            A.CallTo(() => restClientSingleton.ExecuteAsync(A<string>.Ignored, A<RestRequest>.Ignored, A<CancellationToken>.Ignored))
-                .ReturnsNextFromSequence(
-                    Task.FromResult(serverErrorResponse),
-                    Task.FromResult(okResponse));
+            var sequenceMock = new Mock<IRestClientSingleton>();
+            sequenceMock.SetupSequence(rcs => rcs.ExecuteAsync(It.IsAny<string>(), It.IsAny<RestRequest>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(serverErrorResponse)
+                .ReturnsAsync(okResponse);
+
+            var testApi = new BaseApi(loggerMock.Object, apiTokenProviderMock.Object, sequenceMock.Object, optionsMock.Object);
 
             // Act
-            var response = await baseApi.ExecuteAsync(request);
+            var response = await testApi.ExecuteAsync(request);
 
             // Assert
             response.Should().NotBeNull();
             response.StatusCode.Should().Be(HttpStatusCode.OK);
-            A.CallTo(() => restClientSingleton.ExecuteAsync(A<string>.Ignored, request, A<CancellationToken>.Ignored))
-                .MustHaveHappenedTwiceExactly();
+            sequenceMock.Verify(rcs => rcs.ExecuteAsync(It.IsAny<string>(), request, It.IsAny<CancellationToken>()), Times.Exactly(2));
         }
 
         [Test]
         public async Task ExecuteAsync_WithoutSecondaryApiKey_DoesNotRetryWithSecondaryKey()
         {
             // Arrange
-            var testOptions = A.Fake<IOptions<ApiClientOptions>>();
-            A.CallTo(() => testOptions.Value).Returns(new ApiClientOptions
+            var testOptionsMock = new Mock<IOptions<ApiClientOptions>>();
+            testOptionsMock.Setup(o => o.Value).Returns(new ApiClientOptions
             {
                 BaseUrl = "https://api.example.com",
                 ApiPathPrefix = "v1",
@@ -236,26 +253,25 @@ namespace MxIO.ApiClient
                 ApiAudience = "api_audience"
             });
 
-            var testApi = new BaseApi(logger, apiTokenProvider, restClientSingleton, testOptions);
+            // Create a new mock for this test to avoid interference from other tests
+            var testRestClientSingletonMock = new Mock<IRestClientSingleton>();
+            var testApi = new BaseApi(loggerMock.Object, apiTokenProviderMock.Object, testRestClientSingletonMock.Object, testOptionsMock.Object);
 
             var request = new RestRequest("/test", Method.Get);
             var unauthorizedResponse = new RestResponse { StatusCode = HttpStatusCode.Unauthorized, Content = "Access denied due to invalid subscription key. Make sure to provide a valid key for an active subscription." };
 
-            A.CallTo(() => restClientSingleton.ExecuteAsync(A<string>.Ignored, A<RestRequest>.Ignored, A<CancellationToken>.Ignored))
-                .Returns(Task.FromResult(unauthorizedResponse));
-
-            // Reset any previous calls to make the test more deterministic
-            Fake.ClearRecordedCalls(restClientSingleton);
+            testRestClientSingletonMock.Setup(rcs => rcs.ExecuteAsync(It.IsAny<string>(), It.IsAny<RestRequest>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(unauthorizedResponse);
 
             // Act & Assert
             await FluentActions.Invoking(() => testApi.ExecuteAsync(request))
                 .Should().ThrowAsync<ApplicationException>();
 
             // We can't easily verify that the secondary key isn't tried since that's internal behavior
-            // Instead, let's verify that the request was executed but didn't result in a second call
-            // which would happen if secondary key logic had executed successfully
-            A.CallTo(() => restClientSingleton.ExecuteAsync(A<string>.Ignored, A<RestRequest>.Ignored, A<CancellationToken>.Ignored))
-                .MustHaveHappened();
+            // Instead, let's verify that the request was executed without specifying exactly how many times
+            // as the implementation may be using multiple calls internally
+            testRestClientSingletonMock.Verify(rcs => rcs.ExecuteAsync(It.IsAny<string>(), It.IsAny<RestRequest>(), It.IsAny<CancellationToken>()),
+                Times.AtLeastOnce());
         }
 
         [Test]
@@ -265,15 +281,14 @@ namespace MxIO.ApiClient
             var request = new RestRequest("/test", Method.Get);
             var unauthorizedResponse = new RestResponse { StatusCode = HttpStatusCode.Unauthorized, Content = "Different unauthorized message" };
 
-            A.CallTo(() => restClientSingleton.ExecuteAsync(A<string>.Ignored, A<RestRequest>.Ignored, A<CancellationToken>.Ignored))
-                .Returns(Task.FromResult(unauthorizedResponse));
+            restClientSingletonMock.Setup(rcs => rcs.ExecuteAsync(It.IsAny<string>(), It.IsAny<RestRequest>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(unauthorizedResponse);
 
             // Act & Assert
             await FluentActions.Invoking(() => baseApi.ExecuteAsync(request))
                 .Should().ThrowAsync<ApplicationException>();
 
-            A.CallTo(() => restClientSingleton.ExecuteAsync(A<string>.Ignored, request, A<CancellationToken>.Ignored))
-                .MustHaveHappenedOnceExactly();
+            restClientSingletonMock.Verify(rcs => rcs.ExecuteAsync(It.IsAny<string>(), request, It.IsAny<CancellationToken>()), Times.Once);
         }
     }
 }
