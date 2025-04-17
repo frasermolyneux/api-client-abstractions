@@ -1,4 +1,3 @@
-using FluentAssertions;
 using MxIO.ApiClient.Abstractions;
 using MxIO.ApiClient.Extensions;
 using Newtonsoft.Json;
@@ -25,8 +24,8 @@ namespace MxIO.ApiClient
             var apiResponse = response.ToApiResponse();
 
             // Assert
-            apiResponse.Should().NotBeNull();
-            apiResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+            Assert.NotNull(apiResponse);
+            Assert.Equal(HttpStatusCode.OK, apiResponse.StatusCode);
         }
 
         [Fact]
@@ -43,9 +42,9 @@ namespace MxIO.ApiClient
             var apiResponse = response.ToApiResponse();
 
             // Assert
-            apiResponse.Should().NotBeNull();
-            apiResponse.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
-            apiResponse.Errors.Should().Contain("Response content received by client api was null. (client error).");
+            Assert.NotNull(apiResponse);
+            Assert.Equal(HttpStatusCode.InternalServerError, apiResponse.StatusCode);
+            Assert.Contains("Response content received by client api was null. (client error).", apiResponse.Errors);
         }
 
         [Fact]
@@ -64,8 +63,8 @@ namespace MxIO.ApiClient
             var apiResponse = response.ToApiResponse();
 
             // Assert
-            apiResponse.Should().NotBeNull();
-            apiResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+            Assert.NotNull(apiResponse);
+            Assert.Equal(HttpStatusCode.OK, apiResponse.StatusCode);
         }
 
         [Fact]
@@ -82,9 +81,9 @@ namespace MxIO.ApiClient
             var apiResponse = response.ToApiResponse();
 
             // Assert
-            apiResponse.Should().NotBeNull();
-            apiResponse.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
-            apiResponse.Errors.Should().NotBeEmpty(); // Will contain the JSON parsing error
+            Assert.NotNull(apiResponse);
+            Assert.Equal(HttpStatusCode.InternalServerError, apiResponse.StatusCode);
+            Assert.NotEmpty(apiResponse.Errors); // Will contain the JSON parsing error
         }
 
         [Fact]
@@ -101,9 +100,9 @@ namespace MxIO.ApiClient
             var apiResponse = response.ToApiResponse<string>();
 
             // Assert
-            apiResponse.Should().NotBeNull();
-            apiResponse.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
-            apiResponse.Errors.Should().Contain("Response content received by client api was null. (client error).");
+            Assert.NotNull(apiResponse);
+            Assert.Equal(HttpStatusCode.InternalServerError, apiResponse.StatusCode);
+            Assert.Contains("Response content received by client api was null. (client error).", apiResponse.Errors);
         }
 
         [Fact]
@@ -127,9 +126,9 @@ namespace MxIO.ApiClient
             var apiResponse = response.ToApiResponse<string>();
 
             // Assert
-            apiResponse.Should().NotBeNull();
-            apiResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-            apiResponse.Result.Should().Be("test data");
+            Assert.NotNull(apiResponse);
+            Assert.Equal(HttpStatusCode.OK, apiResponse.StatusCode);
+            Assert.Equal("test data", apiResponse.Result);
         }
 
         [Fact]
@@ -146,9 +145,9 @@ namespace MxIO.ApiClient
             var apiResponse = response.ToApiResponse<string>();
 
             // Assert
-            apiResponse.Should().NotBeNull();
-            apiResponse.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
-            apiResponse.Errors.Should().NotBeEmpty(); // Will contain the JSON parsing error
+            Assert.NotNull(apiResponse);
+            Assert.Equal(HttpStatusCode.InternalServerError, apiResponse.StatusCode);
+            Assert.NotEmpty(apiResponse.Errors); // Will contain the JSON parsing error
         }
 
         [Fact]
@@ -172,12 +171,12 @@ namespace MxIO.ApiClient
             var apiResponse = response.ToApiResponse<string>(); // Try to deserialize to string
 
             // Assert
-            apiResponse.Should().NotBeNull();
+            Assert.NotNull(apiResponse);
             // The JSON.NET deserializer appears to be handling type conversion automatically
             // instead of throwing an error, so the status code remains 200 (OK)
-            apiResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+            Assert.Equal(HttpStatusCode.OK, apiResponse.StatusCode);
             // The result will be the string representation of the integer
-            apiResponse.Result.Should().Be("123");
+            Assert.Equal("123", apiResponse.Result);
         }
     }
 }

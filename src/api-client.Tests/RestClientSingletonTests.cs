@@ -1,4 +1,3 @@
-using FluentAssertions;
 using RestSharp;
 using System.Reflection;
 using System.Net;
@@ -68,8 +67,8 @@ namespace MxIO.ApiClient
             var instancesField = typeof(RestClientSingleton).GetField("instances", BindingFlags.NonPublic | BindingFlags.Static);
             var instances = instancesField?.GetValue(null) as Dictionary<string, RestClient>;
 
-            instances.Should().NotBeNull();
-            instances.Should().ContainKey(baseUrl);
+            Assert.NotNull(instances);
+            Assert.Contains(baseUrl, instances.Keys);
         }
 
         [Fact]
@@ -89,9 +88,9 @@ namespace MxIO.ApiClient
             var instancesField = typeof(RestClientSingleton).GetField("instances", BindingFlags.NonPublic | BindingFlags.Static);
             var instances = instancesField?.GetValue(null) as Dictionary<string, RestClient>;
 
-            instances.Should().NotBeNull();
-            instances.Should().ContainKey(baseUrl);
-            instances.Count.Should().Be(1);
+            Assert.NotNull(instances);
+            Assert.Contains(baseUrl, instances.Keys);
+            Assert.Single(instances);
         }
 
         [Fact]
@@ -111,10 +110,10 @@ namespace MxIO.ApiClient
             var instancesField = typeof(RestClientSingleton).GetField("instances", BindingFlags.NonPublic | BindingFlags.Static);
             var instances = instancesField?.GetValue(null) as Dictionary<string, RestClient>;
 
-            instances.Should().NotBeNull();
-            instances.Should().ContainKey(baseUrl1);
-            instances.Should().ContainKey(baseUrl2);
-            instances.Count.Should().Be(2);
+            Assert.NotNull(instances);
+            Assert.Contains(baseUrl1, instances.Keys);
+            Assert.Contains(baseUrl2, instances.Keys);
+            Assert.Equal(2, instances.Count);
         }
 
         [Fact]
@@ -144,9 +143,9 @@ namespace MxIO.ApiClient
             var instancesField = typeof(RestClientSingleton).GetField("instances", BindingFlags.NonPublic | BindingFlags.Static);
             var instances = instancesField?.GetValue(null) as Dictionary<string, RestClient>;
 
-            instances.Should().NotBeNull();
-            instances.Should().ContainKey(baseUrl);
-            instances.Count.Should().Be(1);
+            Assert.NotNull(instances);
+            Assert.Contains(baseUrl, instances.Keys);
+            Assert.Single(instances);
         }
 
         [Fact]
@@ -168,10 +167,10 @@ namespace MxIO.ApiClient
             instances?.Add(baseUrl, createdClient);
 
             // Assert
-            testableRestClientSingleton.CreateRestClientWasCalled.Should().BeTrue();
-            instances.Should().NotBeNull();
-            instances.Should().ContainKey(baseUrl);
-            instances[baseUrl].Should().BeSameAs(mockRestClient);
+            Assert.True(testableRestClientSingleton.CreateRestClientWasCalled);
+            Assert.NotNull(instances);
+            Assert.Contains(baseUrl, instances.Keys);
+            Assert.Same(mockRestClient, instances[baseUrl]);
         }
     }
 }

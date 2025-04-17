@@ -1,6 +1,5 @@
 using Azure.Core;
 using Moq;
-using FluentAssertions;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using System;
@@ -43,7 +42,7 @@ namespace MxIO.ApiClient
         {
             // Act & Assert - Just verify that the constructor doesn't throw exceptions
             var instance = new ApiTokenProvider(loggerMock.Object, memoryCache, tokenCredentialProviderMock.Object);
-            instance.Should().NotBeNull();
+            Assert.NotNull(instance);
         }
 
         [Fact]
@@ -63,7 +62,7 @@ namespace MxIO.ApiClient
             var result = await apiTokenProvider.GetAccessToken(audience);
 
             // Assert
-            result.Should().Be("mock-token-value");
+            Assert.Equal("mock-token-value", result);
 
             // Verify token credential provider was called
             tokenCredentialProviderMock.Verify(tcp => tcp.GetTokenCredential(), Times.Once);
@@ -75,9 +74,9 @@ namespace MxIO.ApiClient
                 Times.Once);
 
             // Verify token was cached
-            memoryCache.TryGetValue(audience, out object? cachedValue).Should().BeTrue();
-            cachedValue.Should().NotBeNull();
-            ((AccessToken)cachedValue!).Token.Should().Be("mock-token-value");
+            Assert.True(memoryCache.TryGetValue(audience, out object? cachedValue));
+            Assert.NotNull(cachedValue);
+            Assert.Equal("mock-token-value", ((AccessToken)cachedValue!).Token);
         }
 
         [Fact]
@@ -95,7 +94,7 @@ namespace MxIO.ApiClient
             var result = await apiTokenProvider.GetAccessToken(audience);
 
             // Assert
-            result.Should().Be("cached-token-value");
+            Assert.Equal("cached-token-value", result);
 
             // Verify token credential provider was NOT called
             tokenCredentialProviderMock.Verify(tcp => tcp.GetTokenCredential(), Times.Never);
@@ -129,19 +128,19 @@ namespace MxIO.ApiClient
             var result = await apiTokenProvider.GetAccessToken(audience);
 
             // Assert
-            result.Should().Be("new-token");
+            Assert.Equal("new-token", result);
 
             // Verify token credential provider was called
             tokenCredentialProviderMock.Verify(tcp => tcp.GetTokenCredential(), Times.Once);
 
             // Verify the new token was cached
-            memoryCache.TryGetValue(audience, out object? cachedValue).Should().BeTrue();
-            cachedValue.Should().NotBeNull();
-            ((AccessToken)cachedValue!).Token.Should().Be("new-token");
+            Assert.True(memoryCache.TryGetValue(audience, out object? cachedValue));
+            Assert.NotNull(cachedValue);
+            Assert.Equal("new-token", ((AccessToken)cachedValue!).Token);
         }
 
         [Fact]
-        public void GetAccessToken_WhenTokenAcquisitionFails_LogsErrorAndRethrows()
+        public async Task GetAccessToken_WhenTokenAcquisitionFails_LogsErrorAndRethrows()
         {
             // Arrange
             var audience = "test-audience";
@@ -153,11 +152,8 @@ namespace MxIO.ApiClient
                 .ThrowsAsync(expectedException);
 
             // Act & Assert
-            Func<Task> act = async () => await apiTokenProvider.GetAccessToken(audience);
-
-            // Verify that the exception is thrown
-            act.Should().ThrowAsync<Exception>()
-                .WithMessage("Authentication failed");
+            var exception = await Assert.ThrowsAsync<Exception>(() => apiTokenProvider.GetAccessToken(audience));
+            Assert.Equal("Authentication failed", exception.Message);
         }
     }
 }

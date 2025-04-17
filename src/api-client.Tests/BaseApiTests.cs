@@ -2,7 +2,6 @@ using Moq;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RestSharp;
-using FluentAssertions;
 using System.Net;
 using System;
 using System.Threading;
@@ -102,10 +101,16 @@ namespace MxIO.ApiClient
             var request = await baseApi.CreateRequest(resource, method);
 
             // Assert
-            request.Resource.Should().Be(resource);
-            request.Method.Should().Be(method);
-            request.Parameters.Should().ContainSingle(p => p.Name == "Ocp-Apim-Subscription-Key" && p.Value != null && (string)p.Value == "primary_key");
-            request.Parameters.Should().ContainSingle(p => p.Name == "Authorization" && p.Value != null && (string)p.Value == "Bearer fake_access_token");
+            Assert.Equal(resource, request.Resource);
+            Assert.Equal(method, request.Method);
+
+            var subscriptionKeyParam = Assert.Single(request.Parameters, p => p.Name == "Ocp-Apim-Subscription-Key");
+            Assert.NotNull(subscriptionKeyParam.Value);
+            Assert.Equal("primary_key", subscriptionKeyParam.Value);
+
+            var authParam = Assert.Single(request.Parameters, p => p.Name == "Authorization");
+            Assert.NotNull(authParam.Value);
+            Assert.Equal("Bearer fake_access_token", authParam.Value);
         }
 
         [Fact]
@@ -122,8 +127,8 @@ namespace MxIO.ApiClient
             var response = await baseApi.ExecuteAsync(request);
 
             // Assert
-            response.Should().NotBeNull();
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            Assert.NotNull(response);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         }
 
         [Fact]
@@ -158,8 +163,8 @@ namespace MxIO.ApiClient
             // Assert
             sequenceMock.Verify(rcs => rcs.ExecuteAsync(It.IsAny<string>(), request, It.IsAny<CancellationToken>()), Times.Exactly(2));
 
-            response.Should().NotBeNull();
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            Assert.NotNull(response);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         }
 
         [Fact]
@@ -176,8 +181,8 @@ namespace MxIO.ApiClient
             var response = await baseApi.ExecuteAsync(request);
 
             // Assert
-            response.Should().NotBeNull();
-            response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+            Assert.NotNull(response);
+            Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         }
 
         [Fact]
@@ -195,9 +200,8 @@ namespace MxIO.ApiClient
                 .ReturnsAsync(exceptionResponse);
 
             // Act & Assert
-            await FluentActions.Invoking(() => baseApi.ExecuteAsync(request))
-                .Should().ThrowAsync<Exception>()
-                .WithMessage("Test exception");
+            var exception = await Assert.ThrowsAsync<Exception>(() => baseApi.ExecuteAsync(request));
+            Assert.Equal("Test exception", exception.Message);
         }
 
         [Fact]
@@ -211,9 +215,8 @@ namespace MxIO.ApiClient
                 .ReturnsAsync(badRequestResponse);
 
             // Act & Assert
-            await FluentActions.Invoking(() => baseApi.ExecuteAsync(request))
-                .Should().ThrowAsync<ApplicationException>()
-                .WithMessage($"Failed {request.Method} to '{request.Resource}' with code '{HttpStatusCode.BadRequest}'");
+            var exception = await Assert.ThrowsAsync<ApplicationException>(() => baseApi.ExecuteAsync(request));
+            Assert.Equal($"Failed {request.Method} to '{request.Resource}' with code '{HttpStatusCode.BadRequest}'", exception.Message);
         }
 
         [Fact]
@@ -235,8 +238,8 @@ namespace MxIO.ApiClient
             var response = await testApi.ExecuteAsync(request);
 
             // Assert
-            response.Should().NotBeNull();
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            Assert.NotNull(response);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             sequenceMock.Verify(rcs => rcs.ExecuteAsync(It.IsAny<string>(), request, It.IsAny<CancellationToken>()), Times.Exactly(2));
         }
 
@@ -265,8 +268,7 @@ namespace MxIO.ApiClient
                 .ReturnsAsync(unauthorizedResponse);
 
             // Act & Assert
-            await FluentActions.Invoking(() => testApi.ExecuteAsync(request))
-                .Should().ThrowAsync<ApplicationException>();
+            await Assert.ThrowsAsync<ApplicationException>(() => testApi.ExecuteAsync(request));
 
             // We can't easily verify that the secondary key isn't tried since that's internal behavior
             // Instead, let's verify that the request was executed without specifying exactly how many times
@@ -286,8 +288,7 @@ namespace MxIO.ApiClient
                 .ReturnsAsync(unauthorizedResponse);
 
             // Act & Assert
-            await FluentActions.Invoking(() => baseApi.ExecuteAsync(request))
-                .Should().ThrowAsync<ApplicationException>();
+            await Assert.ThrowsAsync<ApplicationException>(() => baseApi.ExecuteAsync(request));
 
             restClientSingletonMock.Verify(rcs => rcs.ExecuteAsync(It.IsAny<string>(), request, It.IsAny<CancellationToken>()), Times.Once);
         }
