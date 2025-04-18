@@ -9,7 +9,7 @@ namespace MxIO.ApiClient;
 public class RestClientSingleton : IRestClientSingleton
 {
     private static readonly Dictionary<string, RestClient> instances = new(StringComparer.OrdinalIgnoreCase);
-    private static readonly object padlock = new();
+    private static readonly object padlock = new object();
 
     /// <summary>
     /// Creates a new RestClient instance for the given base URL.

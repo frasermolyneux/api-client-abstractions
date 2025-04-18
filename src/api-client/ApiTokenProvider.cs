@@ -51,7 +51,7 @@ public class ApiTokenProvider : IApiTokenProvider
 
         // Check if we already have a valid cached token
         if (memoryCache.TryGetValue(audience, out AccessToken accessToken) &&
-            DateTime.UtcNow < accessToken.ExpiresOn)
+            DateTimeOffset.UtcNow < accessToken.ExpiresOn)
         {
             logger.LogDebug("Using cached token for audience '{Audience}' which expires at {ExpiryTime}",
                 audience, accessToken.ExpiresOn);
