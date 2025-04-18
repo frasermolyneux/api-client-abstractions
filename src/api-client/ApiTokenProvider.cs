@@ -86,14 +86,14 @@ public class ApiTokenProvider : IApiTokenProvider
         }
 
         // Get a new token
-        TokenCredential? tokenCredential = null;
         try
         {
-            tokenCredential = tokenCredentialProvider.GetTokenCredential();
-            ArgumentNullException.ThrowIfNull(tokenCredential);
-
             // Cancel operation if requested
             cancellationToken.ThrowIfCancellationRequested();
+
+            // Get token credential using the new async method
+            TokenCredential tokenCredential = await tokenCredentialProvider.GetTokenCredentialAsync(cancellationToken);
+            ArgumentNullException.ThrowIfNull(tokenCredential);
 
             logger.LogDebug("Requesting new token for audience '{Audience}'", audience);
 

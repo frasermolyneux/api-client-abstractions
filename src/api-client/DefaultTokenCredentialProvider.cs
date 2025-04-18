@@ -61,7 +61,7 @@ public class DefaultTokenCredentialProvider : ITokenCredentialProvider
     }
 
     /// <summary>
-    /// Gets a DefaultAzureCredential instance for authentication.
+    /// Gets a DefaultAzureCredential instance asynchronously for authentication.
     /// The DefaultAzureCredential attempts to authenticate via the following mechanisms in order:
     /// - Environment variables
     /// - Managed Identity
@@ -69,16 +69,19 @@ public class DefaultTokenCredentialProvider : ITokenCredentialProvider
     /// - Azure CLI
     /// - Azure PowerShell
     /// </summary>
-    /// <returns>A DefaultAzureCredential instance for token acquisition.</returns>
-    public TokenCredential GetTokenCredential()
+    /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+    /// <returns>A task containing a DefaultAzureCredential instance for token acquisition.</returns>
+    public Task<TokenCredential> GetTokenCredentialAsync(CancellationToken cancellationToken = default)
     {
-        logger?.LogDebug("Creating DefaultAzureCredential with authentication settings: ManagedIdentity={ManagedIdentityEnabled}, " +
+        logger?.LogDebug("Creating DefaultAzureCredential asynchronously with authentication settings: ManagedIdentity={ManagedIdentityEnabled}, " +
                          "Environment={EnvironmentEnabled}, VisualStudioCode={VSCodeEnabled}, AzurePowerShell={PowerShellEnabled}",
             !options.ExcludeManagedIdentityCredential,
             !options.ExcludeEnvironmentCredential,
             !options.ExcludeVisualStudioCodeCredential,
             !options.ExcludeAzurePowerShellCredential);
 
-        return new DefaultAzureCredential(options);
+        // Creating DefaultAzureCredential is not an async operation,
+        // but we wrap it in a Task to conform to the async interface pattern
+        return Task.FromResult<TokenCredential>(new DefaultAzureCredential(options));
     }
 }

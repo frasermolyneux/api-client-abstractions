@@ -9,8 +9,9 @@ namespace MxIO.ApiClient;
 public interface ITokenCredentialProvider
 {
     /// <summary>
-    /// Gets a token credential that can be used for authentication.
+    /// Gets a token credential asynchronously that can be used for authentication.
     /// </summary>
-    /// <returns>A token credential instance.</returns>
-    TokenCredential GetTokenCredential();
+    /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+    /// <returns>A task containing a token credential instance.</returns>
+    Task<TokenCredential> GetTokenCredentialAsync(CancellationToken cancellationToken = default);
 }

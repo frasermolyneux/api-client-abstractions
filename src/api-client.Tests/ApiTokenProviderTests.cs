@@ -26,8 +26,8 @@ namespace MxIO.ApiClient
             tokenCredentialProviderMock = new Mock<ITokenCredentialProvider>();
             tokenCredentialMock = new Mock<TokenCredential>();
 
-            tokenCredentialProviderMock.Setup(tcp => tcp.GetTokenCredential())
-                .Returns(tokenCredentialMock.Object);
+            tokenCredentialProviderMock.Setup(tcp => tcp.GetTokenCredentialAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(tokenCredentialMock.Object);
 
             apiTokenProvider = new ApiTokenProvider(loggerMock.Object, memoryCache, tokenCredentialProviderMock.Object);
         }
@@ -66,7 +66,7 @@ namespace MxIO.ApiClient
             Assert.Equal("mock-token-value", result);
 
             // Verify token credential provider was called
-            tokenCredentialProviderMock.Verify(tcp => tcp.GetTokenCredential(), Times.Once);
+            tokenCredentialProviderMock.Verify(tcp => tcp.GetTokenCredentialAsync(It.IsAny<CancellationToken>()), Times.Once);
 
             // Verify GetTokenAsync was called with the correct scope and cancellation token
             tokenCredentialMock.Verify(tc => tc.GetTokenAsync(
@@ -98,7 +98,7 @@ namespace MxIO.ApiClient
             Assert.Equal("cached-token-value", result);
 
             // Verify token credential provider was NOT called
-            tokenCredentialProviderMock.Verify(tcp => tcp.GetTokenCredential(), Times.Never);
+            tokenCredentialProviderMock.Verify(tcp => tcp.GetTokenCredentialAsync(It.IsAny<CancellationToken>()), Times.Never);
 
             // Verify GetTokenAsync was NOT called
             tokenCredentialMock.Verify(tc => tc.GetTokenAsync(
@@ -133,7 +133,7 @@ namespace MxIO.ApiClient
             Assert.Equal("new-token", result);
 
             // Verify token credential provider was called
-            tokenCredentialProviderMock.Verify(tcp => tcp.GetTokenCredential(), Times.Once);
+            tokenCredentialProviderMock.Verify(tcp => tcp.GetTokenCredentialAsync(It.IsAny<CancellationToken>()), Times.Once);
 
             // Verify the new token was cached
             Assert.True(memoryCache.TryGetValue(audience, out object? cachedValue));

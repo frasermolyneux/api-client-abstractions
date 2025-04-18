@@ -75,10 +75,10 @@ services.AddApiClientWithCustomCredentialProvider<YourCustomCredentialProvider>(
 // Add your custom provider implementation
 public class YourCustomCredentialProvider : ITokenCredentialProvider
 {
-    public TokenCredential GetTokenCredential()
+    public Task<TokenCredential> GetTokenCredentialAsync(CancellationToken cancellationToken = default)
     {
         // Your custom implementation
-        return new DefaultAzureCredential(...);
+        return Task.FromResult<TokenCredential>(new DefaultAzureCredential(...));
     }
 }
 ```
@@ -101,7 +101,7 @@ public class UserApi : BaseApi
 
     public async Task<User> GetUserAsync(string userId, CancellationToken cancellationToken = default)
     {
-        var request = await CreateRequest($"users/{userId}", Method.Get, cancellationToken);
+        var request = await CreateRequestAsync($"users/{userId}", Method.Get, cancellationToken);
         var response = await ExecuteAsync(request, false, cancellationToken);
         
         return response.IsSuccessful
@@ -125,9 +125,9 @@ public class UserService
         this.userApi = userApi;
     }
 
-    public async Task<User> GetUserAsync(string userId)
+    public async Task<User> GetUserAsync(string userId, CancellationToken cancellationToken = default)
     {
-        return await userApi.GetUserAsync(userId);
+        return await userApi.GetUserAsync(userId, cancellationToken);
     }
 }
 ```

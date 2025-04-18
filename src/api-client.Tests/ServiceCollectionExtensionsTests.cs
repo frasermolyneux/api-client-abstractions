@@ -1,6 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using MxIO.ApiClient.Extensions;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace MxIO.ApiClient
@@ -91,7 +93,7 @@ namespace MxIO.ApiClient
         // Simple custom implementation of ITokenCredentialProvider for testing
         private class CustomTokenCredentialProvider : ITokenCredentialProvider
         {
-            public Azure.Core.TokenCredential GetTokenCredential()
+            public Task<Azure.Core.TokenCredential> GetTokenCredentialAsync(CancellationToken cancellationToken = default)
             {
                 throw new System.NotImplementedException();
             }
