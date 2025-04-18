@@ -225,7 +225,7 @@ public class BaseApi
                 request.Method, request.Resource);
             throw;
         }
-        catch (Exception ex) when (!(ex is ApplicationException || ex is OperationCanceledException))
+        catch (Exception ex) when (ex is not ApplicationException and not OperationCanceledException)
         {
             logger.LogError(ex, "Unexpected error during {Method} to '{Resource}'",
                 request.Method, request.Resource);
