@@ -82,24 +82,26 @@ public class BaseApi
         secondaryApiKey = options.Value.SecondaryApiKey;
         apiAudience = options.Value.ApiAudience;
 
-        // Configure retry policy - safely handle null responses 
+        // Configure retry policy - safely handle null responses
+        int retryCount = options.Value.MaxRetryCount > 0 ? options.Value.MaxRetryCount : 3;
+
         retryPolicy = Policy
             .HandleResult<RestResponse>(r =>
                 r is null || !NoRetryStatusCodes.Contains(r.StatusCode))
             .WaitAndRetryAsync(
-                3,
+                retryCount,
                 retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
-                (response, timespan, retryCount, context) =>
+                (response, timespan, attemptCount, context) =>
                 {
                     if (response?.Result is not null)
                     {
                         logger.LogWarning("Request failed with {StatusCode}. Waiting {Timespan} before next retry. Retry attempt {RetryCount}",
-                            response.Result.StatusCode, timespan, retryCount);
+                            response.Result.StatusCode, timespan, attemptCount);
                     }
                     else
                     {
                         logger.LogWarning("Request failed with null response. Waiting {Timespan} before next retry. Retry attempt {RetryCount}",
-                            timespan, retryCount);
+                            timespan, attemptCount);
                     }
                 }
             );
@@ -151,48 +153,68 @@ public class BaseApi
             request.AddOrUpdateHeader(SubscriptionKeyHeaderName, secondaryApiKey);
         }
 
-        // Execute the request with retry policy
-        var response = await retryPolicy.ExecuteAsync(
-            async (token) => await restClientSingleton.ExecuteAsync(baseUrl, request, token),
-            cancellationToken);
-
-        // Ensure response is not null to prevent NullReferenceException
-        if (response is null)
+        try
         {
-            logger.LogError("Received null response for {Method} to '{Resource}'", request.Method, request.Resource);
-            throw new ApplicationException($"Failed {request.Method} to '{request.Resource}' - received null response");
-        }
+            // Execute the request with retry policy
+            var response = await retryPolicy.ExecuteAsync(
+                async (token) => await restClientSingleton.ExecuteAsync(baseUrl, request, token),
+                cancellationToken);
 
-        // Check for specific error conditions
-        if (response.StatusCode == HttpStatusCode.Unauthorized && !useSecondaryApiKey)
-        {
-            var responseContent = response.Content;
-
-            if (responseContent is not null && responseContent.Contains("Access denied due to invalid subscription key. Make sure to provide a valid key for an active subscription."))
+            // Ensure response is not null to prevent NullReferenceException
+            if (response is null)
             {
-                return await ExecuteAsync(request, true, cancellationToken);
+                logger.LogError("Received null response for {Method} to '{Resource}'", request.Method, request.Resource);
+                throw new ApplicationException($"Failed {request.Method} to '{request.Resource}' - received null response");
+            }
+
+            // Check for specific error conditions
+            if (response.StatusCode == HttpStatusCode.Unauthorized && !useSecondaryApiKey)
+            {
+                var responseContent = response.Content;
+
+                if (responseContent is not null && responseContent.Contains("Access denied due to invalid subscription key. Make sure to provide a valid key for an active subscription."))
+                {
+                    return await ExecuteAsync(request, true, cancellationToken);
+                }
+            }
+
+            // Return successful responses
+            if (SuccessStatusCodes.Contains(response.StatusCode))
+            {
+                return response;
+            }
+            // Handle exceptions in the response
+            else if (response.ErrorException is not null)
+            {
+                logger.LogError(response.ErrorException, "Failed {Method} to '{Resource}' with code '{StatusCode}'",
+                    request.Method, request.Resource, response.StatusCode);
+                throw response.ErrorException;
+            }
+            // Handle other error status codes
+            else
+            {
+                var ex = new ApplicationException($"Failed {request.Method} to '{request.Resource}' with code '{response.StatusCode}'");
+                logger.LogError(ex, "Failed {Method} to '{Resource}' with response status '{ResponseStatus}' and code '{StatusCode}' - Content: {Content}",
+                    request.Method, request.Resource, response.ResponseStatus, response.StatusCode, response.Content);
+                throw ex;
             }
         }
-
-        // Return successful responses
-        if (SuccessStatusCodes.Contains(response.StatusCode))
+        catch (OperationCanceledException)
         {
-            return response;
+            logger.LogInformation("Request {Method} to '{Resource}' was canceled", request.Method, request.Resource);
+            throw;
         }
-        // Handle exceptions in the response
-        else if (response.ErrorException is not null)
+        catch (ObjectDisposedException ex)
         {
-            logger.LogError(response.ErrorException, "Failed {Method} to '{Resource}' with code '{StatusCode}'",
-                request.Method, request.Resource, response.StatusCode);
-            throw response.ErrorException;
+            logger.LogError(ex, "RestClientSingleton was disposed during request {Method} to '{Resource}'",
+                request.Method, request.Resource);
+            throw;
         }
-        // Handle other error status codes
-        else
+        catch (Exception ex) when (!(ex is ApplicationException || ex is OperationCanceledException))
         {
-            var ex = new ApplicationException($"Failed {request.Method} to '{request.Resource}' with code '{response.StatusCode}'");
-            logger.LogError(ex, "Failed {Method} to '{Resource}' with response status '{ResponseStatus}' and code '{StatusCode}' - Content: {Content}",
-                request.Method, request.Resource, response.ResponseStatus, response.StatusCode, response.Content);
-            throw ex;
+            logger.LogError(ex, "Unexpected error during {Method} to '{Resource}'",
+                request.Method, request.Resource);
+            throw;
         }
     }
 }

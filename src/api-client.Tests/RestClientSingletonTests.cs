@@ -4,6 +4,7 @@ using System.Net;
 using Moq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 using Xunit;
 
 namespace MxIO.ApiClient
@@ -65,7 +66,7 @@ namespace MxIO.ApiClient
 
             // Assert - Verify a client was created for the base URL
             var instancesField = typeof(RestClientSingleton).GetField("instances", BindingFlags.NonPublic | BindingFlags.Static);
-            var instances = instancesField?.GetValue(null) as Dictionary<string, RestClient>;
+            var instances = instancesField?.GetValue(null) as ConcurrentDictionary<string, RestClient>;
 
             Assert.NotNull(instances);
             Assert.Contains(baseUrl, instances.Keys);
@@ -86,7 +87,7 @@ namespace MxIO.ApiClient
 
             // Assert - Verify only one instance was created
             var instancesField = typeof(RestClientSingleton).GetField("instances", BindingFlags.NonPublic | BindingFlags.Static);
-            var instances = instancesField?.GetValue(null) as Dictionary<string, RestClient>;
+            var instances = instancesField?.GetValue(null) as ConcurrentDictionary<string, RestClient>;
 
             Assert.NotNull(instances);
             Assert.Contains(baseUrl, instances.Keys);
@@ -108,7 +109,7 @@ namespace MxIO.ApiClient
 
             // Assert - Verify two different instances were created
             var instancesField = typeof(RestClientSingleton).GetField("instances", BindingFlags.NonPublic | BindingFlags.Static);
-            var instances = instancesField?.GetValue(null) as Dictionary<string, RestClient>;
+            var instances = instancesField?.GetValue(null) as ConcurrentDictionary<string, RestClient>;
 
             Assert.NotNull(instances);
             Assert.Contains(baseUrl1, instances.Keys);
@@ -141,7 +142,7 @@ namespace MxIO.ApiClient
 
             // Assert - Verify only one instance was created despite concurrent access
             var instancesField = typeof(RestClientSingleton).GetField("instances", BindingFlags.NonPublic | BindingFlags.Static);
-            var instances = instancesField?.GetValue(null) as Dictionary<string, RestClient>;
+            var instances = instancesField?.GetValue(null) as ConcurrentDictionary<string, RestClient>;
 
             Assert.NotNull(instances);
             Assert.Contains(baseUrl, instances.Keys);
@@ -157,14 +158,20 @@ namespace MxIO.ApiClient
             // Create our testable singleton that uses our mock client
             var testableRestClientSingleton = new TestableRestClientSingleton(mockRestClient);
 
-            // Act - Add to the instances dictionary directly without executing
-            var instancesField = typeof(RestClientSingleton).GetField("instances", BindingFlags.NonPublic | BindingFlags.Static);
-            var instances = instancesField?.GetValue(null) as Dictionary<string, RestClient>;
-
+            // Act
             // Since we can't actually execute the request (it fails with URI formatting),
             // We'll verify our CreateRestClient method is called by calling our public test method
             var createdClient = testableRestClientSingleton.CreateTestRestClient(baseUrl);
-            instances?.Add(baseUrl, createdClient);
+
+            // Add the client to the instances dictionary through our test method
+            var instancesField = typeof(RestClientSingleton).GetField("instances", BindingFlags.NonPublic | BindingFlags.Static);
+            var instances = instancesField?.GetValue(null) as ConcurrentDictionary<string, RestClient>;
+
+            // Add the client to the dictionary if it exists
+            if (instances != null)
+            {
+                instances.TryAdd(baseUrl, createdClient);
+            }
 
             // Assert
             Assert.True(testableRestClientSingleton.CreateRestClientWasCalled);

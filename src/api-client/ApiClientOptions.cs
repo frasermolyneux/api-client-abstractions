@@ -55,6 +55,14 @@ public class ApiClientOptions
     public string? ApiPathPrefix { get; set; }
 
     /// <summary>
+    /// Gets or sets the maximum number of retry attempts for failed API calls.
+    /// </summary>
+    /// <remarks>
+    /// When not set or set to a value less than or equal to 0, a default of 3 retry attempts will be used.
+    /// </remarks>
+    public int MaxRetryCount { get; set; } = 3;
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="ApiClientOptions"/> class.
     /// </summary>
     public ApiClientOptions()

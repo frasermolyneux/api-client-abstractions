@@ -11,10 +11,12 @@ namespace MxIO.ApiClient;
 public class ApiTokenProvider : IApiTokenProvider
 {
     private const string DefaultScopeFormat = "{0}/.default";
+    private static readonly TimeSpan DefaultExpiryBuffer = TimeSpan.FromMinutes(5);
 
     private readonly ILogger<ApiTokenProvider> logger;
     private readonly IMemoryCache memoryCache;
     private readonly ITokenCredentialProvider tokenCredentialProvider;
+    private readonly TimeSpan tokenExpiryBuffer;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ApiTokenProvider"/> class.
@@ -27,10 +29,35 @@ public class ApiTokenProvider : IApiTokenProvider
         ILogger<ApiTokenProvider> logger,
         IMemoryCache memoryCache,
         ITokenCredentialProvider tokenCredentialProvider)
+        : this(logger, memoryCache, tokenCredentialProvider, DefaultExpiryBuffer)
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ApiTokenProvider"/> class with a custom token expiry buffer.
+    /// </summary>
+    /// <param name="logger">The logger for recording diagnostic information.</param>
+    /// <param name="memoryCache">The memory cache for storing acquired tokens.</param>
+    /// <param name="tokenCredentialProvider">The provider for token credentials.</param>
+    /// <param name="tokenExpiryBuffer">Time buffer before token expiry to consider a token expired.</param>
+    /// <exception cref="ArgumentNullException">Thrown if any required dependency is null.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown if tokenExpiryBuffer is negative.</exception>
+    public ApiTokenProvider(
+        ILogger<ApiTokenProvider> logger,
+        IMemoryCache memoryCache,
+        ITokenCredentialProvider tokenCredentialProvider,
+        TimeSpan tokenExpiryBuffer)
     {
         this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
         this.memoryCache = memoryCache ?? throw new ArgumentNullException(nameof(memoryCache));
         this.tokenCredentialProvider = tokenCredentialProvider ?? throw new ArgumentNullException(nameof(tokenCredentialProvider));
+
+        if (tokenExpiryBuffer < TimeSpan.Zero)
+        {
+            throw new ArgumentOutOfRangeException(nameof(tokenExpiryBuffer), "Token expiry buffer must be non-negative");
+        }
+
+        this.tokenExpiryBuffer = tokenExpiryBuffer;
     }
 
     /// <summary>
@@ -51,19 +78,20 @@ public class ApiTokenProvider : IApiTokenProvider
 
         // Check if we already have a valid cached token
         if (memoryCache.TryGetValue(audience, out AccessToken accessToken) &&
-            DateTimeOffset.UtcNow < accessToken.ExpiresOn)
+            DateTimeOffset.UtcNow < accessToken.ExpiresOn.Subtract(tokenExpiryBuffer))
         {
-            logger.LogDebug("Using cached token for audience '{Audience}' which expires at {ExpiryTime}",
-                audience, accessToken.ExpiresOn);
+            logger.LogDebug("Using cached token for audience '{Audience}' which expires at {ExpiryTime} (effective: {EffectiveExpiry})",
+                audience, accessToken.ExpiresOn, accessToken.ExpiresOn.Subtract(tokenExpiryBuffer));
             return accessToken.Token;
         }
 
         // Get a new token
-        var tokenCredential = tokenCredentialProvider.GetTokenCredential();
-        ArgumentNullException.ThrowIfNull(tokenCredential);
-
+        TokenCredential? tokenCredential = null;
         try
         {
+            tokenCredential = tokenCredentialProvider.GetTokenCredential();
+            ArgumentNullException.ThrowIfNull(tokenCredential);
+
             // Cancel operation if requested
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -74,14 +102,13 @@ public class ApiTokenProvider : IApiTokenProvider
                 new TokenRequestContext(new[] { string.Format(DefaultScopeFormat, audience) }),
                 cancellationToken);
 
-            // Add a small buffer before expiration to prevent using almost-expired tokens
-            var bufferBeforeExpiry = TimeSpan.FromMinutes(5);
-            var effectiveExpiry = accessToken.ExpiresOn.Subtract(bufferBeforeExpiry);
+            // Calculate effective expiry with buffer
+            var effectiveExpiry = accessToken.ExpiresOn.Subtract(tokenExpiryBuffer);
 
             // Cache the token for future use
             var cacheOptions = new MemoryCacheEntryOptions
             {
-                AbsoluteExpiration = effectiveExpiry,
+                AbsoluteExpiration = accessToken.ExpiresOn,
                 Priority = CacheItemPriority.High // Token access is critical
             };
 
@@ -99,7 +126,7 @@ public class ApiTokenProvider : IApiTokenProvider
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to get identity token from AAD for audience: '{Audience}'", audience);
+            logger.LogError(ex, "Failed to get identity token for audience: '{Audience}'", audience);
             throw;
         }
     }

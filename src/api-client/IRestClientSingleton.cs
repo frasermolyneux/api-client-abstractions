@@ -6,7 +6,7 @@ namespace MxIO.ApiClient;
 /// Interface for a singleton service that manages RestClient instances.
 /// This abstraction allows for better testability and ensures proper client reuse across the application.
 /// </summary>
-public interface IRestClientSingleton
+public interface IRestClientSingleton : IDisposable
 {
     /// <summary>
     /// Executes the specified REST request asynchronously.
