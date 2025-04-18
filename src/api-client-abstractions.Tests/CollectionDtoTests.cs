@@ -1,4 +1,5 @@
 using MxIO.ApiClient.Abstractions;
+using Newtonsoft.Json;
 using Xunit;
 
 namespace MxIO.ApiClient.Abstractions.Tests;
@@ -178,6 +179,105 @@ public class CollectionDtoTests
         // Assert
         Assert.Single(collection.Entries);
         Assert.Equal("Item2", collection.Entries[0]);
+    }
+
+    [Fact]
+    public void JsonSerialization_ShouldPreserveAllProperties()
+    {
+        // Arrange
+        var totalRecords = 100;
+        var filteredRecords = 50;
+        var entries = new List<string> { "Item1", "Item2", "Item3" };
+        var collection = new CollectionDto<string>(totalRecords, filteredRecords, entries);
+
+        // Act
+        var json = JsonConvert.SerializeObject(collection);
+        var deserializedCollection = JsonConvert.DeserializeObject<CollectionDto<string>>(json);
+
+        // Assert
+        Assert.NotNull(deserializedCollection);
+        Assert.Equal(totalRecords, deserializedCollection.TotalRecords);
+        Assert.Equal(filteredRecords, deserializedCollection.FilteredRecords);
+        Assert.Equal(3, deserializedCollection.Entries.Count);
+        Assert.Equal("Item1", deserializedCollection.Entries[0]);
+        Assert.Equal("Item2", deserializedCollection.Entries[1]);
+        Assert.Equal("Item3", deserializedCollection.Entries[2]);
+    }
+
+    [Fact]
+    public void JsonSerialization_WithComplexType_ShouldPreserveAllProperties()
+    {
+        // Arrange
+        var totalRecords = 100;
+        var filteredRecords = 50;
+        var entries = new List<TestType>
+        {
+            new TestType { Id = 1, Name = "First Item" },
+            new TestType { Id = 2, Name = "Second Item" }
+        };
+
+        var collection = new CollectionDto<TestType>(totalRecords, filteredRecords, entries);
+
+        // Act
+        var json = JsonConvert.SerializeObject(collection);
+        var deserializedCollection = JsonConvert.DeserializeObject<CollectionDto<TestType>>(json);
+
+        // Assert
+        Assert.NotNull(deserializedCollection);
+        Assert.Equal(totalRecords, deserializedCollection.TotalRecords);
+        Assert.Equal(filteredRecords, deserializedCollection.FilteredRecords);
+        Assert.Equal(2, deserializedCollection.Entries.Count);
+        Assert.Equal(1, deserializedCollection.Entries[0].Id);
+        Assert.Equal("First Item", deserializedCollection.Entries[0].Name);
+        Assert.Equal(2, deserializedCollection.Entries[1].Id);
+        Assert.Equal("Second Item", deserializedCollection.Entries[1].Name);
+    }
+
+    [Fact]
+    public void EmptyCollection_ShouldSerializeAndDeserializeCorrectly()
+    {
+        // Arrange
+        var collection = new CollectionDto<string>(0, 0);
+
+        // Act
+        var json = JsonConvert.SerializeObject(collection);
+        var deserializedCollection = JsonConvert.DeserializeObject<CollectionDto<string>>(json);
+
+        // Assert
+        Assert.NotNull(deserializedCollection);
+        Assert.Equal(0, deserializedCollection.TotalRecords);
+        Assert.Equal(0, deserializedCollection.FilteredRecords);
+        Assert.Empty(deserializedCollection.Entries);
+    }
+
+    [Fact]
+    public void UpdateProperties_AfterConstruction_ShouldWorkCorrectly()
+    {
+        // Arrange
+        var collection = new CollectionDto<string>(10, 5);
+
+        // Act
+        collection.TotalRecords = 20;
+        collection.FilteredRecords = 15;
+        collection.Entries.Add("New Item");
+
+        // Assert
+        Assert.Equal(20, collection.TotalRecords);
+        Assert.Equal(15, collection.FilteredRecords);
+        Assert.Single(collection.Entries);
+        Assert.Equal("New Item", collection.Entries[0]);
+    }
+
+    [Fact]
+    public void Constructor_WithZeroValues_ShouldInitializeCorrectly()
+    {
+        // Arrange & Act
+        var collection = new CollectionDto<string>(0, 0);
+
+        // Assert
+        Assert.Equal(0, collection.TotalRecords);
+        Assert.Equal(0, collection.FilteredRecords);
+        Assert.Empty(collection.Entries);
     }
 
     // Test class for complex type testing

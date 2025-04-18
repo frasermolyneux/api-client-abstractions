@@ -201,6 +201,97 @@ public class ApiResponseDtoGenericTests
         Assert.True(apiResponse.IsSuccess);
     }
 
+    [Fact]
+    public void StatusCodeAndNullErrorConstructor_ShouldNotAddError()
+    {
+        // Arrange & Act
+        var statusCode = HttpStatusCode.BadRequest;
+        var apiResponse = new ApiResponseDto<string>(statusCode, null!);
+
+        // Assert - String.Empty is different from null
+        Assert.Equal(statusCode, apiResponse.StatusCode);
+        Assert.NotNull(apiResponse.Errors);
+        Assert.Empty(apiResponse.Errors);
+    }
+
+    [Fact]
+    public void IsSuccess_WithOkStatusNoErrorsAndValueTypeResult_ShouldReturnTrue()
+    {
+        // Arrange
+        var apiResponse = new ApiResponseDto<int>(HttpStatusCode.OK, 42);
+
+        // Act & Assert
+        Assert.True(apiResponse.IsSuccess);
+    }
+
+    [Fact]
+    public void IsSuccess_WithOkStatusNoErrorsAndDefaultValueTypeResult_ShouldReturnTrue()
+    {
+        // Arrange - Default value (0) for int should still count as a valid result
+        var apiResponse = new ApiResponseDto<int>(HttpStatusCode.OK, 0);
+
+        // Act & Assert
+        Assert.True(apiResponse.IsSuccess);
+    }
+
+    [Fact]
+    public void JsonSerialization_ShouldPreserveAllProperties()
+    {
+        // Arrange
+        var statusCode = HttpStatusCode.OK;
+        var result = "Test result";
+        var errors = new List<string> { "Warning 1" };
+        var apiResponse = new ApiResponseDto<string>(statusCode, result, errors);
+
+        // Act
+        var json = Newtonsoft.Json.JsonConvert.SerializeObject(apiResponse);
+        var deserializedResponse = Newtonsoft.Json.JsonConvert.DeserializeObject<ApiResponseDto<string>>(json);
+
+        // Assert
+        Assert.NotNull(deserializedResponse);
+        Assert.Equal(statusCode, deserializedResponse.StatusCode);
+        Assert.Equal(result, deserializedResponse.Result);
+        Assert.NotNull(deserializedResponse.Errors);
+        Assert.Single(deserializedResponse.Errors);
+        Assert.Equal("Warning 1", deserializedResponse.Errors[0]);
+    }
+
+    [Fact]
+    public void JsonSerialization_WithComplexType_ShouldPreserveAllProperties()
+    {
+        // Arrange
+        var statusCode = HttpStatusCode.OK;
+        var result = new TestObject { Id = 42, Name = "Test Object" };
+        var apiResponse = new ApiResponseDto<TestObject>(statusCode, result);
+
+        // Act
+        var json = Newtonsoft.Json.JsonConvert.SerializeObject(apiResponse);
+        var deserializedResponse = Newtonsoft.Json.JsonConvert.DeserializeObject<ApiResponseDto<TestObject>>(json);
+
+        // Assert
+        Assert.NotNull(deserializedResponse);
+        Assert.Equal(statusCode, deserializedResponse.StatusCode);
+        Assert.NotNull(deserializedResponse.Result);
+        Assert.Equal(42, deserializedResponse.Result.Id);
+        Assert.Equal("Test Object", deserializedResponse.Result.Name);
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.OK, true)]
+    [InlineData(HttpStatusCode.Created, true)]
+    [InlineData(HttpStatusCode.Accepted, true)]
+    [InlineData(HttpStatusCode.NoContent, false)]
+    [InlineData(HttpStatusCode.BadRequest, false)]
+    [InlineData(HttpStatusCode.InternalServerError, false)]
+    public void IsSuccess_WithVariousStatusCodes_AndNonNullResult_ReturnsExpected(HttpStatusCode statusCode, bool expectedResult)
+    {
+        // Arrange
+        var apiResponse = new ApiResponseDto<string>(statusCode, "Test");
+
+        // Act & Assert
+        Assert.Equal(expectedResult, apiResponse.IsSuccess);
+    }
+
     // Test class for complex object testing
     private class TestObject
     {

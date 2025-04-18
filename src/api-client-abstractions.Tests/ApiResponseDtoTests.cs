@@ -158,4 +158,63 @@ public class ApiResponseDtoTests
         // Act & Assert
         Assert.False(apiResponse.IsNotFound);
     }
+
+    [Fact]
+    public void IsSuccess_WithNullErrorsReference_ShouldReturnTrue()
+    {
+        // Arrange
+        var apiResponse = new ApiResponseDto(HttpStatusCode.OK);
+        apiResponse.Errors = null!; // Force null for testing
+
+        // Act & Assert - should not throw exception
+        Assert.True(apiResponse.IsSuccess);
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.OK, true)]
+    [InlineData(HttpStatusCode.Created, true)]
+    [InlineData(HttpStatusCode.NoContent, false)]
+    [InlineData(HttpStatusCode.BadRequest, false)]
+    [InlineData(HttpStatusCode.InternalServerError, false)]
+    public void IsSuccess_WithVariousStatusCodes_ShouldReturnExpectedResult(HttpStatusCode statusCode, bool expectedResult)
+    {
+        // Arrange
+        var apiResponse = new ApiResponseDto(statusCode);
+
+        // Act & Assert
+        Assert.Equal(expectedResult, apiResponse.IsSuccess);
+    }
+
+    [Fact]
+    public void StatusCodeAndNullErrorConstructor_ShouldNotAddError()
+    {
+        // Arrange & Act
+        var statusCode = HttpStatusCode.BadRequest;
+        var apiResponse = new ApiResponseDto(statusCode, null!);
+
+        // Assert
+        Assert.Equal(statusCode, apiResponse.StatusCode);
+        Assert.NotNull(apiResponse.Errors);
+        Assert.Empty(apiResponse.Errors);
+    }
+
+    [Fact]
+    public void JsonSerialization_ShouldPreserveProperties()
+    {
+        // Arrange
+        var statusCode = HttpStatusCode.BadRequest;
+        var errorMessage = "Test error message";
+        var apiResponse = new ApiResponseDto(statusCode, errorMessage);
+
+        // Act
+        var json = Newtonsoft.Json.JsonConvert.SerializeObject(apiResponse);
+        var deserializedResponse = Newtonsoft.Json.JsonConvert.DeserializeObject<ApiResponseDto>(json);
+
+        // Assert
+        Assert.NotNull(deserializedResponse);
+        Assert.Equal(statusCode, deserializedResponse.StatusCode);
+        Assert.NotNull(deserializedResponse.Errors);
+        Assert.Single(deserializedResponse.Errors);
+        Assert.Equal(errorMessage, deserializedResponse.Errors[0]);
+    }
 }

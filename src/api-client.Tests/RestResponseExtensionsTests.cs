@@ -288,6 +288,175 @@ namespace MxIO.ApiClient
             Assert.Empty(apiResponse.Errors);
         }
 
+        [Fact]
+        public void ToApiResponse_WithNullResponse_ThrowsArgumentNullException()
+        {
+            // Arrange
+            RestResponse? response = null;
+
+            // Act & Assert
+            Assert.Throws<ArgumentNullException>(() => response!.ToApiResponse());
+        }
+
+        [Fact]
+        public void ToApiResponseGeneric_WithNullResponse_ThrowsArgumentNullException()
+        {
+            // Arrange
+            RestResponse? response = null;
+
+            // Act & Assert
+            Assert.Throws<ArgumentNullException>(() => response!.ToApiResponse<string>());
+        }
+
+        [Fact]
+        public void ToApiResponse_WithDefaultStatusCodeInContent_UsesResponseStatusCode()
+        {
+            // Arrange
+            var jsonContent = @"{
+                ""StatusCode"": 0,
+                ""Errors"": [""Some error""]
+            }";
+
+            var response = new RestResponse
+            {
+                StatusCode = HttpStatusCode.BadRequest,
+                Content = jsonContent
+            };
+
+            // Act
+            var apiResponse = response.ToApiResponse();
+
+            // Assert
+            Assert.NotNull(apiResponse);
+            Assert.Equal(HttpStatusCode.BadRequest, apiResponse.StatusCode);
+            Assert.Contains("Some error", apiResponse.Errors);
+        }
+
+        [Fact]
+        public void ToApiResponseGeneric_WithDefaultStatusCodeInContent_UsesResponseStatusCode()
+        {
+            // Arrange
+            var jsonContent = @"{
+                ""StatusCode"": 0,
+                ""Errors"": [""Some error""],
+                ""Result"": ""test data""
+            }";
+
+            var response = new RestResponse
+            {
+                StatusCode = HttpStatusCode.BadRequest,
+                Content = jsonContent
+            };
+
+            // Act
+            var apiResponse = response.ToApiResponse<string>();
+
+            // Assert
+            Assert.NotNull(apiResponse);
+            Assert.Equal(HttpStatusCode.BadRequest, apiResponse.StatusCode);
+            Assert.Contains("Some error", apiResponse.Errors);
+            Assert.Equal("test data", apiResponse.Result);
+        }
+
+        [Fact]
+        public void ToApiResponse_WithInvalidContentAndException_HandlesGracefully()
+        {
+            // Arrange - create a response that will cause an exception during processing
+            var invalidJsonWithException = "{\"invalidJson\": true"; // Missing closing brace
+
+            var response = new RestResponse
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = invalidJsonWithException
+            };
+
+            // Act
+            var apiResponse = response.ToApiResponse();
+
+            // Assert
+            Assert.NotNull(apiResponse);
+            Assert.Equal(HttpStatusCode.InternalServerError, apiResponse.StatusCode);
+            Assert.Contains("JSON deserialization error", apiResponse.Errors[0]);
+        }
+
+        [Fact]
+        public void ToApiResponseGeneric_WithInvalidContentAndException_HandlesGracefully()
+        {
+            // Arrange - create a response that will cause an exception during processing
+            var invalidJsonWithException = "{\"invalidJson\": true"; // Missing closing brace
+
+            var response = new RestResponse
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = invalidJsonWithException
+            };
+
+            // Act
+            var apiResponse = response.ToApiResponse<string>();
+
+            // Assert
+            Assert.NotNull(apiResponse);
+            Assert.Equal(HttpStatusCode.InternalServerError, apiResponse.StatusCode);
+            Assert.Contains("JSON deserialization error", apiResponse.Errors[0]);
+        }
+
+        [Fact]
+        public void ToApiResponse_WithDeserializationReturningNull_ReturnsErrorResponse()
+        {
+            // Arrange - Create a response with content that won't deserialize to ApiResponseDto
+            var response = new RestResponse
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = "[]" // Array, not an object
+            };
+
+            // Act
+            var apiResponse = response.ToApiResponse();
+
+            // Assert
+            Assert.NotNull(apiResponse);
+            Assert.Equal(HttpStatusCode.InternalServerError, apiResponse.StatusCode);
+            Assert.Contains("JSON deserialization error", apiResponse.Errors[0]);
+        }
+
+        [Fact]
+        public void ToApiResponseGeneric_WithDeserializationReturningNull_ReturnsErrorResponse()
+        {
+            // Arrange - Create a response with content that won't deserialize to ApiResponseDto<T>
+            var response = new RestResponse
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = "[]" // Array, not an object
+            };
+
+            // Act
+            var apiResponse = response.ToApiResponse<string>();
+
+            // Assert
+            Assert.NotNull(apiResponse);
+            Assert.Equal(HttpStatusCode.InternalServerError, apiResponse.StatusCode);
+            Assert.Contains("JSON deserialization error", apiResponse.Errors[0]);
+        }
+
+        [Fact]
+        public void ToApiResponse_WithWhitespaceContent_ReturnsErrorResponse()
+        {
+            // Arrange
+            var response = new RestResponse
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = "   " // Whitespace, not empty
+            };
+
+            // Act
+            var apiResponse = response.ToApiResponse();
+
+            // Assert
+            Assert.NotNull(apiResponse);
+            Assert.Equal(HttpStatusCode.InternalServerError, apiResponse.StatusCode);
+            Assert.Contains("Response content received by client api was null. (client error).", apiResponse.Errors);
+        }
+
         // Helper class for testing complex object deserialization
         private class TestClass
         {

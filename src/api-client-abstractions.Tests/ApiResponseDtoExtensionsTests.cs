@@ -172,4 +172,68 @@ public class ApiResponseDtoExtensionsTests
         Assert.Equal(errors, response.Errors);
         Assert.Single(response.Errors);
     }
+
+    [Fact]
+    public void ToHttpResult_Generic_WithComplexType_ShouldReturnObjectResultWithSameValue()
+    {
+        // Arrange
+        var complexObject = new { Id = 1, Name = "Test" };
+        var apiResponse = new ApiResponseDto<object>(HttpStatusCode.OK, complexObject);
+
+        // Act
+        var result = apiResponse.ToHttpResult();
+
+        // Assert
+        var objectResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal((int)HttpStatusCode.OK, objectResult.StatusCode);
+        Assert.Same(apiResponse, objectResult.Value);
+        Assert.Same(complexObject, ((ApiResponseDto<object>)objectResult.Value).Result);
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.OK, true)]
+    [InlineData(HttpStatusCode.Created, true)]
+    [InlineData(HttpStatusCode.BadRequest, false)]
+    [InlineData(HttpStatusCode.Unauthorized, false)]
+    [InlineData(HttpStatusCode.InternalServerError, false)]
+    public void CreateResponse_WithDifferentStatusCodes_SetsIsSuccessCorrectly(HttpStatusCode statusCode, bool expectedIsSuccess)
+    {
+        // Arrange & Act
+        var response = statusCode.CreateResponse();
+
+        // Assert
+        Assert.Equal(statusCode, response.StatusCode);
+        Assert.Equal(expectedIsSuccess, response.IsSuccess);
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.OK, true)]
+    [InlineData(HttpStatusCode.Created, false)]
+    [InlineData(HttpStatusCode.BadRequest, false)]
+    [InlineData(HttpStatusCode.NotFound, true)]
+    public void CreateResponse_WithDifferentStatusCodes_SetsIsNotFoundCorrectly(HttpStatusCode statusCode, bool expectedIsNotFound)
+    {
+        // Arrange & Act
+        var response = statusCode.CreateResponse();
+
+        // Assert
+        Assert.Equal(statusCode, response.StatusCode);
+        Assert.Equal(expectedIsNotFound, response.IsNotFound);
+    }
+
+    [Fact]
+    public void CreateResponse_WithGenericType_WithValueType_ShouldCreateCorrectly()
+    {
+        // Arrange
+        var statusCode = HttpStatusCode.OK;
+        var result = 42;
+
+        // Act
+        var response = statusCode.CreateResponse(result);
+
+        // Assert
+        Assert.NotNull(response);
+        Assert.Equal(statusCode, response.StatusCode);
+        Assert.Equal(result, response.Result);
+    }
 }
