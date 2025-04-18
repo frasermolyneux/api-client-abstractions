@@ -10,6 +10,8 @@ namespace MxIO.ApiClient;
 /// </summary>
 public class ApiTokenProvider : IApiTokenProvider
 {
+    private const string DefaultScopeFormat = "{0}/.default";
+
     private readonly ILogger<ApiTokenProvider> logger;
     private readonly IMemoryCache memoryCache;
     private readonly ITokenCredentialProvider tokenCredentialProvider;
@@ -69,19 +71,24 @@ public class ApiTokenProvider : IApiTokenProvider
 
             // Request a new token with the appropriate scope format
             accessToken = await tokenCredential.GetTokenAsync(
-                new TokenRequestContext(new[] { $"{audience}/.default" }),
+                new TokenRequestContext(new[] { string.Format(DefaultScopeFormat, audience) }),
                 cancellationToken);
 
-            // Cache the token for future use with a sliding expiration
+            // Add a small buffer before expiration to prevent using almost-expired tokens
+            var bufferBeforeExpiry = TimeSpan.FromMinutes(5);
+            var effectiveExpiry = accessToken.ExpiresOn.Subtract(bufferBeforeExpiry);
+
+            // Cache the token for future use
             var cacheOptions = new MemoryCacheEntryOptions
             {
-                AbsoluteExpiration = accessToken.ExpiresOn
+                AbsoluteExpiration = effectiveExpiry,
+                Priority = CacheItemPriority.High // Token access is critical
             };
 
             memoryCache.Set(audience, accessToken, cacheOptions);
 
-            logger.LogDebug("Acquired and cached new token for audience '{Audience}' that expires at {ExpiryTime}",
-                audience, accessToken.ExpiresOn);
+            logger.LogDebug("Acquired and cached new token for audience '{Audience}' that expires at {ExpiryTime} (effective: {EffectiveExpiry})",
+                audience, accessToken.ExpiresOn, effectiveExpiry);
 
             return accessToken.Token;
         }

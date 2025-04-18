@@ -3,6 +3,7 @@
 using MxIO.ApiClient.Abstractions;
 
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 using RestSharp;
 
@@ -15,6 +16,12 @@ public static class RestResponseExtensions
 {
     private const string NullContentError = "Response content received by client api was null. (client error).";
     private const string DeserializationError = "Response received by client api could not be transformed into API response. (client error).";
+
+    private static readonly JsonSerializerSettings DefaultSerializerSettings = new()
+    {
+        ContractResolver = new CamelCasePropertyNamesContractResolver(),
+        NullValueHandling = NullValueHandling.Ignore
+    };
 
     /// <summary>
     /// Converts a RestResponse to an ApiResponseDto.
@@ -32,7 +39,7 @@ public static class RestResponseExtensions
             return new ApiResponseDto(response.StatusCode);
         }
 
-        if (response.Content is null)
+        if (string.IsNullOrWhiteSpace(response.Content))
         {
             var nullContentResponse = new ApiResponseDto(HttpStatusCode.InternalServerError);
             nullContentResponse.Errors.Add(NullContentError);
@@ -41,7 +48,7 @@ public static class RestResponseExtensions
 
         try
         {
-            var apiResponseDto = JsonConvert.DeserializeObject<ApiResponseDto>(response.Content);
+            var apiResponseDto = JsonConvert.DeserializeObject<ApiResponseDto>(response.Content, DefaultSerializerSettings);
 
             if (apiResponseDto is null)
             {
@@ -65,15 +72,11 @@ public static class RestResponseExtensions
         }
         catch (JsonException ex)
         {
-            var exceptionResponse = new ApiResponseDto(HttpStatusCode.InternalServerError);
-            exceptionResponse.Errors.Add($"JSON deserialization error: {ex.Message}");
-            return exceptionResponse;
+            return CreateErrorResponse(HttpStatusCode.InternalServerError, $"JSON deserialization error: {ex.Message}");
         }
         catch (Exception ex)
         {
-            var exceptionResponse = new ApiResponseDto(HttpStatusCode.InternalServerError);
-            exceptionResponse.Errors.Add($"Unexpected error during response processing: {ex.Message}");
-            return exceptionResponse;
+            return CreateErrorResponse(HttpStatusCode.InternalServerError, $"Unexpected error during response processing: {ex.Message}");
         }
     }
 
@@ -88,22 +91,18 @@ public static class RestResponseExtensions
     {
         ArgumentNullException.ThrowIfNull(response);
 
-        if (response.Content is null)
+        if (string.IsNullOrWhiteSpace(response.Content))
         {
-            var nullContentResponse = new ApiResponseDto<T>(HttpStatusCode.InternalServerError);
-            nullContentResponse.Errors.Add(NullContentError);
-            return nullContentResponse;
+            return CreateErrorResponse<T>(HttpStatusCode.InternalServerError, NullContentError);
         }
 
         try
         {
-            var apiResponseDto = JsonConvert.DeserializeObject<ApiResponseDto<T>>(response.Content);
+            var apiResponseDto = JsonConvert.DeserializeObject<ApiResponseDto<T>>(response.Content, DefaultSerializerSettings);
 
             if (apiResponseDto is null)
             {
-                var deserializationErrorResponse = new ApiResponseDto<T>(HttpStatusCode.InternalServerError);
-                deserializationErrorResponse.Errors.Add(DeserializationError);
-                return deserializationErrorResponse;
+                return CreateErrorResponse<T>(HttpStatusCode.InternalServerError, DeserializationError);
             }
 
             // If the status code in the DTO is the default (0), create a new response with the proper status code
@@ -121,15 +120,38 @@ public static class RestResponseExtensions
         }
         catch (JsonException ex)
         {
-            var exceptionResponse = new ApiResponseDto<T>(HttpStatusCode.InternalServerError);
-            exceptionResponse.Errors.Add($"JSON deserialization error: {ex.Message}");
-            return exceptionResponse;
+            return CreateErrorResponse<T>(HttpStatusCode.InternalServerError, $"JSON deserialization error: {ex.Message}");
         }
         catch (Exception ex)
         {
-            var exceptionResponse = new ApiResponseDto<T>(HttpStatusCode.InternalServerError);
-            exceptionResponse.Errors.Add($"Unexpected error during response processing: {ex.Message}");
-            return exceptionResponse;
+            return CreateErrorResponse<T>(HttpStatusCode.InternalServerError, $"Unexpected error during response processing: {ex.Message}");
         }
+    }
+
+    /// <summary>
+    /// Creates an error response with a specific status code and error message.
+    /// </summary>
+    /// <param name="statusCode">The HTTP status code for the response.</param>
+    /// <param name="errorMessage">The error message to include.</param>
+    /// <returns>A configured ApiResponseDto with the error.</returns>
+    private static ApiResponseDto CreateErrorResponse(HttpStatusCode statusCode, string errorMessage)
+    {
+        var response = new ApiResponseDto(statusCode);
+        response.Errors.Add(errorMessage);
+        return response;
+    }
+
+    /// <summary>
+    /// Creates an error response with a specific status code and error message.
+    /// </summary>
+    /// <typeparam name="T">The type of the result in the response.</typeparam>
+    /// <param name="statusCode">The HTTP status code for the response.</param>
+    /// <param name="errorMessage">The error message to include.</param>
+    /// <returns>A configured ApiResponseDto with the error.</returns>
+    private static ApiResponseDto<T> CreateErrorResponse<T>(HttpStatusCode statusCode, string errorMessage)
+    {
+        var response = new ApiResponseDto<T>(statusCode);
+        response.Errors.Add(errorMessage);
+        return response;
     }
 }

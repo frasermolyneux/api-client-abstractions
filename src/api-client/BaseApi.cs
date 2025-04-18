@@ -1,6 +1,7 @@
 ﻿using System.Net;
 
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 
 using Polly;
@@ -15,7 +16,11 @@ namespace MxIO.ApiClient;
 /// </summary>
 public class BaseApi
 {
-    private readonly ILogger logger;
+    private const string SubscriptionKeyHeaderName = "Ocp-Apim-Subscription-Key";
+    private const string AuthorizationHeaderName = "Authorization";
+    private const string BearerTokenPrefix = "Bearer ";
+
+    private readonly ILogger<BaseApi> logger;
     private readonly IApiTokenProvider apiTokenProvider;
     private readonly IRestClientSingleton restClientSingleton;
 
@@ -44,7 +49,9 @@ public class BaseApi
         IRestClientSingleton restClientSingleton,
         IOptions<ApiClientOptions> options)
     {
-        this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        // Cast generic logger to typed logger as a best practice
+        this.logger = logger as ILogger<BaseApi> ?? new NullLogger<BaseApi>();
+
         this.apiTokenProvider = apiTokenProvider ?? throw new ArgumentNullException(nameof(apiTokenProvider));
         this.restClientSingleton = restClientSingleton ?? throw new ArgumentNullException(nameof(restClientSingleton));
 
@@ -117,8 +124,8 @@ public class BaseApi
 
         var request = new RestRequest(resource, method);
 
-        request.AddHeader("Ocp-Apim-Subscription-Key", primaryApiKey);
-        request.AddHeader("Authorization", $"Bearer {accessToken}");
+        request.AddHeader(SubscriptionKeyHeaderName, primaryApiKey);
+        request.AddHeader(AuthorizationHeaderName, $"{BearerTokenPrefix}{accessToken}");
 
         return request;
     }
@@ -141,7 +148,7 @@ public class BaseApi
         if (useSecondaryApiKey && !string.IsNullOrWhiteSpace(secondaryApiKey))
         {
             logger.LogInformation("Retrying with secondary API key for '{Resource}'", request.Resource);
-            request.AddOrUpdateHeader("Ocp-Apim-Subscription-Key", secondaryApiKey);
+            request.AddOrUpdateHeader(SubscriptionKeyHeaderName, secondaryApiKey);
         }
 
         // Execute the request with retry policy

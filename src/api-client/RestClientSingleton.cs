@@ -8,7 +8,7 @@ namespace MxIO.ApiClient;
 /// </summary>
 public class RestClientSingleton : IRestClientSingleton
 {
-    private static readonly Dictionary<string, RestClient> instances = new();
+    private static readonly Dictionary<string, RestClient> instances = new(StringComparer.OrdinalIgnoreCase);
     private static readonly object padlock = new();
 
     /// <summary>
@@ -25,7 +25,13 @@ public class RestClientSingleton : IRestClientSingleton
             throw new ArgumentException("Base URL cannot be null or empty", nameof(baseUrl));
         }
 
-        return new RestClient(baseUrl);
+        var options = new RestClientOptions(baseUrl)
+        {
+            ThrowOnDeserializationError = true,
+            Timeout = TimeSpan.FromMinutes(5) // 5 minutes default timeout
+        };
+
+        return new RestClient(options);
     }
 
     /// <summary>
@@ -56,10 +62,16 @@ public class RestClientSingleton : IRestClientSingleton
     /// </summary>
     /// <param name="baseUrl">The base URL for the client.</param>
     /// <returns>A RestClient instance for the specified base URL.</returns>
+    /// <exception cref="ArgumentException">Thrown when baseUrl is null or empty.</exception>
     private RestClient GetOrCreateClient(string baseUrl)
     {
+        if (string.IsNullOrEmpty(baseUrl))
+        {
+            throw new ArgumentException("Base URL cannot be null or empty", nameof(baseUrl));
+        }
+
         // First check without locking for performance
-        if (instances.TryGetValue(baseUrl, out RestClient? client))
+        if (instances.TryGetValue(baseUrl, out RestClient? client) && client is not null)
         {
             return client;
         }
@@ -67,7 +79,7 @@ public class RestClientSingleton : IRestClientSingleton
         // If not found, lock and check again (double-check pattern)
         lock (padlock)
         {
-            if (instances.TryGetValue(baseUrl, out client))
+            if (instances.TryGetValue(baseUrl, out client) && client is not null)
             {
                 return client;
             }
@@ -86,6 +98,12 @@ public class RestClientSingleton : IRestClientSingleton
     {
         lock (padlock)
         {
+            // Dispose clients before clearing
+            foreach (var client in instances.Values)
+            {
+                client.Dispose();
+            }
+
             instances.Clear();
         }
     }
