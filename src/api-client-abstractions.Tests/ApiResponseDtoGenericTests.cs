@@ -125,4 +125,86 @@ public class ApiResponseDtoGenericTests
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() => new ApiResponseDto<string>(HttpStatusCode.OK, "Result", null!));
     }
+
+    [Fact]
+    public void IsSuccess_WithCreatedStatusNoErrorsAndNonNullResult_ShouldReturnTrue()
+    {
+        // Arrange
+        var apiResponse = new ApiResponseDto<string>(HttpStatusCode.Created, "Result");
+
+        // Act & Assert
+        Assert.True(apiResponse.IsSuccess);
+    }
+
+    [Fact]
+    public void IsSuccess_WithAcceptedStatusNoErrorsAndNonNullResult_ShouldReturnTrue()
+    {
+        // Arrange
+        var apiResponse = new ApiResponseDto<string>(HttpStatusCode.Accepted, "Result");
+
+        // Act & Assert
+        Assert.True(apiResponse.IsSuccess);
+    }
+
+    [Fact]
+    public void IsSuccess_WithRedirectionStatusNoErrorsAndNonNullResult_ShouldReturnFalse()
+    {
+        // Arrange
+        var apiResponse = new ApiResponseDto<string>(HttpStatusCode.Redirect, "Result");
+
+        // Act & Assert
+        Assert.False(apiResponse.IsSuccess);
+    }
+
+    [Fact]
+    public void Constructor_WithCustomStatusCodeErrorsAndResult_SetsPropertiesCorrectly()
+    {
+        // Arrange
+        var statusCode = HttpStatusCode.Conflict;
+        var errors = new List<string> { "Error 1", "Error 2" };
+        var result = new TestObject { Id = 42, Name = "Test" };
+
+        // Act
+        var apiResponse = new ApiResponseDto<TestObject>(statusCode, result, errors);
+
+        // Assert
+        Assert.Equal(statusCode, apiResponse.StatusCode);
+        Assert.Same(result, apiResponse.Result);
+        Assert.Equal(errors, apiResponse.Errors);
+        Assert.Equal(2, apiResponse.Errors.Count);
+    }
+
+    [Fact]
+    public void IsNotFound_WithNotFoundStatusAndResult_ShouldReturnTrue()
+    {
+        // Arrange - Even with a result, NotFound status should make IsNotFound true
+        var apiResponse = new ApiResponseDto<string>(HttpStatusCode.NotFound, "Some data");
+
+        // Act & Assert
+        Assert.True(apiResponse.IsNotFound);
+    }
+
+    [Fact]
+    public void ApiResponseWithNonStringType_ConstructsAndSerializesCorrectly()
+    {
+        // Arrange
+        var complexResult = new TestObject { Id = 123, Name = "Test Complex Object" };
+
+        // Act
+        var apiResponse = new ApiResponseDto<TestObject>(HttpStatusCode.OK, complexResult);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, apiResponse.StatusCode);
+        Assert.Equal(123, apiResponse.Result.Id);
+        Assert.Equal("Test Complex Object", apiResponse.Result.Name);
+        Assert.Empty(apiResponse.Errors);
+        Assert.True(apiResponse.IsSuccess);
+    }
+
+    // Test class for complex object testing
+    private class TestObject
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+    }
 }

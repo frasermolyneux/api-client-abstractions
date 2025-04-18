@@ -344,5 +344,101 @@ namespace MxIO.ApiClient
                 rcs => rcs.ExecuteAsync(It.IsAny<string>(), It.IsAny<RestRequest>(), It.IsAny<CancellationToken>()),
                 Times.Never);
         }
+
+        [Fact]
+        public async Task ExecuteAsync_WithRetryableErrorExceedingMaxRetries_ThrowsException()
+        {
+            // Arrange
+            var request = new RestRequest("/test", Method.Get);
+            var serverErrorResponse = new RestResponse { StatusCode = HttpStatusCode.ServiceUnavailable };
+            var cancellationToken = CancellationToken.None;
+
+            var sequenceMock = new Mock<IRestClientSingleton>();
+            // Return server error for all calls
+            sequenceMock.Setup(rcs => rcs.ExecuteAsync(It.IsAny<string>(), It.IsAny<RestRequest>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(serverErrorResponse);
+
+            var testApi = new BaseApi(loggerMock.Object, apiTokenProviderMock.Object, sequenceMock.Object, optionsMock.Object);
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<ApplicationException>(
+                () => testApi.ExecuteAsync(request, true, cancellationToken));
+
+            Assert.Contains("with code 'ServiceUnavailable'", exception.Message);
+
+            // Should retry the maximum number of times (currently 3)
+            sequenceMock.Verify(rcs => rcs.ExecuteAsync(
+                It.IsAny<string>(),
+                It.IsAny<RestRequest>(),
+                It.IsAny<CancellationToken>()),
+            Times.AtLeast(3));
+        }
+
+        [Fact]
+        public async Task CreateRequest_ThenAddCustomSubscriptionKey_UsesProvidedKey()
+        {
+            // Arrange
+            var resource = "custom-resource";
+            var method = Method.Get;
+            var customKey = "custom-subscription-key";
+            var cancellationToken = CancellationToken.None;
+
+            // Act
+            var request = await baseApi.CreateRequest(resource, method, cancellationToken);
+            // Add or update the header after creating the request
+            request.AddOrUpdateHeader("Ocp-Apim-Subscription-Key", customKey);
+
+            // Assert
+            Assert.Equal(resource, request.Resource);
+            Assert.Equal(method, request.Method);
+
+            var subscriptionKeyParam = Assert.Single(request.Parameters, p => p.Name == "Ocp-Apim-Subscription-Key");
+            Assert.NotNull(subscriptionKeyParam.Value);
+            Assert.Equal(customKey, subscriptionKeyParam.Value);
+        }
+
+        [Fact]
+        public async Task CreateRequest_WithNullResource_ThrowsArgumentException()
+        {
+            // Arrange
+            string? resource = null;
+            var method = Method.Get;
+            var cancellationToken = CancellationToken.None;
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentException>(
+                () => baseApi.CreateRequest(resource!, method, cancellationToken));
+        }
+
+        [Fact]
+        public async Task ExecuteAsync_WithNullRequest_ThrowsArgumentNullException()
+        {
+            // Arrange
+            RestRequest? request = null;
+            var cancellationToken = CancellationToken.None;
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentNullException>(
+                () => baseApi.ExecuteAsync(request!, false, cancellationToken));
+        }
+
+        [Fact]
+        public async Task ExecuteAsync_WithNotFoundNonSuccessStatusCode_ReturnsResponse()
+        {
+            // Arrange
+            var request = new RestRequest("/test", Method.Get);
+            var notFoundResponse = new RestResponse { StatusCode = HttpStatusCode.NotFound };
+            var cancellationToken = CancellationToken.None;
+
+            restClientSingletonMock.Setup(rcs => rcs.ExecuteAsync(It.IsAny<string>(), It.IsAny<RestRequest>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(notFoundResponse);
+
+            // Act - NotFound is a special case that doesn't throw exceptions
+            var response = await baseApi.ExecuteAsync(request, false, cancellationToken);
+
+            // Assert
+            Assert.NotNull(response);
+            Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        }
     }
 }

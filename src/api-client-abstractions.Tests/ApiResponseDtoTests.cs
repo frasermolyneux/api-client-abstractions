@@ -107,4 +107,55 @@ public class ApiResponseDtoTests
         // Act & Assert
         Assert.False(apiResponse.IsNotFound);
     }
+
+    [Fact]
+    public void StatusCodeAndMultipleErrorsConstructor_ShouldSetStatusCodeAndAllErrors()
+    {
+        // Arrange & Act
+        var statusCode = HttpStatusCode.BadRequest;
+        var errors = new List<string> { "Error 1", "Error 2", "Error 3" };
+        var apiResponse = new ApiResponseDto(statusCode, errors);
+
+        // Assert
+        Assert.Equal(statusCode, apiResponse.StatusCode);
+        Assert.Equal(errors, apiResponse.Errors);
+        Assert.Equal(3, apiResponse.Errors.Count);
+    }
+
+    [Fact]
+    public void Constructor_WithNullErrors_ShouldThrowArgumentNullException()
+    {
+        // Act & Assert
+        Assert.Throws<ArgumentNullException>(() => new ApiResponseDto(HttpStatusCode.OK, null!));
+    }
+
+    [Fact]
+    public void IsSuccess_WithRedirectionStatusAndNoErrors_ShouldReturnFalse()
+    {
+        // Arrange
+        var apiResponse = new ApiResponseDto(HttpStatusCode.Redirect);
+
+        // Act & Assert
+        Assert.False(apiResponse.IsSuccess);
+    }
+
+    [Fact]
+    public void IsSuccess_WithCreatedStatusAndNoErrors_ShouldReturnTrue()
+    {
+        // Arrange
+        var apiResponse = new ApiResponseDto(HttpStatusCode.Created);
+
+        // Act & Assert
+        Assert.True(apiResponse.IsSuccess);
+    }
+
+    [Fact]
+    public void IsNotFound_WithGoneStatus_ShouldReturnFalse()
+    {
+        // Arrange - Gone (410) is similar to but not the same as NotFound (404)
+        var apiResponse = new ApiResponseDto(HttpStatusCode.Gone);
+
+        // Act & Assert
+        Assert.False(apiResponse.IsNotFound);
+    }
 }
