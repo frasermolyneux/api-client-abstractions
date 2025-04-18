@@ -105,7 +105,7 @@ namespace MxIO.ApiClient
         }
 
         [Fact]
-        public async Task CreateRequest_ShouldCorrectlyConstructRestRequest()
+        public async Task CreateRequestAsync_ShouldCorrectlyConstructRestRequest()
         {
             // Arrange
             var resource = "test/resource";
@@ -113,7 +113,7 @@ namespace MxIO.ApiClient
             var cancellationToken = CancellationToken.None;
 
             // Act
-            var request = await baseApi.CreateRequest(resource, method, cancellationToken);
+            var request = await baseApi.CreateRequestAsync(resource, method, cancellationToken);
 
             // Assert
             Assert.Equal(resource, request.Resource);
@@ -375,7 +375,7 @@ namespace MxIO.ApiClient
         }
 
         [Fact]
-        public async Task CreateRequest_ThenAddCustomSubscriptionKey_UsesProvidedKey()
+        public async Task CreateRequestAsync_ThenAddCustomSubscriptionKey_UsesProvidedKey()
         {
             // Arrange
             var resource = "custom-resource";
@@ -384,7 +384,7 @@ namespace MxIO.ApiClient
             var cancellationToken = CancellationToken.None;
 
             // Act
-            var request = await baseApi.CreateRequest(resource, method, cancellationToken);
+            var request = await baseApi.CreateRequestAsync(resource, method, cancellationToken);
             // Add or update the header after creating the request
             request.AddOrUpdateHeader("Ocp-Apim-Subscription-Key", customKey);
 
@@ -398,7 +398,7 @@ namespace MxIO.ApiClient
         }
 
         [Fact]
-        public async Task CreateRequest_WithNullResource_ThrowsArgumentException()
+        public async Task CreateRequestAsync_WithNullResource_ThrowsArgumentException()
         {
             // Arrange
             string? resource = null;
@@ -407,7 +407,7 @@ namespace MxIO.ApiClient
 
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentException>(
-                () => baseApi.CreateRequest(resource!, method, cancellationToken));
+                () => baseApi.CreateRequestAsync(resource!, method, cancellationToken));
         }
 
         [Fact]
