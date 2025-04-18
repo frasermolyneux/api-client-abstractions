@@ -4,7 +4,7 @@ using MxIO.ApiClient.Abstractions;
 using MxIO.ApiClient.WebExtensions;
 using Xunit;
 
-namespace api_client_abstractions.Tests;
+namespace MxIO.ApiClient.Abstractions.Tests;
 
 public class ApiResponseDtoExtensionsTests
 {

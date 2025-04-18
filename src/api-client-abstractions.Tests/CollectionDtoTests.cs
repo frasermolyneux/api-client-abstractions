@@ -1,7 +1,7 @@
 using MxIO.ApiClient.Abstractions;
 using Xunit;
 
-namespace api_client_abstractions.Tests;
+namespace MxIO.ApiClient.Abstractions.Tests;
 
 public class CollectionDtoTests
 {
