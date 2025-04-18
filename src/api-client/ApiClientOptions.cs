@@ -16,16 +16,6 @@ public class ApiClientOptions
     /// <summary>
     /// Gets or sets the primary API key used for authentication.
     /// </summary>
-    [Obsolete("This property is obsolete, please use PrimaryApiKey instead")]
-    public string ApiKey
-    {
-        get => _primaryApiKey;
-        set => _primaryApiKey = value;
-    }
-
-    /// <summary>
-    /// Gets or sets the primary API key used for authentication.
-    /// </summary>
     /// <remarks>This property is required for the API client to function correctly.</remarks>
     public string PrimaryApiKey
     {

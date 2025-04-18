@@ -132,21 +132,6 @@ public class BaseApi
         return request;
     }
 
-    // For backward compatibility, maintaining the old method name that forwards to the new method
-    /// <summary>
-    /// Creates a new REST request with the appropriate headers and authentication.
-    /// </summary>
-    /// <param name="resource">The API resource path.</param>
-    /// <param name="method">The HTTP method to use.</param>
-    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-    /// <returns>A configured REST request object.</returns>
-    /// <exception cref="ArgumentException">Thrown if the resource is null or empty.</exception>
-    [Obsolete("This method has been renamed to CreateRequestAsync to follow async naming conventions. Use CreateRequestAsync instead.")]
-    public Task<RestRequest> CreateRequest(string resource, Method method, CancellationToken cancellationToken = default)
-    {
-        return CreateRequestAsync(resource, method, cancellationToken);
-    }
-
     /// <summary>
     /// Executes the REST request and handles errors and retries.
     /// </summary>
