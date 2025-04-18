@@ -76,11 +76,11 @@ namespace MxIO.ApiClient
 
             // The implementation currently registers services each time it's called
             Assert.Equal(2, apiTokenProviderRegistrations.Count);
-            
+
             // Both should be the same implementation type
             Assert.All(apiTokenProviderRegistrations, descriptor =>
                 Assert.Equal(typeof(ApiTokenProvider), descriptor.ImplementationType));
-            
+
             // Verify other required services are also registered
             var restClientSingletonRegistrations = serviceCollection
                 .Where(sd => sd.ServiceType == typeof(IRestClientSingleton))

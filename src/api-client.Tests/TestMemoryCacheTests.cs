@@ -53,16 +53,16 @@ namespace MxIO.ApiClient
             string testValue = "expiring-value";
             var options = new MemoryCacheEntryOptions()
                 .SetAbsoluteExpiration(TimeSpan.FromMilliseconds(50));
-            
+
             // Act
             memoryCache.Set(key, testValue, options);
             bool initialResult = memoryCache.TryGetValue(key, out object? initialValue);
-            
+
             // Wait for what would be expiration in a real cache
             System.Threading.Thread.Sleep(100);
             // In TestMemoryCache, expiration is not implemented, so value should still be there
             bool afterWaitResult = memoryCache.TryGetValue(key, out object? afterWaitValue);
-            
+
             // Assert
             Assert.True(initialResult);
             Assert.Equal(testValue, initialValue);
