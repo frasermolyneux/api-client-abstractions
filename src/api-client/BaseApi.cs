@@ -115,14 +115,14 @@ public class BaseApi
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
     /// <returns>A configured REST request object.</returns>
     /// <exception cref="ArgumentException">Thrown if the resource is null or empty.</exception>
-    public async Task<RestRequest> CreateRequest(string resource, Method method, CancellationToken cancellationToken = default)
+    public async Task<RestRequest> CreateRequestAsync(string resource, Method method, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrEmpty(resource))
         {
             throw new ArgumentException("Resource cannot be null or empty", nameof(resource));
         }
 
-        var accessToken = await apiTokenProvider.GetAccessToken(apiAudience, cancellationToken);
+        var accessToken = await apiTokenProvider.GetAccessTokenAsync(apiAudience, cancellationToken);
 
         var request = new RestRequest(resource, method);
 
@@ -130,6 +130,21 @@ public class BaseApi
         request.AddHeader(AuthorizationHeaderName, $"{BearerTokenPrefix}{accessToken}");
 
         return request;
+    }
+
+    // For backward compatibility, maintaining the old method name that forwards to the new method
+    /// <summary>
+    /// Creates a new REST request with the appropriate headers and authentication.
+    /// </summary>
+    /// <param name="resource">The API resource path.</param>
+    /// <param name="method">The HTTP method to use.</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+    /// <returns>A configured REST request object.</returns>
+    /// <exception cref="ArgumentException">Thrown if the resource is null or empty.</exception>
+    [Obsolete("This method has been renamed to CreateRequestAsync to follow async naming conventions. Use CreateRequestAsync instead.")]
+    public Task<RestRequest> CreateRequest(string resource, Method method, CancellationToken cancellationToken = default)
+    {
+        return CreateRequestAsync(resource, method, cancellationToken);
     }
 
     /// <summary>

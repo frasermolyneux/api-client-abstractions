@@ -69,7 +69,7 @@ public class ApiTokenProvider : IApiTokenProvider
     /// <exception cref="ArgumentException">Thrown when the audience is null or empty.</exception>
     /// <exception cref="OperationCanceledException">Thrown when the operation is canceled.</exception>
     /// <exception cref="Exception">Thrown when token acquisition fails.</exception>
-    public async Task<string> GetAccessToken(string audience, CancellationToken cancellationToken = default)
+    public async Task<string> GetAccessTokenAsync(string audience, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrEmpty(audience))
         {
@@ -129,5 +129,20 @@ public class ApiTokenProvider : IApiTokenProvider
             logger.LogError(ex, "Failed to get identity token for audience: '{Audience}'", audience);
             throw;
         }
+    }
+
+    /// <summary>
+    /// Gets an access token for the specified audience, using cached tokens when available.
+    /// </summary>
+    /// <param name="audience">The audience for which the token is requested.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the request.</param>
+    /// <returns>The access token string.</returns>
+    /// <exception cref="ArgumentException">Thrown when the audience is null or empty.</exception>
+    /// <exception cref="OperationCanceledException">Thrown when the operation is canceled.</exception>
+    /// <exception cref="Exception">Thrown when token acquisition fails.</exception>
+    [Obsolete("This method has been renamed to GetAccessTokenAsync to follow async naming conventions. Use GetAccessTokenAsync instead.")]
+    public Task<string> GetAccessToken(string audience, CancellationToken cancellationToken = default)
+    {
+        return GetAccessTokenAsync(audience, cancellationToken);
     }
 }
