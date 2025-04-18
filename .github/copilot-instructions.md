@@ -6,7 +6,9 @@ This document provides guidance on coding standards, patterns, and practices for
 
 - When directed to review code, generate code or generate tests; the conventions, standards, best practice and styling guidelines within these instructions must be used above all others to ensure consistency and alignment.
 
-- Upon completion of any code changes the solutions unit tests should be executed to validate the changes have been implemented without breaking tested functionality.
+- When directed to review code, generate code or generate tests; Upon completion unit tests for the solution should be executed to validate the changes have been implemented without breaking tested functionality.
+
+- When completing any build or test execution the output should be checked for any warnings or errors; if any exist they should be resolved.
 
 ## Naming Conventions for .NET
 

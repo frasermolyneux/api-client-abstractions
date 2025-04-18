@@ -46,7 +46,7 @@ namespace MxIO.ApiClient
         }
 
         [Fact]
-        public async Task GetAccessToken_WhenNotCached_AcquiresNewToken()
+        public async Task GetAccessTokenAsync_WhenNotCached_AcquiresNewToken()
         {
             // Arrange
             var audience = "test-audience";
@@ -60,7 +60,7 @@ namespace MxIO.ApiClient
                 .ReturnsAsync(mockToken);
 
             // Act
-            var result = await apiTokenProvider.GetAccessToken(audience, cancellationToken);
+            var result = await apiTokenProvider.GetAccessTokenAsync(audience, cancellationToken);
 
             // Assert
             Assert.Equal("mock-token-value", result);
@@ -81,7 +81,7 @@ namespace MxIO.ApiClient
         }
 
         [Fact]
-        public async Task GetAccessToken_WhenCached_ReturnsFromCache()
+        public async Task GetAccessTokenAsync_WhenCached_ReturnsFromCache()
         {
             // Arrange
             var audience = "test-audience";
@@ -92,7 +92,7 @@ namespace MxIO.ApiClient
             memoryCache.Set(audience, token);
 
             // Act
-            var result = await apiTokenProvider.GetAccessToken(audience, CancellationToken.None);
+            var result = await apiTokenProvider.GetAccessTokenAsync(audience, CancellationToken.None);
 
             // Assert
             Assert.Equal("cached-token-value", result);
@@ -108,7 +108,7 @@ namespace MxIO.ApiClient
         }
 
         [Fact]
-        public async Task GetAccessToken_WhenCacheExpired_GetsNewToken()
+        public async Task GetAccessTokenAsync_WhenCacheExpired_GetsNewToken()
         {
             // Arrange
             var audience = "test-audience";
@@ -127,7 +127,7 @@ namespace MxIO.ApiClient
                 .ReturnsAsync(newToken);
 
             // Act
-            var result = await apiTokenProvider.GetAccessToken(audience, cancellationToken);
+            var result = await apiTokenProvider.GetAccessTokenAsync(audience, cancellationToken);
 
             // Assert
             Assert.Equal("new-token", result);
@@ -142,7 +142,7 @@ namespace MxIO.ApiClient
         }
 
         [Fact]
-        public async Task GetAccessToken_WhenTokenAcquisitionFails_LogsErrorAndRethrows()
+        public async Task GetAccessTokenAsync_WhenTokenAcquisitionFails_LogsErrorAndRethrows()
         {
             // Arrange
             var audience = "test-audience";
@@ -155,12 +155,12 @@ namespace MxIO.ApiClient
                 .ThrowsAsync(expectedException);
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<Exception>(() => apiTokenProvider.GetAccessToken(audience, cancellationToken));
+            var exception = await Assert.ThrowsAsync<Exception>(() => apiTokenProvider.GetAccessTokenAsync(audience, cancellationToken));
             Assert.Equal("Authentication failed", exception.Message);
         }
 
         [Fact]
-        public async Task GetAccessToken_WithCancelledToken_ThrowsOperationCanceledException()
+        public async Task GetAccessTokenAsync_WithCancelledToken_ThrowsOperationCanceledException()
         {
             // Arrange
             var audience = "test-audience";
@@ -169,7 +169,7 @@ namespace MxIO.ApiClient
 
             // Act & Assert
             await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
-                apiTokenProvider.GetAccessToken(audience, cts.Token));
+                apiTokenProvider.GetAccessTokenAsync(audience, cts.Token));
 
             // Verify GetTokenAsync was never called because cancellation occurred first
             tokenCredentialMock.Verify(tc => tc.GetTokenAsync(

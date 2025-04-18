@@ -25,7 +25,7 @@ namespace MxIO.ApiClient
             restClientSingletonMock = new Mock<IRestClientSingleton>();
             optionsMock = new Mock<IOptions<ApiClientOptions>>();
 
-            apiTokenProviderMock.Setup(atp => atp.GetAccessToken(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            apiTokenProviderMock.Setup(atp => atp.GetAccessTokenAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync("fake_access_token");
 
             optionsMock.Setup(o => o.Value).Returns(new ApiClientOptions
@@ -128,7 +128,7 @@ namespace MxIO.ApiClient
             Assert.Equal("Bearer fake_access_token", authParam.Value);
 
             // Verify token request was made with the correct cancellation token
-            apiTokenProviderMock.Verify(atp => atp.GetAccessToken(It.IsAny<string>(), It.Is<CancellationToken>(ct => ct == cancellationToken)),
+            apiTokenProviderMock.Verify(atp => atp.GetAccessTokenAsync(It.IsAny<string>(), It.Is<CancellationToken>(ct => ct == cancellationToken)),
                 Times.Once);
         }
 
