@@ -2,9 +2,13 @@
 
 namespace MxIO.ApiClient
 {
+    /// <summary>
+    /// Singleton implementation for managing RestClient instances.
+    /// Ensures that only one RestClient is created per base URL for optimal resource usage.
+    /// </summary>
     public class RestClientSingleton : IRestClientSingleton
     {
-        private static Dictionary<string, RestClient> instances = new Dictionary<string, RestClient>();
+        private static readonly Dictionary<string, RestClient> instances = new Dictionary<string, RestClient>();
         private static readonly object padlock = new object();
 
         /// <summary>
@@ -18,17 +22,27 @@ namespace MxIO.ApiClient
             return new RestClient(baseUrl);
         }
 
+        /// <summary>
+        /// Executes the specified REST request asynchronously using a cached RestClient instance.
+        /// </summary>
+        /// <param name="baseUrl">The base URL for the API endpoint.</param>
+        /// <param name="request">The REST request to execute.</param>
+        /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+        /// <returns>A task representing the asynchronous operation, containing the REST response.</returns>
         public Task<RestResponse> ExecuteAsync(string baseUrl, RestRequest request, CancellationToken cancellationToken = default)
         {
+            RestClient client;
+
             lock (padlock)
             {
-                if (!instances.ContainsKey(baseUrl))
+                if (!instances.TryGetValue(baseUrl, out client!))
                 {
-                    instances.Add(baseUrl, CreateRestClient(baseUrl));
+                    client = CreateRestClient(baseUrl);
+                    instances.Add(baseUrl, client);
                 }
             }
 
-            return instances[baseUrl].ExecuteAsync(request, cancellationToken);
+            return client.ExecuteAsync(request, cancellationToken);
         }
 
         /// <summary>

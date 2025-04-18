@@ -1,46 +1,56 @@
 ﻿namespace MxIO.ApiClient
 {
+    /// <summary>
+    /// Options for configuring the API client.
+    /// </summary>
     public class ApiClientOptions
     {
-        private string _primaryApiKey = null!;
+        private string _primaryApiKey = string.Empty;
 
-        public string BaseUrl { get; set; }
+        /// <summary>
+        /// Gets or sets the base URL of the API.
+        /// </summary>
+        public string BaseUrl { get; set; } = string.Empty;
 
-        [Obsolete("This is now obsolete, please use PrimaryApiKey instead")]
+        /// <summary>
+        /// Gets or sets the primary API key used for authentication.
+        /// </summary>
+        [Obsolete("This property is obsolete, please use PrimaryApiKey instead")]
         public string ApiKey
         {
-            get
-            {
-                return _primaryApiKey;
-            }
-            set
-            {
-                _primaryApiKey = value;
-            }
+            get => _primaryApiKey;
+            set => _primaryApiKey = value;
         }
 
+        /// <summary>
+        /// Gets or sets the primary API key used for authentication.
+        /// </summary>
         public string PrimaryApiKey
         {
-            get
-            {
-                return _primaryApiKey;
-            }
-            set
-            {
-                _primaryApiKey = value;
-            }
+            get => _primaryApiKey;
+            set => _primaryApiKey = value;
         }
-        public string SecondaryApiKey { get; set; }
 
-        public string ApiAudience { get; set; }
+        /// <summary>
+        /// Gets or sets the secondary API key used as a fallback for authentication.
+        /// </summary>
+        public string SecondaryApiKey { get; set; } = string.Empty;
 
+        /// <summary>
+        /// Gets or sets the API audience value for token acquisition.
+        /// </summary>
+        public string ApiAudience { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets an optional path prefix to append to the base URL.
+        /// </summary>
         public string? ApiPathPrefix { get; set; }
 
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ApiClientOptions"/> class.
+        /// </summary>
         public ApiClientOptions()
         {
-
         }
-#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
     }
 }

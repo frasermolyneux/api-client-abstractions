@@ -37,6 +37,10 @@ namespace MxIO.ApiClient
                 ApiAudience = "api_audience"
             });
 
+            // Set up a default OK response for all REST client calls
+            restClientSingletonMock.Setup(rcs => rcs.ExecuteAsync(It.IsAny<string>(), It.IsAny<RestRequest>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new RestResponse { StatusCode = HttpStatusCode.OK });
+
             baseApi = new BaseApi(loggerMock.Object, apiTokenProviderMock.Object, restClientSingletonMock.Object, optionsMock.Object);
         }
 
@@ -54,14 +58,19 @@ namespace MxIO.ApiClient
                 ApiAudience = "api_audience"
             });
 
+            // Set up a mock response for the specific test
+            var localMock = new Mock<IRestClientSingleton>();
+            localMock.Setup(rcs => rcs.ExecuteAsync(It.IsAny<string>(), It.IsAny<RestRequest>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new RestResponse { StatusCode = HttpStatusCode.OK });
+
             // Act
-            var testApi = new BaseApi(loggerMock.Object, apiTokenProviderMock.Object, restClientSingletonMock.Object, testOptionsMock.Object);
+            var testApi = new BaseApi(loggerMock.Object, apiTokenProviderMock.Object, localMock.Object, testOptionsMock.Object);
 
             // Assert - We can test the base URL by making a request and checking the URL passed to the RestClientSingleton
             var request = new RestRequest("/test", Method.Get);
             await testApi.ExecuteAsync(request);
 
-            restClientSingletonMock.Verify(rcs => rcs.ExecuteAsync("https://api.example.com/v2", It.IsAny<RestRequest>(), It.IsAny<CancellationToken>()),
+            localMock.Verify(rcs => rcs.ExecuteAsync("https://api.example.com/v2", It.IsAny<RestRequest>(), It.IsAny<CancellationToken>()),
                 Times.Once);
         }
 
@@ -79,14 +88,19 @@ namespace MxIO.ApiClient
                 ApiAudience = "api_audience"
             });
 
+            // Set up a mock response for the specific test
+            var localMock = new Mock<IRestClientSingleton>();
+            localMock.Setup(rcs => rcs.ExecuteAsync(It.IsAny<string>(), It.IsAny<RestRequest>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new RestResponse { StatusCode = HttpStatusCode.OK });
+
             // Act
-            var testApi = new BaseApi(loggerMock.Object, apiTokenProviderMock.Object, restClientSingletonMock.Object, testOptionsMock.Object);
+            var testApi = new BaseApi(loggerMock.Object, apiTokenProviderMock.Object, localMock.Object, testOptionsMock.Object);
 
             // Assert - We can test the base URL by making a request and checking the URL passed to the RestClientSingleton
             var request = new RestRequest("/test", Method.Get);
             await testApi.ExecuteAsync(request);
 
-            restClientSingletonMock.Verify(rcs => rcs.ExecuteAsync("https://api.example.com", It.IsAny<RestRequest>(), It.IsAny<CancellationToken>()),
+            localMock.Verify(rcs => rcs.ExecuteAsync("https://api.example.com", It.IsAny<RestRequest>(), It.IsAny<CancellationToken>()),
                 Times.Once);
         }
 
