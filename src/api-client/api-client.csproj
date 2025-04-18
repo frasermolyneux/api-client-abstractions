@@ -16,6 +16,7 @@
     <RepositoryUrl>https://github.com/frasermolyneux/api-client-abstractions</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageLicenseExpression>GPL-3.0-only</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -32,6 +33,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\api-client-abstractions\api-client-abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>
