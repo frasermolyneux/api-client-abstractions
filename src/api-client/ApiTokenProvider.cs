@@ -19,7 +19,7 @@ public class ApiTokenProvider : IApiTokenProvider
         this.tokenCredentialProvider = tokenCredentialProvider;
     }
 
-    public async Task<string> GetAccessToken(string audience)
+    public async Task<string> GetAccessToken(string audience, CancellationToken cancellationToken = default)
     {
         if (memoryCache.TryGetValue(audience, out AccessToken accessToken))
         {
@@ -33,7 +33,7 @@ public class ApiTokenProvider : IApiTokenProvider
         {
             accessToken = await tokenCredential.GetTokenAsync(
                 new TokenRequestContext(new[] { $"{audience}/.default" }),
-                CancellationToken.None);
+                cancellationToken);
 
             memoryCache.Set(audience, accessToken);
         }

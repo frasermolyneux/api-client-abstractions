@@ -49,9 +49,9 @@ namespace MxIO.ApiClient
                 });
         }
 
-        public async Task<RestRequest> CreateRequest(string resource, Method method)
+        public async Task<RestRequest> CreateRequest(string resource, Method method, CancellationToken cancellationToken = default)
         {
-            var accessToken = await apiTokenProvider.GetAccessToken(apiAudience);
+            var accessToken = await apiTokenProvider.GetAccessToken(apiAudience, cancellationToken);
 
             var request = new RestRequest(resource, method);
 
@@ -61,7 +61,7 @@ namespace MxIO.ApiClient
             return request;
         }
 
-        public async Task<RestResponse> ExecuteAsync(RestRequest request, bool useSecondaryApiKey = false)
+        public async Task<RestResponse> ExecuteAsync(RestRequest request, bool useSecondaryApiKey = false, CancellationToken cancellationToken = default)
         {
             if (useSecondaryApiKey && !string.IsNullOrWhiteSpace(secondaryApiKey))
             {
@@ -69,7 +69,9 @@ namespace MxIO.ApiClient
                 request.AddOrUpdateHeader("Ocp-Apim-Subscription-Key", secondaryApiKey);
             }
 
-            var response = await retryPolicy.ExecuteAsync(() => restClientSingleton.ExecuteAsync(baseUrl, request));
+            var response = await retryPolicy.ExecuteAsync(
+                async (token) => await restClientSingleton.ExecuteAsync(baseUrl, request, token),
+                cancellationToken);
 
             if (response.StatusCode == HttpStatusCode.Unauthorized && !useSecondaryApiKey)
             {
@@ -77,7 +79,7 @@ namespace MxIO.ApiClient
 
                 if (responseContent is not null && responseContent.Contains("Access denied due to invalid subscription key. Make sure to provide a valid key for an active subscription."))
                 {
-                    return await ExecuteAsync(request, true);
+                    return await ExecuteAsync(request, true, cancellationToken);
                 }
             }
 

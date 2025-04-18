@@ -2,5 +2,5 @@
 
 public interface IApiTokenProvider
 {
-    Task<string> GetAccessToken(string audience);
+    Task<string> GetAccessToken(string audience, CancellationToken cancellationToken = default);
 }

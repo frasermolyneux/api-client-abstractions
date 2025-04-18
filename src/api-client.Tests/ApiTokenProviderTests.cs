@@ -52,6 +52,7 @@ namespace MxIO.ApiClient
             var audience = "test-audience";
             var expiresOn = DateTimeOffset.UtcNow.AddHours(1);
             var mockToken = new AccessToken("mock-token-value", expiresOn);
+            var cancellationToken = CancellationToken.None;
 
             tokenCredentialMock.Setup(tc => tc.GetTokenAsync(
                     It.Is<TokenRequestContext>(c => c.Scopes[0] == $"{audience}/.default"),
@@ -59,7 +60,7 @@ namespace MxIO.ApiClient
                 .ReturnsAsync(mockToken);
 
             // Act
-            var result = await apiTokenProvider.GetAccessToken(audience);
+            var result = await apiTokenProvider.GetAccessToken(audience, cancellationToken);
 
             // Assert
             Assert.Equal("mock-token-value", result);
@@ -67,10 +68,10 @@ namespace MxIO.ApiClient
             // Verify token credential provider was called
             tokenCredentialProviderMock.Verify(tcp => tcp.GetTokenCredential(), Times.Once);
 
-            // Verify GetTokenAsync was called with the correct scope
+            // Verify GetTokenAsync was called with the correct scope and cancellation token
             tokenCredentialMock.Verify(tc => tc.GetTokenAsync(
                     It.Is<TokenRequestContext>(c => c.Scopes[0] == $"{audience}/.default"),
-                    It.IsAny<CancellationToken>()),
+                    It.Is<CancellationToken>(ct => ct == cancellationToken)),
                 Times.Once);
 
             // Verify token was cached
@@ -91,7 +92,7 @@ namespace MxIO.ApiClient
             memoryCache.Set(audience, token);
 
             // Act
-            var result = await apiTokenProvider.GetAccessToken(audience);
+            var result = await apiTokenProvider.GetAccessToken(audience, CancellationToken.None);
 
             // Assert
             Assert.Equal("cached-token-value", result);
@@ -113,6 +114,7 @@ namespace MxIO.ApiClient
             var audience = "test-audience";
             var expiredOn = DateTimeOffset.UtcNow.AddHours(-1);
             var expiredToken = new AccessToken("expired-token", expiredOn);
+            var cancellationToken = CancellationToken.None;
 
             // Pre-populate the cache with an expired token
             memoryCache.Set(audience, expiredToken);
@@ -125,7 +127,7 @@ namespace MxIO.ApiClient
                 .ReturnsAsync(newToken);
 
             // Act
-            var result = await apiTokenProvider.GetAccessToken(audience);
+            var result = await apiTokenProvider.GetAccessToken(audience, cancellationToken);
 
             // Assert
             Assert.Equal("new-token", result);
@@ -145,6 +147,7 @@ namespace MxIO.ApiClient
             // Arrange
             var audience = "test-audience";
             var expectedException = new Exception("Authentication failed");
+            var cancellationToken = CancellationToken.None;
 
             tokenCredentialMock.Setup(tc => tc.GetTokenAsync(
                     It.IsAny<TokenRequestContext>(),
@@ -152,8 +155,27 @@ namespace MxIO.ApiClient
                 .ThrowsAsync(expectedException);
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<Exception>(() => apiTokenProvider.GetAccessToken(audience));
+            var exception = await Assert.ThrowsAsync<Exception>(() => apiTokenProvider.GetAccessToken(audience, cancellationToken));
             Assert.Equal("Authentication failed", exception.Message);
+        }
+
+        [Fact]
+        public async Task GetAccessToken_WithCancelledToken_ThrowsOperationCanceledException()
+        {
+            // Arrange
+            var audience = "test-audience";
+            var cts = new CancellationTokenSource();
+            cts.Cancel(); // Cancel the token immediately
+
+            // Act & Assert
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+                apiTokenProvider.GetAccessToken(audience, cts.Token));
+
+            // Verify GetTokenAsync was never called because cancellation occurred first
+            tokenCredentialMock.Verify(tc => tc.GetTokenAsync(
+                It.IsAny<TokenRequestContext>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
         }
     }
 }
