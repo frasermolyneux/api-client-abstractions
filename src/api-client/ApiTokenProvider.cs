@@ -51,18 +51,23 @@ public class ApiTokenProvider : IApiTokenProvider
         if (memoryCache.TryGetValue(audience, out AccessToken accessToken) &&
             DateTime.UtcNow < accessToken.ExpiresOn)
         {
+            logger.LogDebug("Using cached token for audience '{Audience}' which expires at {ExpiryTime}",
+                audience, accessToken.ExpiresOn);
             return accessToken.Token;
         }
 
         // Get a new token
         var tokenCredential = tokenCredentialProvider.GetTokenCredential();
+        ArgumentNullException.ThrowIfNull(tokenCredential);
 
         try
         {
             // Cancel operation if requested
             cancellationToken.ThrowIfCancellationRequested();
 
-            // Request a new token
+            logger.LogDebug("Requesting new token for audience '{Audience}'", audience);
+
+            // Request a new token with the appropriate scope format
             accessToken = await tokenCredential.GetTokenAsync(
                 new TokenRequestContext(new[] { $"{audience}/.default" }),
                 cancellationToken);
@@ -75,16 +80,19 @@ public class ApiTokenProvider : IApiTokenProvider
 
             memoryCache.Set(audience, accessToken, cacheOptions);
 
+            logger.LogDebug("Acquired and cached new token for audience '{Audience}' that expires at {ExpiryTime}",
+                audience, accessToken.ExpiresOn);
+
             return accessToken.Token;
         }
         catch (OperationCanceledException)
         {
-            logger.LogInformation($"Token acquisition for audience '{audience}' was canceled.");
+            logger.LogInformation("Token acquisition for audience '{Audience}' was canceled", audience);
             throw;
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, $"Failed to get identity token from AAD for audience: '{audience}'");
+            logger.LogError(ex, "Failed to get identity token from AAD for audience: '{Audience}'", audience);
             throw;
         }
     }

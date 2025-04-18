@@ -9,6 +9,28 @@ namespace MxIO.ApiClient.Abstractions;
 public record CollectionDto<T>
 {
     /// <summary>
+    /// Initializes a new instance of the <see cref="CollectionDto{T}"/> class.
+    /// </summary>
+    [JsonConstructor]
+    public CollectionDto()
+    {
+        Entries = new List<T>();
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CollectionDto{T}"/> class with the specified values.
+    /// </summary>
+    /// <param name="totalRecords">The total number of records available.</param>
+    /// <param name="filteredRecords">The number of records after applying any filters.</param>
+    /// <param name="entries">The collection of items.</param>
+    public CollectionDto(int totalRecords, int filteredRecords, IEnumerable<T>? entries = null)
+    {
+        TotalRecords = totalRecords;
+        FilteredRecords = filteredRecords;
+        Entries = entries?.ToList() ?? new List<T>();
+    }
+
+    /// <summary>
     /// Gets or sets the total number of records available.
     /// </summary>
     [JsonProperty(PropertyName = "totalRecords")]

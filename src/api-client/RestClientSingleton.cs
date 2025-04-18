@@ -47,25 +47,34 @@ public class RestClientSingleton : IRestClientSingleton
         ArgumentNullException.ThrowIfNull(request);
 
         RestClient client = GetOrCreateClient(baseUrl);
-
         return client.ExecuteAsync(request, cancellationToken);
     }
 
     /// <summary>
     /// Gets an existing client or creates a new one if none exists for the given base URL.
+    /// Thread-safe implementation using double-check locking pattern.
     /// </summary>
     /// <param name="baseUrl">The base URL for the client.</param>
     /// <returns>A RestClient instance for the specified base URL.</returns>
     private RestClient GetOrCreateClient(string baseUrl)
     {
+        // First check without locking for performance
+        if (instances.TryGetValue(baseUrl, out RestClient? client))
+        {
+            return client;
+        }
+
+        // If not found, lock and check again (double-check pattern)
         lock (padlock)
         {
-            if (!instances.TryGetValue(baseUrl, out RestClient? client))
+            if (instances.TryGetValue(baseUrl, out client))
             {
-                client = CreateRestClient(baseUrl);
-                instances[baseUrl] = client;
+                return client;
             }
 
+            // Create new client and add to dictionary
+            client = CreateRestClient(baseUrl);
+            instances[baseUrl] = client;
             return client;
         }
     }

@@ -42,11 +42,23 @@ public static class RestResponseExtensions
         try
         {
             var apiResponseDto = JsonConvert.DeserializeObject<ApiResponseDto>(response.Content);
+
             if (apiResponseDto is null)
             {
                 var deserializationErrorResponse = new ApiResponseDto(HttpStatusCode.InternalServerError);
                 deserializationErrorResponse.Errors.Add(DeserializationError);
                 return deserializationErrorResponse;
+            }
+
+            // If the status code in the DTO is the default (0), create a new response with the proper status code
+            if (apiResponseDto.StatusCode == default)
+            {
+                var newResponse = new ApiResponseDto(response.StatusCode);
+                foreach (var error in apiResponseDto.Errors)
+                {
+                    newResponse.Errors.Add(error);
+                }
+                return newResponse;
             }
 
             return apiResponseDto;
@@ -60,7 +72,7 @@ public static class RestResponseExtensions
         catch (Exception ex)
         {
             var exceptionResponse = new ApiResponseDto(HttpStatusCode.InternalServerError);
-            exceptionResponse.Errors.Add(ex.Message);
+            exceptionResponse.Errors.Add($"Unexpected error during response processing: {ex.Message}");
             return exceptionResponse;
         }
     }
@@ -86,11 +98,23 @@ public static class RestResponseExtensions
         try
         {
             var apiResponseDto = JsonConvert.DeserializeObject<ApiResponseDto<T>>(response.Content);
+
             if (apiResponseDto is null)
             {
                 var deserializationErrorResponse = new ApiResponseDto<T>(HttpStatusCode.InternalServerError);
                 deserializationErrorResponse.Errors.Add(DeserializationError);
                 return deserializationErrorResponse;
+            }
+
+            // If the status code in the DTO is the default (0), create a new response with the proper status code
+            if (apiResponseDto.StatusCode == default)
+            {
+                var newResponse = new ApiResponseDto<T>(response.StatusCode, apiResponseDto.Result);
+                foreach (var error in apiResponseDto.Errors)
+                {
+                    newResponse.Errors.Add(error);
+                }
+                return newResponse;
             }
 
             return apiResponseDto;
@@ -104,7 +128,7 @@ public static class RestResponseExtensions
         catch (Exception ex)
         {
             var exceptionResponse = new ApiResponseDto<T>(HttpStatusCode.InternalServerError);
-            exceptionResponse.Errors.Add(ex.Message);
+            exceptionResponse.Errors.Add($"Unexpected error during response processing: {ex.Message}");
             return exceptionResponse;
         }
     }

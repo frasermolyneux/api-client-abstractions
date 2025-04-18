@@ -15,6 +15,7 @@ public record ApiResponseDto
     [JsonConstructor]
     public ApiResponseDto()
     {
+        Errors = new List<string>();
     }
 
     /// <summary>
@@ -22,6 +23,7 @@ public record ApiResponseDto
     /// </summary>
     /// <param name="statusCode">The HTTP status code of the response.</param>
     public ApiResponseDto(HttpStatusCode statusCode)
+        : this()
     {
         StatusCode = statusCode;
     }
@@ -32,9 +34,12 @@ public record ApiResponseDto
     /// <param name="statusCode">The HTTP status code of the response.</param>
     /// <param name="error">An error message describing the issue.</param>
     public ApiResponseDto(HttpStatusCode statusCode, string error)
+        : this(statusCode)
     {
-        StatusCode = statusCode;
-        Errors.Add(error);
+        if (!string.IsNullOrEmpty(error))
+        {
+            Errors.Add(error);
+        }
     }
 
     /// <summary>
@@ -73,6 +78,7 @@ public record ApiResponseDto<T> : ApiResponseDto
     /// </summary>
     [JsonConstructor]
     public ApiResponseDto()
+        : base()
     {
     }
 
@@ -80,10 +86,9 @@ public record ApiResponseDto<T> : ApiResponseDto
     /// Initializes a new instance of the <see cref="ApiResponseDto{T}"/> class with the specified status code.
     /// </summary>
     /// <param name="statusCode">The HTTP status code of the response.</param>
-    public ApiResponseDto(HttpStatusCode statusCode) : base(statusCode)
+    public ApiResponseDto(HttpStatusCode statusCode)
+        : base(statusCode)
     {
-        StatusCode = statusCode;
-        Result = default;
     }
 
     /// <summary>
@@ -91,10 +96,9 @@ public record ApiResponseDto<T> : ApiResponseDto
     /// </summary>
     /// <param name="statusCode">The HTTP status code of the response.</param>
     /// <param name="error">An error message describing the issue.</param>
-    public ApiResponseDto(HttpStatusCode statusCode, string error) : base(statusCode, error)
+    public ApiResponseDto(HttpStatusCode statusCode, string error)
+        : base(statusCode, error)
     {
-        StatusCode = statusCode;
-        Result = default;
     }
 
     /// <summary>
@@ -102,9 +106,9 @@ public record ApiResponseDto<T> : ApiResponseDto
     /// </summary>
     /// <param name="statusCode">The HTTP status code of the response.</param>
     /// <param name="result">The result data.</param>
-    public ApiResponseDto(HttpStatusCode statusCode, T result) : base(statusCode)
+    public ApiResponseDto(HttpStatusCode statusCode, T? result)
+        : base(statusCode)
     {
-        StatusCode = statusCode;
         Result = result;
     }
 
@@ -114,9 +118,11 @@ public record ApiResponseDto<T> : ApiResponseDto
     /// <param name="statusCode">The HTTP status code of the response.</param>
     /// <param name="result">The result data.</param>
     /// <param name="errors">A list of error messages.</param>
-    public ApiResponseDto(HttpStatusCode statusCode, T result, List<string> errors) : base(statusCode)
+    public ApiResponseDto(HttpStatusCode statusCode, T? result, List<string> errors)
+        : base(statusCode)
     {
-        StatusCode = statusCode;
+        ArgumentNullException.ThrowIfNull(errors);
+
         Result = result;
         Errors = errors;
     }

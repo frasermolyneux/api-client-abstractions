@@ -10,6 +10,15 @@ namespace MxIO.ApiClient;
 /// </summary>
 public class DefaultTokenCredentialProvider : ITokenCredentialProvider
 {
+    private static readonly DefaultAzureCredentialOptions DefaultOptions = new()
+    {
+        ExcludeSharedTokenCacheCredential = true,
+        ExcludeVisualStudioCodeCredential = false,
+        ExcludeAzurePowerShellCredential = false,
+        ExcludeEnvironmentCredential = false,
+        ExcludeManagedIdentityCredential = false
+    };
+
     /// <summary>
     /// Gets a DefaultAzureCredential instance for authentication.
     /// The DefaultAzureCredential attempts to authenticate via the following mechanisms in order:
@@ -22,6 +31,6 @@ public class DefaultTokenCredentialProvider : ITokenCredentialProvider
     /// <returns>A DefaultAzureCredential instance for token acquisition.</returns>
     public TokenCredential GetTokenCredential()
     {
-        return new DefaultAzureCredential();
+        return new DefaultAzureCredential(DefaultOptions);
     }
 }

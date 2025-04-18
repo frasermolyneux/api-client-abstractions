@@ -49,6 +49,7 @@ public class BaseApi
         this.restClientSingleton = restClientSingleton ?? throw new ArgumentNullException(nameof(restClientSingleton));
 
         ArgumentNullException.ThrowIfNull(options);
+        ArgumentNullException.ThrowIfNull(options.Value);
 
         if (string.IsNullOrEmpty(options.Value.BaseUrl))
         {
@@ -68,7 +69,7 @@ public class BaseApi
         // Construct the base URL with optional path prefix
         baseUrl = string.IsNullOrWhiteSpace(options.Value.ApiPathPrefix)
             ? options.Value.BaseUrl
-            : $"{options.Value.BaseUrl}/{options.Value.ApiPathPrefix}";
+            : $"{options.Value.BaseUrl.TrimEnd('/')}/{options.Value.ApiPathPrefix.TrimStart('/')}";
 
         primaryApiKey = options.Value.PrimaryApiKey;
         secondaryApiKey = options.Value.SecondaryApiKey;
@@ -130,6 +131,7 @@ public class BaseApi
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
     /// <returns>The REST response.</returns>
     /// <exception cref="ArgumentNullException">Thrown if the request is null.</exception>
+    /// <exception cref="OperationCanceledException">Thrown when the operation is canceled.</exception>
     /// <exception cref="ApplicationException">Thrown when the request fails with an unexpected status code.</exception>
     public async Task<RestResponse> ExecuteAsync(RestRequest request, bool useSecondaryApiKey = false, CancellationToken cancellationToken = default)
     {
@@ -181,8 +183,8 @@ public class BaseApi
         else
         {
             var ex = new ApplicationException($"Failed {request.Method} to '{request.Resource}' with code '{response.StatusCode}'");
-            logger.LogError(ex, "Failed {Method} to '{Resource}' with response status '{ResponseStatus}' and code '{StatusCode}'",
-                request.Method, request.Resource, response.ResponseStatus, response.StatusCode);
+            logger.LogError(ex, "Failed {Method} to '{Resource}' with response status '{ResponseStatus}' and code '{StatusCode}' - Content: {Content}",
+                request.Method, request.Resource, response.ResponseStatus, response.StatusCode, response.Content);
             throw ex;
         }
     }

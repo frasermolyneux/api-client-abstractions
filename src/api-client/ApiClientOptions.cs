@@ -10,6 +10,7 @@ public class ApiClientOptions
     /// <summary>
     /// Gets or sets the base URL of the API.
     /// </summary>
+    /// <remarks>This property is required for the API client to function correctly.</remarks>
     public string BaseUrl { get; set; } = string.Empty;
 
     /// <summary>
@@ -25,6 +26,7 @@ public class ApiClientOptions
     /// <summary>
     /// Gets or sets the primary API key used for authentication.
     /// </summary>
+    /// <remarks>This property is required for the API client to function correctly.</remarks>
     public string PrimaryApiKey
     {
         get => _primaryApiKey;
@@ -34,16 +36,22 @@ public class ApiClientOptions
     /// <summary>
     /// Gets or sets the secondary API key used as a fallback for authentication.
     /// </summary>
+    /// <remarks>This is optional and will be used as a fallback if the primary key fails.</remarks>
     public string SecondaryApiKey { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the API audience value for token acquisition.
     /// </summary>
+    /// <remarks>This property is required for the API client to function correctly.</remarks>
     public string ApiAudience { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets an optional path prefix to append to the base URL.
     /// </summary>
+    /// <remarks>
+    /// When provided, this value will be appended to the BaseUrl with appropriate
+    /// handling of slashes to form the complete endpoint URL.
+    /// </remarks>
     public string? ApiPathPrefix { get; set; }
 
     /// <summary>
@@ -51,5 +59,6 @@ public class ApiClientOptions
     /// </summary>
     public ApiClientOptions()
     {
+        // Default constructor
     }
 }
