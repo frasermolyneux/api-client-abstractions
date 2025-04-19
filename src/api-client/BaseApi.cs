@@ -1,5 +1,4 @@
 ﻿using System.Net;
-
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
@@ -8,6 +7,8 @@ using Polly;
 using Polly.Retry;
 
 using RestSharp;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace MxIO.ApiClient;
 
@@ -33,7 +34,8 @@ public class BaseApi
     private readonly AsyncRetryPolicy<RestResponse> retryPolicy;
 
     private static readonly HttpStatusCode[] SuccessStatusCodes = { HttpStatusCode.OK, HttpStatusCode.NotFound };
-    private static readonly HttpStatusCode[] NoRetryStatusCodes = { HttpStatusCode.OK, HttpStatusCode.NotFound, HttpStatusCode.Unauthorized };
+    private static readonly HttpStatusCode[] NoRetryStatusCodes = { HttpStatusCode.OK, HttpStatusCode.NotFound, HttpStatusCode.Unauthorized, HttpStatusCode.BadRequest, HttpStatusCode.UnprocessableEntity };
+    private static readonly HttpStatusCode[] ValidationStatusCodes = { HttpStatusCode.BadRequest, HttpStatusCode.UnprocessableEntity };
 
     /// <summary>
     /// Initializes a new instance of the <see cref="BaseApi"/> class.
@@ -156,6 +158,7 @@ public class BaseApi
     /// <exception cref="ArgumentNullException">Thrown if the request is null.</exception>
     /// <exception cref="OperationCanceledException">Thrown when the operation is canceled.</exception>
     /// <exception cref="ApiException">Thrown when the request fails with an unexpected status code.</exception>
+    /// <exception cref="ApiValidationException">Thrown when the request fails due to validation errors.</exception>
     public async Task<RestResponse> ExecuteAsync(RestRequest request, bool useSecondaryApiKey = false, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -203,8 +206,55 @@ public class BaseApi
             {
                 return response;
             }
+            // Handle validation errors - new code for ApiValidationException
+            else if (ValidationStatusCodes.Contains(response.StatusCode) && !string.IsNullOrEmpty(response.Content))
+            {
+                try
+                {
+                    var validationErrors = new Dictionary<string, IEnumerable<string>>();
+
+                    // Try to parse the validation errors from the response
+                    var jsonObject = JObject.Parse(response.Content);
+
+                    // Handle standard ASP.NET Core validation response format
+                    if (jsonObject.ContainsKey("errors") && jsonObject["errors"] is JObject errors)
+                    {
+                        foreach (var property in errors.Properties())
+                        {
+                            var fieldName = property.Name;
+                            var errorMessages = property.Value?.ToObject<string[]>() ?? Array.Empty<string>();
+                            validationErrors[fieldName] = errorMessages;
+                        }
+                    }
+                    // If we couldn't parse it in the expected format, add the whole content as a general error
+                    else
+                    {
+                        validationErrors["General"] = new[] { response.Content };
+                    }
+
+                    if (validationErrors.Count > 0)
+                    {
+                        var validationException = new ApiValidationException(
+                            $"Validation failed for {request.Method} to '{request.Resource}' with code '{response.StatusCode}'",
+                            request.Resource ?? string.Empty,
+                            request.Method.ToString(),
+                            validationErrors,
+                            response.StatusCode,
+                            response.Content);
+
+                        logger.LogWarning(validationException, "Validation failed for {Method} to '{Resource}' - Content: {Content}",
+                            request.Method, request.Resource, response.Content);
+                        throw validationException;
+                    }
+                }
+                catch (JsonException)
+                {
+                    // If we can't parse the content as JSON, fall back to regular ApiException
+                }
+            }
+
             // Handle exceptions in the response
-            else if (response.ErrorException is not null)
+            if (response.ErrorException is not null)
             {
                 logger.LogError(response.ErrorException, "Failed {Method} to '{Resource}' with code '{StatusCode}'",
                     request.Method, request.Resource, response.StatusCode);
@@ -248,11 +298,15 @@ public class BaseApi
                 request.Method, request.Resource);
             throw;
         }
-        catch (Exception ex) when (ex is not ApiException and not OperationCanceledException)
+        catch (Exception ex) when (ex is not ApiException and not ApiValidationException and not OperationCanceledException)
         {
             logger.LogError(ex, "Unexpected error during {Method} to '{Resource}'",
                 request.Method, request.Resource);
             throw;
         }
+
+        // This code should never be reached due to the throw statements above, but we need to add a return
+        // to satisfy the compiler requirement that all code paths return a value
+        throw new InvalidOperationException("Unexpected execution path in ExecuteAsync method");
     }
 }

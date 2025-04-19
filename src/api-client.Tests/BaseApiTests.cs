@@ -7,6 +7,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
+using Newtonsoft.Json.Linq;
 
 namespace MxIO.ApiClient
 {
@@ -452,6 +453,81 @@ namespace MxIO.ApiClient
             // Assert
             Assert.NotNull(response);
             Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        }
+
+        [Fact]
+        public async Task ExecuteAsync_WithValidationErrors_ThrowsApiValidationException()
+        {
+            // Arrange
+            var request = new RestRequest("/test", Method.Post);
+            var validationContent = @"{
+                ""errors"": {
+                    ""name"": [""Name is required""],
+                    ""email"": [""Invalid email format"", ""Email already exists""]
+                }
+            }";
+            var validationResponse = new RestResponse
+            {
+                StatusCode = HttpStatusCode.BadRequest,
+                Content = validationContent
+            };
+            var cancellationToken = CancellationToken.None;
+
+            restClientSingletonMock.Setup(rcs => rcs.ExecuteAsync(It.IsAny<string>(), It.IsAny<RestRequest>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(validationResponse);
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<ApiValidationException>(
+                () => baseApi.ExecuteAsync(request, false, cancellationToken));
+
+            // Verify the exception details
+            Assert.Equal(HttpStatusCode.BadRequest, exception.StatusCode);
+            Assert.Equal(request.Resource ?? string.Empty, exception.Resource);
+            Assert.Equal(request.Method.ToString(), exception.Method);
+            Assert.Equal(validationContent, exception.ResponseContent);
+
+            // Verify validation errors were parsed correctly
+            Assert.Contains("name", exception.ValidationErrors.Keys);
+            Assert.Contains("email", exception.ValidationErrors.Keys);
+            var nameErrors = Assert.Single(exception.ValidationErrors["name"]);
+            Assert.Equal("Name is required", nameErrors);
+            Assert.Collection(exception.ValidationErrors["email"],
+                error => Assert.Equal("Invalid email format", error),
+                error => Assert.Equal("Email already exists", error));
+
+            // Verify all validation messages
+            var messages = exception.GetAllValidationMessages();
+            Assert.Contains("name: Name is required", messages);
+            Assert.Contains("email: Invalid email format", messages);
+            Assert.Contains("email: Email already exists", messages);
+        }
+
+        [Fact]
+        public async Task ExecuteAsync_WithNonJsonValidationResponse_ThrowsApiValidationException()
+        {
+            // Arrange
+            var request = new RestRequest("/test", Method.Post);
+            var validationContent = "Invalid request format";
+            var validationResponse = new RestResponse
+            {
+                StatusCode = HttpStatusCode.BadRequest,
+                Content = validationContent
+            };
+            var cancellationToken = CancellationToken.None;
+
+            restClientSingletonMock.Setup(rcs => rcs.ExecuteAsync(It.IsAny<string>(), It.IsAny<RestRequest>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(validationResponse);
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<ApiException>(
+                () => baseApi.ExecuteAsync(request, false, cancellationToken));
+
+            // Verify the exception details - this should be a regular ApiException since we couldn't parse validation errors
+            Assert.Equal(HttpStatusCode.BadRequest, exception.StatusCode);
+            Assert.Equal(request.Resource ?? string.Empty, exception.Resource);
+            Assert.Equal(request.Method.ToString(), exception.Method);
+            Assert.Equal(validationContent, exception.ResponseContent);
+            Assert.NotNull(exception.Message);
         }
     }
 }

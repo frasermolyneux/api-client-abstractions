@@ -10,8 +10,10 @@ namespace MxIO.ApiClient;
 public class RestClientSingleton : IRestClientSingleton, IDisposable
 {
     private static readonly ConcurrentDictionary<string, RestClient> instances = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly ConcurrentDictionary<string, DateTime> lastAccessTimes = new(StringComparer.OrdinalIgnoreCase);
     private static readonly object padlock = new();
     private readonly TimeSpan defaultTimeout = TimeSpan.FromMinutes(5);
+    private readonly TimeSpan clientExpirationTime = TimeSpan.FromHours(1);
     private bool disposed;
 
     /// <summary>
@@ -62,6 +64,16 @@ public class RestClientSingleton : IRestClientSingleton, IDisposable
         ArgumentNullException.ThrowIfNull(request);
 
         RestClient client = GetOrCreateClient(baseUrl);
+
+        // Update last access time for this client
+        lastAccessTimes[baseUrl] = DateTime.UtcNow;
+
+        // Cleanup expired clients occasionally (1% chance per request)
+        if (Random.Shared.Next(1, 100) == 1)
+        {
+            CleanupExpiredClients();
+        }
+
         return client.ExecuteAsync(request, cancellationToken);
     }
 
@@ -80,7 +92,43 @@ public class RestClientSingleton : IRestClientSingleton, IDisposable
         }
 
         // Using GetOrAdd from ConcurrentDictionary for atomic get-or-create operation
-        return instances.GetOrAdd(baseUrl, key => CreateRestClient(key));
+        var client = instances.GetOrAdd(baseUrl, key =>
+        {
+            var newClient = CreateRestClient(key);
+            lastAccessTimes[key] = DateTime.UtcNow;
+            return newClient;
+        });
+
+        return client;
+    }
+
+    /// <summary>
+    /// Removes and disposes clients that haven't been used for the expiration time.
+    /// </summary>
+    private void CleanupExpiredClients()
+    {
+        var now = DateTime.UtcNow;
+        var expiredUrls = lastAccessTimes
+            .Where(kvp => (now - kvp.Value) > clientExpirationTime)
+            .Select(kvp => kvp.Key)
+            .ToList();
+
+        foreach (var url in expiredUrls)
+        {
+            if (instances.TryRemove(url, out var client))
+            {
+                try
+                {
+                    client.Dispose();
+                }
+                catch (Exception)
+                {
+                    // Suppress exceptions during cleanup
+                }
+
+                lastAccessTimes.TryRemove(url, out _);
+            }
+        }
     }
 
     /// <summary>
@@ -105,6 +153,7 @@ public class RestClientSingleton : IRestClientSingleton, IDisposable
             }
 
             instances.Clear();
+            lastAccessTimes.Clear();
         }
     }
 
