@@ -5,9 +5,47 @@ using Newtonsoft.Json;
 namespace MxIO.ApiClient.Abstractions;
 
 /// <summary>
+/// Interface for API responses.
+/// </summary>
+public interface IApiResponseDto
+{
+    /// <summary>
+    /// Gets or sets the HTTP status code of the response.
+    /// </summary>
+    HttpStatusCode StatusCode { get; }
+
+    /// <summary>
+    /// Gets or sets the collection of error messages.
+    /// </summary>
+    List<string> Errors { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether the response was successful.
+    /// </summary>
+    bool IsSuccess { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether the response indicates a resource was not found.
+    /// </summary>
+    bool IsNotFound { get; }
+}
+
+/// <summary>
+/// Generic interface for API responses with a strongly-typed result.
+/// </summary>
+/// <typeparam name="T">The type of the result.</typeparam>
+public interface IApiResponseDto<T> : IApiResponseDto
+{
+    /// <summary>
+    /// Gets or sets the result data.
+    /// </summary>
+    T? Result { get; }
+}
+
+/// <summary>
 /// Base class for API responses.
 /// </summary>
-public record ApiResponseDto
+public record ApiResponseDto : IApiResponseDto
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="ApiResponseDto"/> class.
@@ -46,13 +84,13 @@ public record ApiResponseDto
     /// Gets or sets the HTTP status code of the response.
     /// </summary>
     [JsonProperty(PropertyName = "statusCode")]
-    public HttpStatusCode StatusCode { get; internal set; }
+    public HttpStatusCode StatusCode { get; set; }
 
     /// <summary>
     /// Gets or sets the collection of error messages.
     /// </summary>
     [JsonProperty(PropertyName = "errors")]
-    public List<string> Errors { get; internal set; } = new();
+    public List<string> Errors { get; set; } = new();
 
     /// <summary>
     /// Gets a value indicating whether the response was successful.
@@ -71,7 +109,7 @@ public record ApiResponseDto
 /// Generic API response with a strongly-typed result.
 /// </summary>
 /// <typeparam name="T">The type of the result.</typeparam>
-public record ApiResponseDto<T> : ApiResponseDto
+public record ApiResponseDto<T> : ApiResponseDto, IApiResponseDto<T>
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="ApiResponseDto{T}"/> class.

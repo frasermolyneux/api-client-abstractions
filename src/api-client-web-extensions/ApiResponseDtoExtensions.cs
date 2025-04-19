@@ -21,7 +21,7 @@ public static class ApiResponseDtoExtensions
     /// the complete ApiResponseDto including any result data and error messages.
     /// </returns>
     /// <exception cref="ArgumentNullException">Thrown when apiResponseDto is null.</exception>
-    public static IActionResult ToHttpResult<T>(this ApiResponseDto<T> apiResponseDto)
+    public static IActionResult ToHttpResult<T>(this IApiResponseDto<T> apiResponseDto)
     {
         ArgumentNullException.ThrowIfNull(apiResponseDto);
 
@@ -40,7 +40,7 @@ public static class ApiResponseDtoExtensions
     /// the complete ApiResponseDto including any error messages.
     /// </returns>
     /// <exception cref="ArgumentNullException">Thrown when apiResponseDto is null.</exception>
-    public static IActionResult ToHttpResult(this ApiResponseDto apiResponseDto)
+    public static IActionResult ToHttpResult(this IApiResponseDto apiResponseDto)
     {
         ArgumentNullException.ThrowIfNull(apiResponseDto);
 

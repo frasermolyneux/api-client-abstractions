@@ -3,10 +3,32 @@
 namespace MxIO.ApiClient.Abstractions;
 
 /// <summary>
+/// Interface for a data transfer object representing a collection of items with pagination information.
+/// </summary>
+/// <typeparam name="T">The type of items in the collection.</typeparam>
+public interface ICollectionDto<T>
+{
+    /// <summary>
+    /// Gets or sets the total number of records available.
+    /// </summary>
+    int TotalRecords { get; }
+
+    /// <summary>
+    /// Gets or sets the number of records after applying any filters.
+    /// </summary>
+    int FilteredRecords { get; }
+
+    /// <summary>
+    /// Gets or sets the collection of items.
+    /// </summary>
+    List<T> Entries { get; }
+}
+
+/// <summary>
 /// A data transfer object representing a collection of items with pagination information.
 /// </summary>
 /// <typeparam name="T">The type of items in the collection.</typeparam>
-public record CollectionDto<T>
+public record CollectionDto<T> : ICollectionDto<T>
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="CollectionDto{T}"/> class.
