@@ -12,7 +12,7 @@ namespace MxIO.ApiClient
 {
     public class BaseApiTests
     {
-        private readonly Mock<ILogger> loggerMock;
+        private readonly Mock<ILogger<BaseApi>> loggerMock;
         private readonly Mock<IApiTokenProvider> apiTokenProviderMock;
         private readonly Mock<IRestClientSingleton> restClientSingletonMock;
         private readonly Mock<IOptions<ApiClientOptions>> optionsMock;
@@ -20,7 +20,7 @@ namespace MxIO.ApiClient
 
         public BaseApiTests()
         {
-            loggerMock = new Mock<ILogger>();
+            loggerMock = new Mock<ILogger<BaseApi>>();
             apiTokenProviderMock = new Mock<IApiTokenProvider>();
             restClientSingletonMock = new Mock<IRestClientSingleton>();
             optionsMock = new Mock<IOptions<ApiClientOptions>>();
@@ -215,14 +215,15 @@ namespace MxIO.ApiClient
         }
 
         [Fact]
-        public async Task ExecuteAsync_WithErrorException_ThrowsException()
+        public async Task ExecuteAsync_WithErrorException_ThrowsApiException()
         {
             // Arrange
             var request = new RestRequest("/test", Method.Get);
+            var errorMessage = "Test exception";
             var exceptionResponse = new RestResponse
             {
                 StatusCode = HttpStatusCode.InternalServerError,
-                ErrorException = new Exception("Test exception")
+                ErrorException = new Exception(errorMessage)
             };
             var cancellationToken = CancellationToken.None;
 
@@ -230,12 +231,18 @@ namespace MxIO.ApiClient
                 .ReturnsAsync(exceptionResponse);
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<Exception>(() => baseApi.ExecuteAsync(request, false, cancellationToken));
-            Assert.Equal("Test exception", exception.Message);
+            var apiException = await Assert.ThrowsAsync<ApiException>(() => baseApi.ExecuteAsync(request, false, cancellationToken));
+
+            // Verify that the inner exception is preserved
+            Assert.NotNull(apiException.InnerException);
+            Assert.Equal(errorMessage, apiException.InnerException.Message);
+            Assert.Equal(HttpStatusCode.InternalServerError, apiException.StatusCode);
+            Assert.Equal(request.Resource ?? string.Empty, apiException.Resource);
+            Assert.Equal(request.Method.ToString(), apiException.Method);
         }
 
         [Fact]
-        public async Task ExecuteAsync_WithNonOkNonNotFoundResponse_ThrowsApplicationException()
+        public async Task ExecuteAsync_WithNonOkNonNotFoundResponse_ThrowsApiException()
         {
             // Arrange
             var request = new RestRequest("/test", Method.Get);
@@ -246,8 +253,11 @@ namespace MxIO.ApiClient
                 .ReturnsAsync(badRequestResponse);
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<ApplicationException>(() => baseApi.ExecuteAsync(request, false, cancellationToken));
+            var exception = await Assert.ThrowsAsync<ApiException>(() => baseApi.ExecuteAsync(request, false, cancellationToken));
             Assert.Equal($"Failed {request.Method} to '{request.Resource}' with code '{HttpStatusCode.BadRequest}'", exception.Message);
+            Assert.Equal(HttpStatusCode.BadRequest, exception.StatusCode);
+            Assert.Equal(request.Resource ?? string.Empty, exception.Resource);
+            Assert.Equal(request.Method.ToString(), exception.Method);
         }
 
         [Fact]
@@ -301,7 +311,7 @@ namespace MxIO.ApiClient
                 .ReturnsAsync(unauthorizedResponse);
 
             // Act & Assert
-            await Assert.ThrowsAsync<ApplicationException>(() => testApi.ExecuteAsync(request, false, cancellationToken));
+            await Assert.ThrowsAsync<ApiException>(() => testApi.ExecuteAsync(request, false, cancellationToken));
 
             // We can't easily verify that the secondary key isn't tried since that's internal behavior
             // Instead, let's verify that the request was executed without specifying exactly how many times
@@ -322,7 +332,7 @@ namespace MxIO.ApiClient
                 .ReturnsAsync(unauthorizedResponse);
 
             // Act & Assert
-            await Assert.ThrowsAsync<ApplicationException>(() => baseApi.ExecuteAsync(request, false, cancellationToken));
+            await Assert.ThrowsAsync<ApiException>(() => baseApi.ExecuteAsync(request, false, cancellationToken));
 
             restClientSingletonMock.Verify(rcs => rcs.ExecuteAsync(It.IsAny<string>(), request, It.IsAny<CancellationToken>()), Times.Once);
         }
@@ -346,7 +356,7 @@ namespace MxIO.ApiClient
         }
 
         [Fact]
-        public async Task ExecuteAsync_WithRetryableErrorExceedingMaxRetries_ThrowsException()
+        public async Task ExecuteAsync_WithRetryableErrorExceedingMaxRetries_ThrowsApiException()
         {
             // Arrange
             var request = new RestRequest("/test", Method.Get);
@@ -361,10 +371,13 @@ namespace MxIO.ApiClient
             var testApi = new BaseApi(loggerMock.Object, apiTokenProviderMock.Object, sequenceMock.Object, optionsMock.Object);
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<ApplicationException>(
+            var exception = await Assert.ThrowsAsync<ApiException>(
                 () => testApi.ExecuteAsync(request, true, cancellationToken));
 
             Assert.Contains("with code 'ServiceUnavailable'", exception.Message);
+            Assert.Equal(HttpStatusCode.ServiceUnavailable, exception.StatusCode);
+            Assert.Equal(request.Resource ?? string.Empty, exception.Resource);
+            Assert.Equal(request.Method.ToString(), exception.Method);
 
             // Should retry the maximum number of times (currently 3)
             sequenceMock.Verify(rcs => rcs.ExecuteAsync(

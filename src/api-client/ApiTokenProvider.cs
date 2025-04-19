@@ -7,6 +7,7 @@ namespace MxIO.ApiClient;
 
 /// <summary>
 /// Default implementation of IApiTokenProvider that manages access tokens with caching.
+/// This class is responsible for acquiring and caching access tokens for API authentication.
 /// </summary>
 public class ApiTokenProvider : IApiTokenProvider
 {
@@ -68,13 +69,16 @@ public class ApiTokenProvider : IApiTokenProvider
     /// <returns>The access token string.</returns>
     /// <exception cref="ArgumentException">Thrown when the audience is null or empty.</exception>
     /// <exception cref="OperationCanceledException">Thrown when the operation is canceled.</exception>
-    /// <exception cref="Exception">Thrown when token acquisition fails.</exception>
+    /// <exception cref="ApiAuthenticationException">Thrown when token acquisition fails.</exception>
     public async Task<string> GetAccessTokenAsync(string audience, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrEmpty(audience))
         {
             throw new ArgumentException("Audience cannot be null or empty", nameof(audience));
         }
+
+        // Check for cancellation before proceeding
+        cancellationToken.ThrowIfCancellationRequested();
 
         // Check if we already have a valid cached token
         if (memoryCache.TryGetValue(audience, out AccessToken accessToken) &&
@@ -88,10 +92,7 @@ public class ApiTokenProvider : IApiTokenProvider
         // Get a new token
         try
         {
-            // Cancel operation if requested
-            cancellationToken.ThrowIfCancellationRequested();
-
-            // Get token credential using the new async method
+            // Get token credential using the async method
             TokenCredential tokenCredential = await tokenCredentialProvider.GetTokenCredentialAsync(cancellationToken);
             ArgumentNullException.ThrowIfNull(tokenCredential);
 
@@ -127,7 +128,7 @@ public class ApiTokenProvider : IApiTokenProvider
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to get identity token for audience: '{Audience}'", audience);
-            throw;
+            throw new ApiAuthenticationException($"Failed to acquire authentication token for audience: '{audience}'", audience, ex);
         }
     }
 }

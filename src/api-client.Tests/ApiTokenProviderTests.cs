@@ -142,7 +142,7 @@ namespace MxIO.ApiClient
         }
 
         [Fact]
-        public async Task GetAccessTokenAsync_WhenTokenAcquisitionFails_LogsErrorAndRethrows()
+        public async Task GetAccessTokenAsync_WhenTokenAcquisitionFails_ThrowsApiAuthenticationException()
         {
             // Arrange
             var audience = "test-audience";
@@ -155,8 +155,12 @@ namespace MxIO.ApiClient
                 .ThrowsAsync(expectedException);
 
             // Act & Assert
-            var exception = await Assert.ThrowsAsync<Exception>(() => apiTokenProvider.GetAccessTokenAsync(audience, cancellationToken));
-            Assert.Equal("Authentication failed", exception.Message);
+            var exception = await Assert.ThrowsAsync<ApiAuthenticationException>(() =>
+                apiTokenProvider.GetAccessTokenAsync(audience, cancellationToken));
+
+            Assert.Contains("Failed to acquire authentication token for audience", exception.Message);
+            Assert.Equal(audience, exception.Audience);
+            Assert.Equal(expectedException, exception.InnerException);
         }
 
         [Fact]

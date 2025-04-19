@@ -13,6 +13,7 @@ namespace MxIO.ApiClient;
 
 /// <summary>
 /// Base class for API clients providing common functionality for REST API calls.
+/// This class handles authentication, retries, and error management for REST API operations.
 /// </summary>
 public class BaseApi
 {
@@ -44,14 +45,12 @@ public class BaseApi
     /// <exception cref="ArgumentNullException">Thrown when any required dependency is null.</exception>
     /// <exception cref="ArgumentException">Thrown when required options are missing.</exception>
     public BaseApi(
-        ILogger logger,
+        ILogger<BaseApi> logger,
         IApiTokenProvider apiTokenProvider,
         IRestClientSingleton restClientSingleton,
         IOptions<ApiClientOptions> options)
     {
-        // Cast generic logger to typed logger as a best practice
-        this.logger = logger as ILogger<BaseApi> ?? new NullLogger<BaseApi>();
-
+        this.logger = logger ?? new NullLogger<BaseApi>();
         this.apiTokenProvider = apiTokenProvider ?? throw new ArgumentNullException(nameof(apiTokenProvider));
         this.restClientSingleton = restClientSingleton ?? throw new ArgumentNullException(nameof(restClientSingleton));
 
@@ -95,12 +94,12 @@ public class BaseApi
                 {
                     if (response?.Result is not null)
                     {
-                        logger.LogWarning("Request failed with {StatusCode}. Waiting {Timespan} before next retry. Retry attempt {RetryCount}",
+                        this.logger.LogWarning("Request failed with {StatusCode}. Waiting {Timespan} before next retry. Retry attempt {RetryCount}",
                             response.Result.StatusCode, timespan, attemptCount);
                     }
                     else
                     {
-                        logger.LogWarning("Request failed with null response. Waiting {Timespan} before next retry. Retry attempt {RetryCount}",
+                        this.logger.LogWarning("Request failed with null response. Waiting {Timespan} before next retry. Retry attempt {RetryCount}",
                             timespan, attemptCount);
                     }
                 }
@@ -115,6 +114,8 @@ public class BaseApi
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
     /// <returns>A configured REST request object.</returns>
     /// <exception cref="ArgumentException">Thrown if the resource is null or empty.</exception>
+    /// <exception cref="OperationCanceledException">Thrown when the operation is canceled.</exception>
+    /// <exception cref="ApiAuthenticationException">Thrown when authentication token acquisition fails.</exception>
     public async Task<RestRequest> CreateRequestAsync(string resource, Method method, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrEmpty(resource))
@@ -122,7 +123,20 @@ public class BaseApi
             throw new ArgumentException("Resource cannot be null or empty", nameof(resource));
         }
 
-        var accessToken = await apiTokenProvider.GetAccessTokenAsync(apiAudience, cancellationToken);
+        // Check for cancellation before proceeding
+        cancellationToken.ThrowIfCancellationRequested();
+
+        string accessToken;
+        try
+        {
+            accessToken = await apiTokenProvider.GetAccessTokenAsync(apiAudience, cancellationToken);
+        }
+        catch (ApiAuthenticationException ex)
+        {
+            logger.LogError(ex, "Failed to get authentication token for resource '{Resource}' with audience '{Audience}'",
+                resource, apiAudience);
+            throw;
+        }
 
         var request = new RestRequest(resource, method);
 
@@ -141,10 +155,13 @@ public class BaseApi
     /// <returns>The REST response.</returns>
     /// <exception cref="ArgumentNullException">Thrown if the request is null.</exception>
     /// <exception cref="OperationCanceledException">Thrown when the operation is canceled.</exception>
-    /// <exception cref="ApplicationException">Thrown when the request fails with an unexpected status code.</exception>
+    /// <exception cref="ApiException">Thrown when the request fails with an unexpected status code.</exception>
     public async Task<RestResponse> ExecuteAsync(RestRequest request, bool useSecondaryApiKey = false, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
+
+        // Check for cancellation before proceeding
+        cancellationToken.ThrowIfCancellationRequested();
 
         // Apply secondary API key if requested and available
         if (useSecondaryApiKey && !string.IsNullOrWhiteSpace(secondaryApiKey))
@@ -164,7 +181,10 @@ public class BaseApi
             if (response is null)
             {
                 logger.LogError("Received null response for {Method} to '{Resource}'", request.Method, request.Resource);
-                throw new ApplicationException($"Failed {request.Method} to '{request.Resource}' - received null response");
+                throw new ApiException(
+                    $"Failed {request.Method} to '{request.Resource}' - received null response",
+                    request.Resource ?? string.Empty,
+                    request.Method.ToString());
             }
 
             // Check for specific error conditions
@@ -188,12 +208,24 @@ public class BaseApi
             {
                 logger.LogError(response.ErrorException, "Failed {Method} to '{Resource}' with code '{StatusCode}'",
                     request.Method, request.Resource, response.StatusCode);
-                throw response.ErrorException;
+                throw new ApiException(
+                    $"Failed {request.Method} to '{request.Resource}' with code '{response.StatusCode}'",
+                    request.Resource ?? string.Empty,
+                    request.Method.ToString(),
+                    response.StatusCode,
+                    response.Content,
+                    response.ErrorException);
             }
             // Handle other error status codes
             else
             {
-                var ex = new ApplicationException($"Failed {request.Method} to '{request.Resource}' with code '{response.StatusCode}'");
+                var ex = new ApiException(
+                    $"Failed {request.Method} to '{request.Resource}' with code '{response.StatusCode}'",
+                    request.Resource ?? string.Empty,
+                    request.Method.ToString(),
+                    response.StatusCode,
+                    response.Content);
+
                 logger.LogError(ex, "Failed {Method} to '{Resource}' with response status '{ResponseStatus}' and code '{StatusCode}' - Content: {Content}",
                     request.Method, request.Resource, response.ResponseStatus, response.StatusCode, response.Content);
                 throw ex;
@@ -204,13 +236,19 @@ public class BaseApi
             logger.LogInformation("Request {Method} to '{Resource}' was canceled", request.Method, request.Resource);
             throw;
         }
+        catch (ApiAuthenticationException authEx)
+        {
+            logger.LogError(authEx, "Authentication failed during {Method} to '{Resource}'",
+                request.Method, request.Resource);
+            throw;
+        }
         catch (ObjectDisposedException ex)
         {
             logger.LogError(ex, "RestClientSingleton was disposed during request {Method} to '{Resource}'",
                 request.Method, request.Resource);
             throw;
         }
-        catch (Exception ex) when (ex is not ApplicationException and not OperationCanceledException)
+        catch (Exception ex) when (ex is not ApiException and not OperationCanceledException)
         {
             logger.LogError(ex, "Unexpected error during {Method} to '{Resource}'",
                 request.Method, request.Resource);
