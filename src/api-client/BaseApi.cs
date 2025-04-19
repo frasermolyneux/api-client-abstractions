@@ -154,7 +154,7 @@ public class BaseApi
     /// <param name="request">The REST request to execute.</param>
     /// <param name="useSecondaryApiKey">Whether to use the secondary API key.</param>
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-    /// <returns>The REST response.</returns>
+    /// <returns>A task representing the asynchronous operation, containing the REST response.</returns>
     /// <exception cref="ArgumentNullException">Thrown if the request is null.</exception>
     /// <exception cref="OperationCanceledException">Thrown when the operation is canceled.</exception>
     /// <exception cref="ApiException">Thrown when the request fails with an unexpected status code.</exception>

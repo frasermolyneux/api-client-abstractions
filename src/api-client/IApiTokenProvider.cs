@@ -9,7 +9,10 @@ public interface IApiTokenProvider
     /// Gets an access token for the specified audience.
     /// </summary>
     /// <param name="audience">The audience for which the token is requested.</param>
-    /// <param name="cancellationToken">A cancellation token to cancel the request.</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
     /// <returns>A task representing the asynchronous operation, containing the access token as a string.</returns>
+    /// <exception cref="ArgumentException">Thrown when audience is null or empty.</exception>
+    /// <exception cref="OperationCanceledException">Thrown when the operation is canceled.</exception>
+    /// <exception cref="ApiAuthenticationException">Thrown when token acquisition fails.</exception>
     Task<string> GetAccessTokenAsync(string audience, CancellationToken cancellationToken = default);
 }
