@@ -78,7 +78,7 @@ public class YourCustomCredentialProvider : ITokenCredentialProvider
     public Task<TokenCredential> GetTokenCredentialAsync(CancellationToken cancellationToken = default)
     {
         // Your custom implementation
-        return Task.FromResult<TokenCredential>(new DefaultAzureCredential(...));
+        return Task.FromResult<TokenCredential>(new DefaultAzureCredential(cancellationToken: cancellationToken));
     }
 }
 ```
@@ -90,6 +90,8 @@ Create your API client by inheriting from `BaseApi`:
 ```csharp
 public class UserApi : BaseApi
 {
+    private readonly ILogger<UserApi> logger;
+
     public UserApi(
         ILogger<UserApi> logger,
         IApiTokenProvider apiTokenProvider,
@@ -97,16 +99,25 @@ public class UserApi : BaseApi
         IOptions<ApiClientOptions> options)
         : base(logger, apiTokenProvider, restClientSingleton, options)
     {
+        this.logger = logger;
     }
 
-    public async Task<User> GetUserAsync(string userId, CancellationToken cancellationToken = default)
+    public async Task<ApiResponseDto<User>> GetUserAsync(string userId, CancellationToken cancellationToken = default)
     {
-        var request = await CreateRequestAsync($"users/{userId}", Method.Get, cancellationToken);
-        var response = await ExecuteAsync(request, false, cancellationToken);
-        
-        return response.IsSuccessful
-            ? JsonSerializer.Deserialize<User>(response.Content)
-            : null;
+        try
+        {
+            logger.LogInformation("Retrieving user with ID {UserId}", userId);
+            
+            var request = await CreateRequestAsync($"users/{userId}", Method.Get, cancellationToken);
+            var response = await ExecuteAsync(request, false, cancellationToken);
+            
+            return response.ToApiResponse<User>();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogError(ex, "Failed to retrieve user with ID {UserId}", userId);
+            return HttpStatusCode.InternalServerError.CreateResponse<User>("An unexpected error occurred while retrieving the user");
+        }
     }
 }
 ```
@@ -118,16 +129,33 @@ Inject and use your API client:
 ```csharp
 public class UserService
 {
+    private readonly ILogger<UserService> logger;
     private readonly UserApi userApi;
 
-    public UserService(UserApi userApi)
+    public UserService(ILogger<UserService> logger, UserApi userApi)
     {
+        this.logger = logger;
         this.userApi = userApi;
     }
 
-    public async Task<User> GetUserAsync(string userId, CancellationToken cancellationToken = default)
+    public async Task<User?> GetUserAsync(string userId, CancellationToken cancellationToken = default)
     {
-        return await userApi.GetUserAsync(userId, cancellationToken);
+        var response = await userApi.GetUserAsync(userId, cancellationToken);
+        
+        if (response.IsSuccess && response.Result != null)
+        {
+            return response.Result;
+        }
+        
+        if (response.IsNotFound)
+        {
+            logger.LogWarning("User with ID {UserId} was not found", userId);
+            return null;
+        }
+        
+        logger.LogError("Failed to retrieve user with ID {UserId}. Status code: {StatusCode}", 
+            userId, response.StatusCode);
+        return null;
     }
 }
 ```
