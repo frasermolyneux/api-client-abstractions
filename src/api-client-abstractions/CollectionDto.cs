@@ -47,8 +47,8 @@ public record CollectionDto<T> : ICollectionDto<T>
     /// <param name="entries">The collection of items.</param>
     public CollectionDto(int totalRecords, int filteredRecords, IEnumerable<T>? entries = null)
     {
-        TotalRecords = totalRecords;
-        FilteredRecords = filteredRecords;
+        TotalRecords = totalRecords < 0 ? 0 : totalRecords;
+        FilteredRecords = filteredRecords < 0 ? 0 : filteredRecords;
         Entries = entries?.ToList() ?? new List<T>();
     }
 

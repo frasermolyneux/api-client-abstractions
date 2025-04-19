@@ -33,22 +33,6 @@ public class ApiResponseDtoGenericTests
     }
 
     [Fact]
-    public void StatusCodeAndErrorConstructor_ShouldSetStatusCodeAndError()
-    {
-        // Arrange & Act
-        var statusCode = HttpStatusCode.BadRequest;
-        var errorMessage = "Test error message";
-        var apiResponse = new ApiResponseDto<string>(statusCode, errorMessage);
-
-        // Assert
-        Assert.Equal(statusCode, apiResponse.StatusCode);
-        Assert.NotNull(apiResponse.Errors);
-        Assert.Single(apiResponse.Errors);
-        Assert.Equal(errorMessage, apiResponse.Errors[0]);
-        Assert.Null(apiResponse.Result);
-    }
-
-    [Fact]
     public void StatusCodeAndResultConstructor_ShouldSetStatusCodeAndResult()
     {
         // Arrange & Act
@@ -123,7 +107,7 @@ public class ApiResponseDtoGenericTests
     public void Constructor_WithNullErrors_ShouldThrowArgumentNullException()
     {
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new ApiResponseDto<string>(HttpStatusCode.OK, "Result", null!));
+        Assert.Throws<ArgumentNullException>(() => new ApiResponseDto<string>(HttpStatusCode.OK, "Result", errors: null!));
     }
 
     [Fact]
@@ -272,7 +256,7 @@ public class ApiResponseDtoGenericTests
         Assert.NotNull(deserializedResponse);
         Assert.Equal(statusCode, deserializedResponse.StatusCode);
         Assert.NotNull(deserializedResponse.Result);
-        Assert.Equal(42, deserializedResponse.Result.Id);
+        Assert.Equal(42, deserializedResponse.Result!.Id);
         Assert.Equal("Test Object", deserializedResponse.Result.Name);
     }
 

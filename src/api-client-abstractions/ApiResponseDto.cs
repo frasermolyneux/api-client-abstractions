@@ -67,17 +67,16 @@ public record ApiResponseDto : IApiResponseDto
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ApiResponseDto"/> class with the specified status code and error message.
+    /// Initializes a new instance of the <see cref="ApiResponseDto"/> class with the specified status code and error messages.
     /// </summary>
     /// <param name="statusCode">The HTTP status code of the response.</param>
-    /// <param name="error">An error message describing the issue.</param>
-    public ApiResponseDto(HttpStatusCode statusCode, string error)
+    /// <param name="errors">A list of error messages.</param>
+    /// <exception cref="ArgumentNullException">Thrown when errors is null.</exception>
+    public ApiResponseDto(HttpStatusCode statusCode, List<string> errors)
         : this(statusCode)
     {
-        if (!string.IsNullOrEmpty(error))
-        {
-            Errors.Add(error);
-        }
+        ArgumentNullException.ThrowIfNull(errors);
+        Errors = errors;
     }
 
     /// <summary>
@@ -96,7 +95,10 @@ public record ApiResponseDto : IApiResponseDto
     /// Gets a value indicating whether the response was successful.
     /// </summary>
     [JsonIgnore]
-    public bool IsSuccess => StatusCode == HttpStatusCode.OK && !Errors.Any();
+    public bool IsSuccess => (StatusCode == HttpStatusCode.OK ||
+                              StatusCode == HttpStatusCode.Created ||
+                              StatusCode == HttpStatusCode.Accepted) &&
+                             (Errors == null || !Errors.Any());
 
     /// <summary>
     /// Gets a value indicating whether the response indicates a resource was not found.
@@ -130,16 +132,6 @@ public record ApiResponseDto<T> : ApiResponseDto, IApiResponseDto<T>
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ApiResponseDto{T}"/> class with the specified status code and error message.
-    /// </summary>
-    /// <param name="statusCode">The HTTP status code of the response.</param>
-    /// <param name="error">An error message describing the issue.</param>
-    public ApiResponseDto(HttpStatusCode statusCode, string error)
-        : base(statusCode, error)
-    {
-    }
-
-    /// <summary>
     /// Initializes a new instance of the <see cref="ApiResponseDto{T}"/> class with the specified status code and result.
     /// </summary>
     /// <param name="statusCode">The HTTP status code of the response.</param>
@@ -156,6 +148,7 @@ public record ApiResponseDto<T> : ApiResponseDto, IApiResponseDto<T>
     /// <param name="statusCode">The HTTP status code of the response.</param>
     /// <param name="result">The result data.</param>
     /// <param name="errors">A list of error messages.</param>
+    /// <exception cref="ArgumentNullException">Thrown if errors is null.</exception>
     public ApiResponseDto(HttpStatusCode statusCode, T? result, List<string> errors)
         : base(statusCode)
     {
@@ -175,5 +168,9 @@ public record ApiResponseDto<T> : ApiResponseDto, IApiResponseDto<T>
     /// Gets a value indicating whether the response was successful and contains a non-null result.
     /// </summary>
     [JsonIgnore]
-    public new bool IsSuccess => StatusCode == HttpStatusCode.OK && !Errors.Any() && Result != null;
+    public new bool IsSuccess => (StatusCode == HttpStatusCode.OK ||
+                                  StatusCode == HttpStatusCode.Created ||
+                                  StatusCode == HttpStatusCode.Accepted) &&
+                                 !Errors.Any() &&
+                                 Result != null;
 }

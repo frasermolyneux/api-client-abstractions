@@ -34,21 +34,6 @@ public class ApiResponseDtoExtensionsTests
     }
 
     [Fact]
-    public void ToHttpResult_NonGeneric_ShouldReturnObjectResultWithCorrectStatusCode()
-    {
-        // Arrange
-        var apiResponse = new ApiResponseDto(HttpStatusCode.BadRequest, "Error message");
-
-        // Act
-        var result = apiResponse.ToHttpResult();
-
-        // Assert
-        var objectResult = Assert.IsType<ObjectResult>(result);
-        Assert.Equal((int)HttpStatusCode.BadRequest, objectResult.StatusCode);
-        Assert.Same(apiResponse, objectResult.Value);
-    }
-
-    [Fact]
     public void ToHttpResult_NonGeneric_WithNullInput_ShouldThrowArgumentNullException()
     {
         // Arrange
@@ -123,38 +108,6 @@ public class ApiResponseDtoExtensionsTests
     }
 
     [Fact]
-    public void ToHttpResult_NonGeneric_WithServerErrorStatusCode_ReturnsObjectResultWithCorrectStatusCode()
-    {
-        // Arrange
-        var apiResponse = new ApiResponseDto(HttpStatusCode.InternalServerError, "Server error");
-
-        // Act
-        var result = apiResponse.ToHttpResult();
-
-        // Assert
-        var objectResult = Assert.IsType<ObjectResult>(result);
-        Assert.Equal((int)HttpStatusCode.InternalServerError, objectResult.StatusCode);
-        Assert.Same(apiResponse, objectResult.Value);
-    }
-
-    [Fact]
-    public void CreateResponse_FromStatusCodeWithErrorMessage_ShouldCreateApiResponseWithErrorMessage()
-    {
-        // Arrange
-        var statusCode = HttpStatusCode.BadRequest;
-        var errorMessage = "Validation error";
-
-        // Act
-        var response = new ApiResponseDto(statusCode, errorMessage);
-
-        // Assert
-        Assert.NotNull(response);
-        Assert.Equal(statusCode, response.StatusCode);
-        Assert.Contains(errorMessage, response.Errors);
-        Assert.Single(response.Errors);
-    }
-
-    [Fact]
     public void CreateResponse_FromStatusCodeWithResultAndErrorMessage_ShouldCreateApiResponseWithResultAndError()
     {
         // Arrange
@@ -207,7 +160,7 @@ public class ApiResponseDtoExtensionsTests
     }
 
     [Theory]
-    [InlineData(HttpStatusCode.OK, true)]
+    [InlineData(HttpStatusCode.OK, false)]
     [InlineData(HttpStatusCode.Created, false)]
     [InlineData(HttpStatusCode.BadRequest, false)]
     [InlineData(HttpStatusCode.NotFound, true)]

@@ -218,27 +218,6 @@ namespace MxIO.ApiClient
         }
 
         [Fact]
-        public void ToApiResponse_WithErrorStatusCode_PreservesStatusCode()
-        {
-            // Arrange
-            var originalApiResponse = new ApiResponseDto(HttpStatusCode.BadRequest, "Error message");
-            var jsonContent = JsonConvert.SerializeObject(originalApiResponse);
-            var response = new RestResponse
-            {
-                StatusCode = HttpStatusCode.BadRequest,
-                Content = jsonContent
-            };
-
-            // Act
-            var apiResponse = response.ToApiResponse();
-
-            // Assert
-            Assert.NotNull(apiResponse);
-            Assert.Equal(HttpStatusCode.BadRequest, apiResponse.StatusCode);
-            Assert.Contains("Error message", apiResponse.Errors);
-        }
-
-        [Fact]
         public void ToApiResponseGeneric_WithComplexResult_DeserializesCorrectly()
         {
             // Arrange

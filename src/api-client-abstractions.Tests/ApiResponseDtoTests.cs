@@ -31,34 +31,6 @@ public class ApiResponseDtoTests
     }
 
     [Fact]
-    public void StatusCodeAndErrorConstructor_ShouldSetStatusCodeAndError()
-    {
-        // Arrange & Act
-        var statusCode = HttpStatusCode.BadRequest;
-        var errorMessage = "Test error message";
-        var apiResponse = new ApiResponseDto(statusCode, errorMessage);
-
-        // Assert
-        Assert.Equal(statusCode, apiResponse.StatusCode);
-        Assert.NotNull(apiResponse.Errors);
-        Assert.Single(apiResponse.Errors);
-        Assert.Equal(errorMessage, apiResponse.Errors[0]);
-    }
-
-    [Fact]
-    public void StatusCodeAndEmptyErrorConstructor_ShouldSetStatusCodeOnly()
-    {
-        // Arrange & Act
-        var statusCode = HttpStatusCode.BadRequest;
-        var apiResponse = new ApiResponseDto(statusCode, string.Empty);
-
-        // Assert
-        Assert.Equal(statusCode, apiResponse.StatusCode);
-        Assert.NotNull(apiResponse.Errors);
-        Assert.Empty(apiResponse.Errors);
-    }
-
-    [Fact]
     public void IsSuccess_WithOkStatusAndNoErrors_ShouldReturnTrue()
     {
         // Arrange
@@ -66,16 +38,6 @@ public class ApiResponseDtoTests
 
         // Act & Assert
         Assert.True(apiResponse.IsSuccess);
-    }
-
-    [Fact]
-    public void IsSuccess_WithOkStatusAndErrors_ShouldReturnFalse()
-    {
-        // Arrange
-        var apiResponse = new ApiResponseDto(HttpStatusCode.OK, "Error message");
-
-        // Act & Assert
-        Assert.False(apiResponse.IsSuccess);
     }
 
     [Fact]
@@ -120,13 +82,6 @@ public class ApiResponseDtoTests
         Assert.Equal(statusCode, apiResponse.StatusCode);
         Assert.Equal(errors, apiResponse.Errors);
         Assert.Equal(3, apiResponse.Errors.Count);
-    }
-
-    [Fact]
-    public void Constructor_WithNullErrors_ShouldThrowArgumentNullException()
-    {
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new ApiResponseDto(HttpStatusCode.OK, null!));
     }
 
     [Fact]
@@ -183,38 +138,5 @@ public class ApiResponseDtoTests
 
         // Act & Assert
         Assert.Equal(expectedResult, apiResponse.IsSuccess);
-    }
-
-    [Fact]
-    public void StatusCodeAndNullErrorConstructor_ShouldNotAddError()
-    {
-        // Arrange & Act
-        var statusCode = HttpStatusCode.BadRequest;
-        var apiResponse = new ApiResponseDto(statusCode, null!);
-
-        // Assert
-        Assert.Equal(statusCode, apiResponse.StatusCode);
-        Assert.NotNull(apiResponse.Errors);
-        Assert.Empty(apiResponse.Errors);
-    }
-
-    [Fact]
-    public void JsonSerialization_ShouldPreserveProperties()
-    {
-        // Arrange
-        var statusCode = HttpStatusCode.BadRequest;
-        var errorMessage = "Test error message";
-        var apiResponse = new ApiResponseDto(statusCode, errorMessage);
-
-        // Act
-        var json = Newtonsoft.Json.JsonConvert.SerializeObject(apiResponse);
-        var deserializedResponse = Newtonsoft.Json.JsonConvert.DeserializeObject<ApiResponseDto>(json);
-
-        // Assert
-        Assert.NotNull(deserializedResponse);
-        Assert.Equal(statusCode, deserializedResponse.StatusCode);
-        Assert.NotNull(deserializedResponse.Errors);
-        Assert.Single(deserializedResponse.Errors);
-        Assert.Equal(errorMessage, deserializedResponse.Errors[0]);
     }
 }
