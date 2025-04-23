@@ -81,12 +81,25 @@ public class ApiTokenProvider : IApiTokenProvider
         cancellationToken.ThrowIfCancellationRequested();
 
         // Check if we already have a valid cached token
-        if (memoryCache.TryGetValue(audience, out AccessToken accessToken) &&
-            DateTimeOffset.UtcNow < accessToken.ExpiresOn.Subtract(tokenExpiryBuffer))
+        if (memoryCache.TryGetValue(audience, out AccessToken accessToken))
         {
-            logger.LogDebug("Using cached token for audience '{Audience}' which expires at {ExpiryTime} (effective: {EffectiveExpiry})",
-                audience, accessToken.ExpiresOn, accessToken.ExpiresOn.Subtract(tokenExpiryBuffer));
-            return accessToken.Token;
+            try
+            {
+                // Safely apply the expiry buffer with overflow protection
+                DateTimeOffset effectiveExpiry = SafeSubtractBuffer(accessToken.ExpiresOn);
+
+                if (DateTimeOffset.UtcNow < effectiveExpiry)
+                {
+                    logger.LogDebug("Using cached token for audience '{Audience}' which expires at {ExpiryTime} (effective: {EffectiveExpiry})",
+                        audience, accessToken.ExpiresOn, effectiveExpiry);
+                    return accessToken.Token;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Error calculating token expiration for cached token. Will request a new token.");
+                // Continue to get a new token
+            }
         }
 
         // Get a new token
@@ -103,20 +116,28 @@ public class ApiTokenProvider : IApiTokenProvider
                 new TokenRequestContext(new[] { string.Format(DefaultScopeFormat, audience) }),
                 cancellationToken);
 
-            // Calculate effective expiry with buffer
-            var effectiveExpiry = accessToken.ExpiresOn.Subtract(tokenExpiryBuffer);
-
-            // Cache the token for future use
-            var cacheOptions = new MemoryCacheEntryOptions
+            try
             {
-                AbsoluteExpiration = accessToken.ExpiresOn,
-                Priority = CacheItemPriority.High // Token access is critical
-            };
+                // Calculate effective expiry with buffer using the safe method
+                var effectiveExpiry = SafeSubtractBuffer(accessToken.ExpiresOn);
 
-            memoryCache.Set(audience, accessToken, cacheOptions);
+                // Cache the token for future use
+                var cacheOptions = new MemoryCacheEntryOptions
+                {
+                    AbsoluteExpiration = accessToken.ExpiresOn,
+                    Priority = CacheItemPriority.High // Token access is critical
+                };
 
-            logger.LogDebug("Acquired and cached new token for audience '{Audience}' that expires at {ExpiryTime} (effective: {EffectiveExpiry})",
-                audience, accessToken.ExpiresOn, effectiveExpiry);
+                memoryCache.Set(audience, accessToken, cacheOptions);
+
+                logger.LogDebug("Acquired and cached new token for audience '{Audience}' that expires at {ExpiryTime} (effective: {EffectiveExpiry})",
+                    audience, accessToken.ExpiresOn, effectiveExpiry);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Error calculating effective expiry time for token. Using token without caching.");
+                // Still return the token even if we can't cache it properly
+            }
 
             return accessToken.Token;
         }
@@ -129,6 +150,25 @@ public class ApiTokenProvider : IApiTokenProvider
         {
             logger.LogError(ex, "Failed to get identity token for audience: '{Audience}'", audience);
             throw new ApiAuthenticationException($"Failed to acquire authentication token for audience: '{audience}'", audience, ex);
+        }
+    }
+
+    /// <summary>
+    /// Safely subtracts the token expiry buffer from the given DateTimeOffset, ensuring no underflow occurs.
+    /// </summary>
+    /// <param name="dateTimeOffset">The original DateTimeOffset.</param>
+    /// <returns>The DateTimeOffset with the buffer subtracted, or the earliest valid date if underflow would occur.</returns>
+    private DateTimeOffset SafeSubtractBuffer(DateTimeOffset dateTimeOffset)
+    {
+        try
+        {
+            return dateTimeOffset.Subtract(tokenExpiryBuffer);
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            logger.LogWarning("Could not subtract token expiry buffer from {ExpiresOn} as it would result in an invalid DateTime. Using minimum valid date instead.", dateTimeOffset);
+            // Return the earliest possible date that's still valid
+            return DateTimeOffset.MinValue.AddTicks(1);
         }
     }
 }
