@@ -139,4 +139,38 @@ public class ApiResponseDtoTests
         // Act & Assert
         Assert.Equal(expectedResult, apiResponse.IsSuccess);
     }
+
+    [Fact]
+    public void IsConflict_WithConflictStatus_ShouldReturnTrue()
+    {
+        // Arrange
+        var apiResponse = new ApiResponseDto(HttpStatusCode.Conflict);
+
+        // Act & Assert
+        Assert.True(apiResponse.IsConflict);
+    }
+
+    [Fact]
+    public void IsConflict_WithNonConflictStatus_ShouldReturnFalse()
+    {
+        // Arrange
+        var apiResponse = new ApiResponseDto(HttpStatusCode.OK);
+
+        // Act & Assert
+        Assert.False(apiResponse.IsConflict);
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.Conflict, true)]
+    [InlineData(HttpStatusCode.BadRequest, false)]
+    [InlineData(HttpStatusCode.OK, false)]
+    [InlineData(HttpStatusCode.NotFound, false)]
+    public void IsConflict_WithVariousStatusCodes_ShouldReturnExpectedResult(HttpStatusCode statusCode, bool expectedResult)
+    {
+        // Arrange
+        var apiResponse = new ApiResponseDto(statusCode);
+
+        // Act & Assert
+        Assert.Equal(expectedResult, apiResponse.IsConflict);
+    }
 }

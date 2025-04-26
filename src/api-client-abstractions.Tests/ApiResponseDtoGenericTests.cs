@@ -276,6 +276,50 @@ public class ApiResponseDtoGenericTests
         Assert.Equal(expectedResult, apiResponse.IsSuccess);
     }
 
+    [Fact]
+    public void IsConflict_WithConflictStatus_ShouldReturnTrue()
+    {
+        // Arrange
+        var apiResponse = new ApiResponseDto<string>(HttpStatusCode.Conflict);
+
+        // Act & Assert
+        Assert.True(apiResponse.IsConflict);
+    }
+
+    [Fact]
+    public void IsConflict_WithNonConflictStatus_ShouldReturnFalse()
+    {
+        // Arrange
+        var apiResponse = new ApiResponseDto<string>(HttpStatusCode.OK);
+
+        // Act & Assert
+        Assert.False(apiResponse.IsConflict);
+    }
+
+    [Fact]
+    public void IsConflict_WithConflictStatusAndResult_ShouldReturnTrue()
+    {
+        // Arrange
+        var apiResponse = new ApiResponseDto<string>(HttpStatusCode.Conflict, "Result");
+
+        // Act & Assert
+        Assert.True(apiResponse.IsConflict);
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.Conflict, true)]
+    [InlineData(HttpStatusCode.BadRequest, false)]
+    [InlineData(HttpStatusCode.OK, false)]
+    [InlineData(HttpStatusCode.NotFound, false)]
+    public void IsConflict_WithVariousStatusCodes_ShouldReturnExpectedResult(HttpStatusCode statusCode, bool expectedResult)
+    {
+        // Arrange
+        var apiResponse = new ApiResponseDto<string>(statusCode, "Test");
+
+        // Act & Assert
+        Assert.Equal(expectedResult, apiResponse.IsConflict);
+    }
+
     // Test class for complex object testing
     private class TestObject
     {

@@ -28,6 +28,11 @@ public interface IApiResponseDto
     /// Gets a value indicating whether the response indicates a resource was not found.
     /// </summary>
     bool IsNotFound { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether the response indicates a conflict occurred.
+    /// </summary>
+    bool IsConflict { get; }
 }
 
 /// <summary>
@@ -105,6 +110,12 @@ public record ApiResponseDto : IApiResponseDto
     /// </summary>
     [JsonIgnore]
     public bool IsNotFound => StatusCode == HttpStatusCode.NotFound;
+
+    /// <summary>
+    /// Gets a value indicating whether the response indicates a conflict occurred.
+    /// </summary>
+    [JsonIgnore]
+    public bool IsConflict => StatusCode == HttpStatusCode.Conflict;
 }
 
 /// <summary>
