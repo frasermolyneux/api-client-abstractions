@@ -31,11 +31,8 @@ public class BaseApi
     private readonly IRestClientSingleton restClientSingleton;
     private readonly ApiClientOptions options;
 
-    private readonly AsyncRetryPolicy<RestResponse> retryPolicy;
-
-    private static readonly HttpStatusCode[] SuccessStatusCodes = { HttpStatusCode.OK, HttpStatusCode.Created, HttpStatusCode.NoContent, HttpStatusCode.NotFound };
+    private readonly AsyncRetryPolicy<RestResponse> retryPolicy; private static readonly HttpStatusCode[] SuccessStatusCodes = { HttpStatusCode.OK, HttpStatusCode.Created, HttpStatusCode.NoContent, HttpStatusCode.NotFound };
     private static readonly HttpStatusCode[] NoRetryStatusCodes = { HttpStatusCode.OK, HttpStatusCode.Created, HttpStatusCode.NoContent, HttpStatusCode.NotFound, HttpStatusCode.Unauthorized, HttpStatusCode.BadRequest, HttpStatusCode.UnprocessableEntity };
-    private static readonly HttpStatusCode[] ValidationStatusCodes = { HttpStatusCode.BadRequest, HttpStatusCode.UnprocessableEntity };
 
     /// <summary>
     /// Initializes a new instance of the <see cref="BaseApi"/> class.
@@ -261,27 +258,18 @@ public class BaseApi
         return string.IsNullOrWhiteSpace(options.ApiPathPrefix)
             ? options.BaseUrl
             : $"{options.BaseUrl.TrimEnd('/')}/{options.ApiPathPrefix.TrimStart('/')}";
-    }
-
-    /// <summary>
-    /// Handles the REST response and processes according to status code.
-    /// </summary>
-    /// <param name="response">The REST response to handle.</param>
-    /// <param name="request">The original request for context in error messages.</param>
-    /// <returns>The response if successful.</returns>
-    /// <exception cref="InvalidOperationException">Thrown when validation errors occur.</exception>
-    /// <exception cref="HttpRequestException">Thrown when a non-successful status code is returned.</exception>
+    }    /// <summary>
+         /// Handles the REST response and processes according to status code.
+         /// </summary>
+         /// <param name="response">The REST response to handle.</param>
+         /// <param name="request">The original request for context in error messages.</param>
+         /// <returns>The response if successful.</returns>
+         /// <exception cref="HttpRequestException">Thrown when a non-successful status code is returned.</exception>
     private RestResponse HandleResponse(RestResponse response, RestRequest request)
     {
         if (SuccessStatusCodes.Contains(response.StatusCode))
         {
             return response;
-        }
-        else if (ValidationStatusCodes.Contains(response.StatusCode))
-        {
-            logger.LogWarning("Validation error for {Method} to '{Resource}': {Content}",
-                request.Method, request.Resource, response.Content);
-            throw new InvalidOperationException($"Validation failed: {response.Content}");
         }
         else
         {
