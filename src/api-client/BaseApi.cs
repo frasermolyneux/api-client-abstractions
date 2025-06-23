@@ -71,10 +71,18 @@ public class BaseApi
 
         this.options = options.Value;
 
-        // Configure retry policy - safely handle null responses
-        int retryCount = this.options.MaxRetryCount > 0 ? this.options.MaxRetryCount : 3;
+        // Configure retry policy - simplified configuration
+        retryPolicy = CreateRetryPolicy(this.options.MaxRetryCount > 0 ? this.options.MaxRetryCount : 3);
+    }
 
-        retryPolicy = Policy
+    /// <summary>
+    /// Creates a retry policy with exponential backoff for handling transient failures.
+    /// </summary>
+    /// <param name="retryCount">The maximum number of retry attempts.</param>
+    /// <returns>A configured retry policy.</returns>
+    private AsyncRetryPolicy<RestResponse> CreateRetryPolicy(int retryCount)
+    {
+        return Policy
             .HandleResult<RestResponse>(r =>
                 r is null || !NoRetryStatusCodes.Contains(r.StatusCode))
             .WaitAndRetryAsync(
@@ -119,35 +127,72 @@ public class BaseApi
         var request = new RestRequest(resource, method);
 
         // Apply authentication based on the configured authentication type
-        if (options.AuthenticationOptions is ApiKeyAuthenticationOptions apiKeyOptions)
-        {
-            // Add API key header
-            request.AddHeader(apiKeyOptions.HeaderName, apiKeyOptions.ApiKey);
-            logger.LogDebug("Added API key authentication with header '{HeaderName}'", apiKeyOptions.HeaderName);
-        }
-        else if (options.AuthenticationOptions is EntraIdAuthenticationOptions entraIdOptions)
-        {
-            // Apply Entra ID token authentication
-            try
-            {
-                if (apiTokenProvider == null)
-                {
-                    throw new InvalidOperationException("IApiTokenProvider not available for Entra ID authentication");
-                }
-
-                string accessToken = await apiTokenProvider.GetAccessTokenAsync(entraIdOptions.ApiAudience, cancellationToken);
-                request.AddHeader(AuthorizationHeaderName, $"{BearerTokenPrefix}{accessToken}");
-                logger.LogDebug("Added Entra ID token authentication for audience '{Audience}'", entraIdOptions.ApiAudience);
-            }
-            catch (AuthenticationException ex)
-            {
-                logger.LogError(ex, "Failed to get authentication token for resource '{Resource}' with audience '{Audience}'",
-                    resource, entraIdOptions.ApiAudience);
-                throw;
-            }
-        }
+        await ApplyAuthenticationAsync(request, cancellationToken);
 
         return request;
+    }
+
+    /// <summary>
+    /// Applies the appropriate authentication to the request based on configuration.
+    /// </summary>
+    /// <param name="request">The request to authenticate.</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+    /// <exception cref="InvalidOperationException">Thrown when authentication is not properly configured.</exception>
+    /// <exception cref="AuthenticationException">Thrown when authentication token acquisition fails.</exception>
+    private async Task ApplyAuthenticationAsync(RestRequest request, CancellationToken cancellationToken)
+    {
+        switch (options.AuthenticationOptions)
+        {
+            case ApiKeyAuthenticationOptions apiKeyOptions:
+                ApplyApiKeyAuthentication(request, apiKeyOptions);
+                break;
+
+            case EntraIdAuthenticationOptions entraIdOptions:
+                await ApplyEntraIdAuthenticationAsync(request, entraIdOptions, cancellationToken);
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Applies API key authentication to the request.
+    /// </summary>
+    /// <param name="request">The request to authenticate.</param>
+    /// <param name="options">The API key authentication options.</param>
+    private void ApplyApiKeyAuthentication(RestRequest request, ApiKeyAuthenticationOptions options)
+    {
+        request.AddHeader(options.HeaderName, options.ApiKey);
+        logger.LogDebug("Added API key authentication with header '{HeaderName}'", options.HeaderName);
+    }
+
+    /// <summary>
+    /// Applies Entra ID token authentication to the request.
+    /// </summary>
+    /// <param name="request">The request to authenticate.</param>
+    /// <param name="options">The Entra ID authentication options.</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+    /// <exception cref="InvalidOperationException">Thrown when apiTokenProvider is not available.</exception>
+    /// <exception cref="AuthenticationException">Thrown when token acquisition fails.</exception>
+    private async Task ApplyEntraIdAuthenticationAsync(
+        RestRequest request,
+        EntraIdAuthenticationOptions options,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (apiTokenProvider == null)
+            {
+                throw new InvalidOperationException("IApiTokenProvider not available for Entra ID authentication");
+            }
+
+            string accessToken = await apiTokenProvider.GetAccessTokenAsync(options.ApiAudience, cancellationToken);
+            request.AddHeader(AuthorizationHeaderName, $"{BearerTokenPrefix}{accessToken}");
+            logger.LogDebug("Added Entra ID token authentication for audience '{Audience}'", options.ApiAudience);
+        }
+        catch (AuthenticationException ex)
+        {
+            logger.LogError(ex, "Failed to get authentication token for audience '{Audience}'", options.ApiAudience);
+            throw;
+        }
     }
 
     /// <summary>
@@ -163,16 +208,12 @@ public class BaseApi
     public async Task<RestResponse> ExecuteAsync(RestRequest request, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-
-        // Check for cancellation before proceeding
         cancellationToken.ThrowIfCancellationRequested();
 
         try
         {
             // Build the base URL with optional path prefix
-            string baseUrl = string.IsNullOrWhiteSpace(options.ApiPathPrefix)
-                ? options.BaseUrl
-                : $"{options.BaseUrl.TrimEnd('/')}/{options.ApiPathPrefix.TrimStart('/')}";
+            string baseUrl = BuildBaseUrl();
 
             // Execute the request with retry policy
             var response = await retryPolicy.ExecuteAsync(
@@ -183,40 +224,22 @@ public class BaseApi
             if (response is null)
             {
                 logger.LogError("Received null response for {Method} to '{Resource}'", request.Method, request.Resource);
-                throw new HttpRequestException(
-                    $"Failed {request.Method} to '{request.Resource}' - received null response");
+                throw new HttpRequestException($"Failed {request.Method} to '{request.Resource}' - received null response");
             }
 
-            // Handle based on status code
-            if (SuccessStatusCodes.Contains(response.StatusCode))
-            {
-                return response;
-            }
-            else if (ValidationStatusCodes.Contains(response.StatusCode))
-            {
-                logger.LogWarning("Validation error for {Method} to '{Resource}': {Content}",
-                    request.Method, request.Resource, response.Content);
-                throw new InvalidOperationException($"Validation failed: {response.Content}");
-            }
-            else
-            {
-                logger.LogError("HTTP error {StatusCode} for {Method} to '{Resource}': {Content}",
-                    response.StatusCode, request.Method, request.Resource, response.Content);
-                throw new HttpRequestException(
-                    $"Failed {request.Method} to '{request.Resource}' with status code {response.StatusCode}: {response.Content}");
-            }
+            return HandleResponse(response, request);
         }
         catch (OperationCanceledException)
         {
             logger.LogInformation("Request to '{Resource}' was canceled", request.Resource);
             throw;
         }
-        catch (HttpRequestException ex)
+        catch (HttpRequestException)
         {
             // Re-throw HttpRequestException - already logged
             throw;
         }
-        catch (InvalidOperationException ex)
+        catch (InvalidOperationException)
         {
             // Re-throw InvalidOperationException - already logged
             throw;
@@ -226,6 +249,46 @@ public class BaseApi
             logger.LogError(ex, "Unexpected error executing {Method} request to '{Resource}'",
                 request.Method, request.Resource);
             throw;
+        }
+    }
+
+    /// <summary>
+    /// Builds the base URL incorporating the API path prefix if specified.
+    /// </summary>
+    /// <returns>The complete base URL.</returns>
+    private string BuildBaseUrl()
+    {
+        return string.IsNullOrWhiteSpace(options.ApiPathPrefix)
+            ? options.BaseUrl
+            : $"{options.BaseUrl.TrimEnd('/')}/{options.ApiPathPrefix.TrimStart('/')}";
+    }
+
+    /// <summary>
+    /// Handles the REST response and processes according to status code.
+    /// </summary>
+    /// <param name="response">The REST response to handle.</param>
+    /// <param name="request">The original request for context in error messages.</param>
+    /// <returns>The response if successful.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when validation errors occur.</exception>
+    /// <exception cref="HttpRequestException">Thrown when a non-successful status code is returned.</exception>
+    private RestResponse HandleResponse(RestResponse response, RestRequest request)
+    {
+        if (SuccessStatusCodes.Contains(response.StatusCode))
+        {
+            return response;
+        }
+        else if (ValidationStatusCodes.Contains(response.StatusCode))
+        {
+            logger.LogWarning("Validation error for {Method} to '{Resource}': {Content}",
+                request.Method, request.Resource, response.Content);
+            throw new InvalidOperationException($"Validation failed: {response.Content}");
+        }
+        else
+        {
+            logger.LogError("HTTP error {StatusCode} for {Method} to '{Resource}': {Content}",
+                response.StatusCode, request.Method, request.Resource, response.Content);
+            throw new HttpRequestException(
+                $"Failed {request.Method} to '{request.Resource}' with status code {response.StatusCode}: {response.Content}");
         }
     }
 }
