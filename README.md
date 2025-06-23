@@ -172,7 +172,7 @@ public class UserService
 The library supports multiple authentication mechanisms:
 
 1. **API Keys**: Provided via `ApiClientOptions.PrimaryApiKey` and `ApiClientOptions.SecondaryApiKey`
-2. **Bearer Tokens**: Automatically managed and cached by `ApiTokenProvider`
+2. **Bearer Tokens**: Automatically managed and cached by `SimpleApiTokenProvider`
 3. **Azure Authentication**: Leverages `DefaultAzureCredential` for Azure resource access
 
 The `DefaultTokenCredentialProvider` attempts to authenticate via:

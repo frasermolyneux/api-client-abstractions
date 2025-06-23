@@ -149,39 +149,6 @@ public static class ServiceCollectionExtensions
     /// <param name="apiAudience">The API audience value for token acquisition.</param>
     /// <returns>The same service collection for method chaining.</returns>
     /// <exception cref="ArgumentNullException">Thrown if serviceCollection is null.</exception>
-    public static IServiceCollection WithEntraIdAuthenticationAndCustomCredentialProvider<TTokenCredentialProvider>(
-        this IServiceCollection serviceCollection,
-        string apiAudience)
-        where TTokenCredentialProvider : class, ITokenCredentialProvider
-    {
-        ArgumentNullException.ThrowIfNull(serviceCollection);
-
-        // Ensure that IMemoryCache is registered
-        serviceCollection.AddMemoryCache();
-
-        // Register the custom token credential provider
-        serviceCollection.AddSingleton<ITokenCredentialProvider, TTokenCredentialProvider>();
-
-        // Register the API token provider
-        serviceCollection.AddSingleton<IApiTokenProvider, SimpleApiTokenProvider>();
-
-        serviceCollection.Configure<ApiClientOptions>(options =>
-        {
-            options.AuthenticationOptions = new EntraIdAuthenticationOptions
-            {
-                ApiAudience = apiAudience
-            };
-        });
-
-        return serviceCollection;
-    }    /// <summary>
-         /// Registers a custom implementation of ITokenCredentialProvider and configures Entra ID authentication.
-         /// </summary>
-         /// <typeparam name="TTokenCredentialProvider">The type of the custom token credential provider.</typeparam>
-         /// <param name="serviceCollection">The service collection to add the services to.</param>
-         /// <param name="apiAudience">The API audience value for token acquisition.</param>
-         /// <returns>The same service collection for method chaining.</returns>
-         /// <exception cref="ArgumentNullException">Thrown if serviceCollection is null.</exception>
     public static IServiceCollection WithCustomCredentialProvider<TTokenCredentialProvider>(
         this IServiceCollection serviceCollection,
         string apiAudience)
@@ -189,7 +156,7 @@ public static class ServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(serviceCollection);
 
-        // Ensure that IMemoryCache is registered, as it's required by ApiTokenProvider
+        // Ensure that IMemoryCache is registered, as it's required by SimpleApiTokenProvider
         serviceCollection.AddMemoryCache();
 
         // Register the custom token credential provider
