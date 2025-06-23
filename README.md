@@ -7,7 +7,9 @@
 
 ## Overview
 
-This repository provides common abstractions and implementations for building robust API clients in .NET applications. The library offers standardized approaches for handling authentication, token management, request execution, and response processing when interacting with REST APIs.
+This repository provides common abstractions and implementations for building robust API clients in .NET applications. The library offers standardized approaches for handling authentication, token management, request execution, and response processing when interacting with REST APIs. 
+
+The implementation follows the v2 API design pattern, which provides a consistent approach to API interactions with standardized response formats, filtering, and pagination.
 
 ## Libraries
 
@@ -21,16 +23,21 @@ Core library providing the base API client implementation with support for:
 - Primary/secondary API key failover
 - Resilient HTTP requests with configurable retry policies
 - Thread-safe REST client management
+- Support for common query parameters and filtering options
 
 ### MxIO.ApiClient.Abstractions
 
-Contains common data transfer object definitions used across API implementations:
-- `ApiResponseDto` - Standard API response model
-- `CollectionDto` - Collection wrapper for API result sets
+Contains common model definitions used across API implementations:
+- `ApiResponse<T>` - Standard API response model following v2 API design
+- `HttpResponseWrapper<T>` - HTTP response wrapper containing API responses
+- `CollectionModel<T>` - Collection wrapper for API result sets
+- `ApiError` - Standardized error model
+- `ApiPagination` - Pagination information
+- `FilterOptions` - OData-like filtering options
 
 ### MxIO.ApiClient.WebExtensions
 
-Extension methods for working with API responses in web applications.
+Extension methods for working with API responses in web applications, including conversion to ActionResults.
 
 ## Installation
 

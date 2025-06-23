@@ -1,44 +1,53 @@
-# MxIO.ApiClient.Abstractions
+# API Client Abstractions
 
-A library containing common abstractions and DTOs for API clients in .NET applications. This package provides the fundamental data structures and interfaces for building API clients.
+This library provides abstractions for API responses and common API related models.
 
-## Features
+## Usage
 
-- Common API response DTOs 
-- Collection DTOs for paginated results
-- Base interfaces for implementing custom API clients
+The abstractions in this library help with standardizing API responses and models across different API clients and API implementations.
 
-## Installation
+### ApiResponse<T>
 
-```
-dotnet add package MxIO.ApiClient.Abstractions
-```
+The `ApiResponse<T>` class is a wrapper for API responses that includes:
 
-## Basic Usage
+- HTTP Status Code
+- Data payload
+- Error information
+- Pagination data
+- Metadata
 
-```csharp
-// Example of using the ApiResponseDto
-ApiResponseDto<MyData> response = await apiClient.GetDataAsync();
+### ApiError
 
-if (response.IsSuccess)
-{
-    MyData data = response.Data;
-    // Process data
-}
-else
-{
-    // Handle error
-    string errorMessage = response.Message;
-}
+The `ApiError` class provides a standardized format for API errors, including:
 
-// Example of working with collections
-CollectionDto<MyItem> collection = await apiClient.GetCollectionAsync();
-foreach (var item in collection.Items)
-{
-    // Process each item
-}
-```
+- Error code
+- Message
+- Target field (optional)
+- Details (optional nested errors)
 
-## License
+### ApiPagination
 
-GPL-3.0-only
+The `ApiPagination` class provides standardized pagination information including:
+
+- Total count of records
+- Current page
+- Page size
+- Next/previous page URLs
+
+### CollectionModel<T>
+
+The `CollectionModel<T>` class provides a standardized container for collections of resources, including:
+
+- Collection of items
+- Total count of items (before pagination)
+- Filtered count of items (after filters applied)
+- Metadata
+
+### FilterOptions
+
+The `FilterOptions` class provides standardized options for filtering API responses, including:
+
+- Skip (number of records to skip)
+- Top (number of records to take)
+- Filter expressions
+- Sort expressions

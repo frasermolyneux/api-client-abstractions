@@ -24,134 +24,127 @@ public static class RestResponseExtensions
     };
 
     /// <summary>
-    /// Converts a RestResponse to an ApiResponseDto.
+    /// Converts a RestResponse to an HttpResponseWrapper containing an ApiResponse.
     /// </summary>
     /// <param name="response">The RestSharp response to convert.</param>
-    /// <returns>A strongly-typed API response DTO object.</returns>
+    /// <returns>An HTTP response wrapper object.</returns>
     /// <exception cref="ArgumentNullException">Thrown when response is null.</exception>
-    public static ApiResponseDto ToApiResponse(this RestResponse response)
+    public static HttpResponseWrapper<object> ToHttpResponse(this RestResponse response)
     {
         ArgumentNullException.ThrowIfNull(response);
+
+        // Create HTTP response wrapper with the status code
+        var httpResponse = new HttpResponseWrapper<object>(response.StatusCode);
 
         // Special handling for HEAD requests which don't return content
         if (response.Request?.Method == Method.Head)
         {
-            return new ApiResponseDto(response.StatusCode);
+            return httpResponse;
         }
 
         if (string.IsNullOrWhiteSpace(response.Content))
         {
-            var nullContentResponse = new ApiResponseDto(HttpStatusCode.InternalServerError);
-            nullContentResponse.Errors.Add(NullContentError);
-            return nullContentResponse;
+            var apiResponse = new ApiResponse<object>(response.StatusCode);
+            apiResponse.Errors = new[] { new ApiError("NullContent", NullContentError) };
+            httpResponse.Result = apiResponse;
+            return httpResponse;
         }
 
         try
         {
-            var apiResponseDto = JsonConvert.DeserializeObject<ApiResponseDto>(response.Content, DefaultSerializerSettings);
+            // Try to deserialize directly to ApiResponse
+            var apiResponse = JsonConvert.DeserializeObject<ApiResponse<object>>(response.Content, DefaultSerializerSettings);
 
-            if (apiResponseDto is null)
+            if (apiResponse is null)
             {
-                var deserializationErrorResponse = new ApiResponseDto(HttpStatusCode.InternalServerError);
-                deserializationErrorResponse.Errors.Add(DeserializationError);
-                return deserializationErrorResponse;
+                var errorResponse = new ApiResponse<object>(response.StatusCode);
+                errorResponse.Errors = new[] { new ApiError("DeserializationError", DeserializationError) };
+                httpResponse.Result = errorResponse;
+                return httpResponse;
             }
 
-            // If the status code in the DTO is the default (0), create a new response with the proper status code
-            if (apiResponseDto.StatusCode == default)
+            // If the status code in the API response is the default (0), update it with the response status code
+            if (apiResponse.StatusCode == default)
             {
-                var newResponse = new ApiResponseDto(response.StatusCode);
-                foreach (var error in apiResponseDto.Errors)
-                {
-                    newResponse.Errors.Add(error);
-                }
-                return newResponse;
+                apiResponse.StatusCode = response.StatusCode;
             }
 
-            return apiResponseDto;
+            httpResponse.Result = apiResponse;
+            return httpResponse;
         }
         catch (JsonException ex)
         {
-            return CreateErrorResponse(HttpStatusCode.InternalServerError, $"JSON deserialization error: {ex.Message}");
+            var errorResponse = new ApiResponse<object>(response.StatusCode);
+            errorResponse.Errors = new[] { new ApiError("JsonError", $"JSON deserialization error: {ex.Message}") };
+            httpResponse.Result = errorResponse;
+            return httpResponse;
         }
         catch (Exception ex)
         {
-            return CreateErrorResponse(HttpStatusCode.InternalServerError, $"Unexpected error during response processing: {ex.Message}");
+            var errorResponse = new ApiResponse<object>(response.StatusCode);
+            errorResponse.Errors = new[] { new ApiError("UnexpectedError", $"Unexpected error during response processing: {ex.Message}") };
+            httpResponse.Result = errorResponse;
+            return httpResponse;
         }
     }
 
     /// <summary>
-    /// Converts a RestResponse to a generic ApiResponseDto with a strongly-typed result.
+    /// Converts a RestResponse to an HttpResponseWrapper containing a strongly-typed ApiResponse.
     /// </summary>
-    /// <typeparam name="T">The type of the result expected in the response.</typeparam>
+    /// <typeparam name="T">The type of the data expected in the response.</typeparam>
     /// <param name="response">The RestSharp response to convert.</param>
-    /// <returns>A strongly-typed API response DTO object with result of type T.</returns>
+    /// <returns>An HTTP response wrapper object with a strongly-typed API response.</returns>
     /// <exception cref="ArgumentNullException">Thrown when response is null.</exception>
-    public static ApiResponseDto<T> ToApiResponse<T>(this RestResponse response)
+    public static HttpResponseWrapper<T> ToHttpResponse<T>(this RestResponse response)
     {
         ArgumentNullException.ThrowIfNull(response);
 
+        // Create HTTP response wrapper with the status code
+        var httpResponse = new HttpResponseWrapper<T>(response.StatusCode);
+
         if (string.IsNullOrWhiteSpace(response.Content))
         {
-            return CreateErrorResponse<T>(HttpStatusCode.InternalServerError, NullContentError);
+            var apiResponse = new ApiResponse<T>(response.StatusCode);
+            apiResponse.Errors = new[] { new ApiError("NullContent", NullContentError) };
+            httpResponse.Result = apiResponse;
+            return httpResponse;
         }
 
         try
         {
-            var apiResponseDto = JsonConvert.DeserializeObject<ApiResponseDto<T>>(response.Content, DefaultSerializerSettings);
+            // Try to deserialize directly to ApiResponse<T>
+            var apiResponse = JsonConvert.DeserializeObject<ApiResponse<T>>(response.Content, DefaultSerializerSettings);
 
-            if (apiResponseDto is null)
+            if (apiResponse is null)
             {
-                return CreateErrorResponse<T>(HttpStatusCode.InternalServerError, DeserializationError);
+                var errorResponse = new ApiResponse<T>(response.StatusCode);
+                errorResponse.Errors = new[] { new ApiError("DeserializationError", DeserializationError) };
+                httpResponse.Result = errorResponse;
+                return httpResponse;
             }
 
-            // If the status code in the DTO is the default (0), create a new response with the proper status code
-            if (apiResponseDto.StatusCode == default)
+            // If the status code in the API response is the default (0), update it with the response status code
+            if (apiResponse.StatusCode == default)
             {
-                var newResponse = new ApiResponseDto<T>(response.StatusCode, apiResponseDto.Result);
-                foreach (var error in apiResponseDto.Errors)
-                {
-                    newResponse.Errors.Add(error);
-                }
-                return newResponse;
+                apiResponse.StatusCode = response.StatusCode;
             }
 
-            return apiResponseDto;
+            httpResponse.Result = apiResponse;
+            return httpResponse;
         }
         catch (JsonException ex)
         {
-            return CreateErrorResponse<T>(HttpStatusCode.InternalServerError, $"JSON deserialization error: {ex.Message}");
+            var errorResponse = new ApiResponse<T>(response.StatusCode);
+            errorResponse.Errors = new[] { new ApiError("JsonError", $"JSON deserialization error: {ex.Message}") };
+            httpResponse.Result = errorResponse;
+            return httpResponse;
         }
         catch (Exception ex)
         {
-            return CreateErrorResponse<T>(HttpStatusCode.InternalServerError, $"Unexpected error during response processing: {ex.Message}");
+            var errorResponse = new ApiResponse<T>(response.StatusCode);
+            errorResponse.Errors = new[] { new ApiError("UnexpectedError", $"Unexpected error during response processing: {ex.Message}") };
+            httpResponse.Result = errorResponse;
+            return httpResponse;
         }
-    }
-
-    /// <summary>
-    /// Creates an error response with a specific status code and error message.
-    /// </summary>
-    /// <param name="statusCode">The HTTP status code for the response.</param>
-    /// <param name="errorMessage">The error message to include.</param>
-    /// <returns>A configured ApiResponseDto with the error.</returns>
-    private static ApiResponseDto CreateErrorResponse(HttpStatusCode statusCode, string errorMessage)
-    {
-        var response = new ApiResponseDto(statusCode);
-        response.Errors.Add(errorMessage);
-        return response;
-    }
-
-    /// <summary>
-    /// Creates an error response with a specific status code and error message.
-    /// </summary>
-    /// <typeparam name="T">The type of the result in the response.</typeparam>
-    /// <param name="statusCode">The HTTP status code for the response.</param>
-    /// <param name="errorMessage">The error message to include.</param>
-    /// <returns>A configured ApiResponseDto with the error.</returns>
-    private static ApiResponseDto<T> CreateErrorResponse<T>(HttpStatusCode statusCode, string errorMessage)
-    {
-        var response = new ApiResponseDto<T>(statusCode);
-        response.Errors.Add(errorMessage);
-        return response;
     }
 }

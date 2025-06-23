@@ -2,6 +2,7 @@
 
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
+using System.Security.Authentication;
 
 namespace MxIO.ApiClient;
 
@@ -66,10 +67,9 @@ public class ApiTokenProvider : IApiTokenProvider
     /// </summary>
     /// <param name="audience">The audience for which the token is requested.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the request.</param>
-    /// <returns>The access token string.</returns>
-    /// <exception cref="ArgumentException">Thrown when the audience is null or empty.</exception>
+    /// <returns>The access token string.</returns>    /// <exception cref="ArgumentException">Thrown when the audience is null or empty.</exception>
     /// <exception cref="OperationCanceledException">Thrown when the operation is canceled.</exception>
-    /// <exception cref="ApiAuthenticationException">Thrown when token acquisition fails.</exception>
+    /// <exception cref="AuthenticationException">Thrown when token acquisition fails.</exception>
     public async Task<string> GetAccessTokenAsync(string audience, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrEmpty(audience))
@@ -149,7 +149,7 @@ public class ApiTokenProvider : IApiTokenProvider
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to get identity token for audience: '{Audience}'", audience);
-            throw new ApiAuthenticationException($"Failed to acquire authentication token for audience: '{audience}'", audience, ex);
+            throw new AuthenticationException($"Failed to acquire authentication token for audience: '{audience}'", ex);
         }
     }
 

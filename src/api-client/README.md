@@ -1,41 +1,84 @@
-# MxIO.ApiClient
+# API Client
 
-A generic API client helper library for .NET applications. This package provides a set of base classes and utilities for creating API clients with features including:
+This library provides a base implementation for creating strongly typed API clients with standardized error handling, authentication, and resilience features.
 
-- Token-based authentication support
-- Configurable retry policies
-- Centralized REST client management
-- Default Azure AD credential provider integration
+## Features
 
-## Installation
+- Support for multiple authentication methods (API Key and Entra ID)
+- Fluent API for easy configuration
+- Built-in retry policies with exponential backoff
+- Standardized error handling
+- Token caching for better performance
 
-```
-dotnet add package MxIO.ApiClient
-```
+## Usage
 
-## Basic Usage
+### Basic Setup
 
 ```csharp
-// Add API client services to your DI container
-services.AddApiClient(Configuration);
+// Register the API client services
+services.AddApiClient()
+    .WithApiKeyAuthentication("your-api-key");
 
-// Inject and use the base API in your services
-public class MyService
+// Or with Entra ID authentication
+services.AddApiClient()
+    .WithEntraIdAuthentication("api://your-api-audience");
+
+// Inject and use the BaseApi in your custom API client
+public class MyApiClient
 {
-    private readonly BaseApi _baseApi;
+    private readonly BaseApi baseApi;
 
-    public MyService(BaseApi baseApi)
+    public MyApiClient(BaseApi baseApi)
     {
-        _baseApi = baseApi;
+        this.baseApi = baseApi;
     }
 
-    public async Task DoSomething()
+    public async Task<MyResource> GetResourceAsync(string id, CancellationToken cancellationToken = default)
     {
-        // Use the API client
+        var request = await baseApi.CreateRequestAsync($"resources/{id}", Method.Get, cancellationToken);
+        var response = await baseApi.ExecuteAsync(request, cancellationToken);
+        
+        // Process response
+        return JsonConvert.DeserializeObject<MyResource>(response.Content);
     }
 }
 ```
 
-## License
+### Updating API Key at Runtime
 
-GPL-3.0-only
+```csharp
+// Inject IOptions<ApiClientOptions> and update
+var options = apiClientOptions.Value;
+options.UpdateApiKey("new-api-key");
+```
+
+## Authentication Methods
+
+### API Key Authentication
+
+Use this when your API requires an API key in a header (like Azure API Management).
+
+```csharp
+services.AddApiClient()
+    .WithApiKeyAuthentication("your-api-key", "X-API-Key"); // Custom header name
+```
+
+### Entra ID Authentication
+
+Use this when your API requires OAuth tokens from Entra ID (formerly Azure AD).
+
+```csharp
+services.AddApiClient()
+    .WithEntraIdAuthentication("api://your-api-audience");
+```
+
+With custom credential options:
+
+```csharp
+services.AddApiClient()
+    .WithEntraIdAuthentication("api://your-api-audience", options => 
+    {
+        options.ExcludeManagedIdentityCredential = true;
+        // Other DefaultAzureCredentialOptions
+    });
+```
