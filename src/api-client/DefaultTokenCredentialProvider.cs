@@ -8,7 +8,7 @@ namespace MxIO.ApiClient;
 /// <summary>
 /// Default implementation of ITokenCredentialProvider that uses DefaultAzureCredential.
 /// This provider is used to authenticate with Azure services using the DefaultAzureCredential,
-/// which tries multiple authentication methods in sequence.
+/// which tries multiple authentication methods in sequence such as Managed Identity and environment variables.
 /// </summary>
 public class DefaultTokenCredentialProvider : ITokenCredentialProvider
 {

@@ -35,9 +35,9 @@ public class ApiKeyAuthenticationOptions : AuthenticationOptions
 }
 
 /// <summary>
-/// Authentication options for Entra ID (formerly Azure AD) authentication.
+/// Base class for all Entra ID authentication options.
 /// </summary>
-public class EntraIdAuthenticationOptions : AuthenticationOptions
+public abstract class EntraIdAuthenticationOptions : AuthenticationOptions
 {
     /// <summary>
     /// Gets or sets the API audience value for token acquisition.
@@ -48,6 +48,34 @@ public class EntraIdAuthenticationOptions : AuthenticationOptions
     /// Gets the type of authentication.
     /// </summary>
     public override AuthenticationType AuthenticationType => AuthenticationType.EntraId;
+}
+
+/// <summary>
+/// Authentication options for Entra ID using Azure credentials (Managed Identity, environment variables, etc.).
+/// </summary>
+public class AzureCredentialAuthenticationOptions : EntraIdAuthenticationOptions
+{
+}
+
+/// <summary>
+/// Authentication options for Entra ID using client credentials (client ID and secret).
+/// </summary>
+public class ClientCredentialAuthenticationOptions : EntraIdAuthenticationOptions
+{
+    /// <summary>
+    /// Gets or sets the tenant (directory) ID for authentication.
+    /// </summary>
+    public string TenantId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the client (application) ID for authentication.
+    /// </summary>
+    public string ClientId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the client secret for authentication.
+    /// </summary>
+    public string ClientSecret { get; set; } = string.Empty;
 }
 
 /// <summary>

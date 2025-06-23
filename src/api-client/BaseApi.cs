@@ -127,15 +127,13 @@ public class BaseApi
         await ApplyAuthenticationAsync(request, cancellationToken);
 
         return request;
-    }
-
-    /// <summary>
-    /// Applies the appropriate authentication to the request based on configuration.
-    /// </summary>
-    /// <param name="request">The request to authenticate.</param>
-    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-    /// <exception cref="InvalidOperationException">Thrown when authentication is not properly configured.</exception>
-    /// <exception cref="AuthenticationException">Thrown when authentication token acquisition fails.</exception>
+    }    /// <summary>
+         /// Applies the appropriate authentication to the request based on configuration.
+         /// </summary>
+         /// <param name="request">The request to authenticate.</param>
+         /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+         /// <exception cref="InvalidOperationException">Thrown when authentication is not properly configured.</exception>
+         /// <exception cref="AuthenticationException">Thrown when authentication token acquisition fails.</exception>
     private async Task ApplyAuthenticationAsync(RestRequest request, CancellationToken cancellationToken)
     {
         switch (options.AuthenticationOptions)

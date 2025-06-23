@@ -62,43 +62,27 @@ public static class ServiceCollectionExtensions
         });
 
         return serviceCollection;
-    }
-
-    /// <summary>
-    /// Configures an API client with Entra ID (formerly Azure AD) authentication.
-    /// </summary>
-    /// <param name="serviceCollection">The service collection to add the services to.</param>
-    /// <param name="apiAudience">The API audience value for token acquisition.</param>
-    /// <returns>The same service collection for method chaining.</returns>
-    /// <exception cref="ArgumentNullException">Thrown if serviceCollection is null.</exception>
+    }    /// <summary>
+         /// Configures an API client with Entra ID (formerly Azure AD) authentication.
+         /// This method is maintained for backward compatibility.
+         /// Consider using WithAzureCredentials or WithClientCredentials instead.
+         /// </summary>
+         /// <param name="serviceCollection">The service collection to add the services to.</param>
+         /// <param name="apiAudience">The API audience value for token acquisition.</param>
+         /// <returns>The same service collection for method chaining.</returns>
+         /// <exception cref="ArgumentNullException">Thrown if serviceCollection is null.</exception>
     public static IServiceCollection WithEntraIdAuthentication(
         this IServiceCollection serviceCollection,
         string apiAudience)
     {
-        ArgumentNullException.ThrowIfNull(serviceCollection);
-
-        // Ensure that IMemoryCache is registered
-        serviceCollection.AddMemoryCache();
-
-        // Register the token credential provider
-        serviceCollection.AddSingleton<ITokenCredentialProvider, DefaultTokenCredentialProvider>();
-
-        // Register the API token provider
-        serviceCollection.AddSingleton<IApiTokenProvider, ApiTokenProvider>();
-
-        serviceCollection.Configure<ApiClientOptions>(options =>
-        {
-            options.AuthenticationOptions = new EntraIdAuthenticationOptions
-            {
-                ApiAudience = apiAudience
-            };
-        });
-
-        return serviceCollection;
+        // Forward to the more specific implementation
+        return serviceCollection.WithAzureCredentials(apiAudience);
     }
 
     /// <summary>
     /// Configures an API client with Entra ID (formerly Azure AD) authentication and custom DefaultAzureCredentialOptions.
+    /// This method is maintained for backward compatibility.
+    /// Consider using WithAzureCredentials instead.
     /// </summary>
     /// <param name="serviceCollection">The service collection to add the services to.</param>
     /// <param name="apiAudience">The API audience value for token acquisition.</param>
@@ -110,35 +94,8 @@ public static class ServiceCollectionExtensions
         string apiAudience,
         Action<DefaultAzureCredentialOptions> configureCredentialOptions)
     {
-        ArgumentNullException.ThrowIfNull(serviceCollection);
-        ArgumentNullException.ThrowIfNull(configureCredentialOptions);
-
-        // Configure Azure credential options
-        serviceCollection.Configure(configureCredentialOptions);
-
-        // Ensure that IMemoryCache is registered
-        serviceCollection.AddMemoryCache();
-
-        // Register the token credential provider with configured options
-        serviceCollection.AddSingleton<ITokenCredentialProvider>(sp =>
-        {
-            var options = sp.GetRequiredService<IOptions<DefaultAzureCredentialOptions>>();
-            var logger = sp.GetService<Microsoft.Extensions.Logging.ILogger<DefaultTokenCredentialProvider>>();
-            return new DefaultTokenCredentialProvider(logger, options);
-        });
-
-        // Register the API token provider
-        serviceCollection.AddSingleton<IApiTokenProvider, ApiTokenProvider>();
-
-        serviceCollection.Configure<ApiClientOptions>(options =>
-        {
-            options.AuthenticationOptions = new EntraIdAuthenticationOptions
-            {
-                ApiAudience = apiAudience
-            };
-        });
-
-        return serviceCollection;
+        // Forward to the more specific implementation
+        return serviceCollection.WithAzureCredentials(apiAudience, configureCredentialOptions);
     }
 
     /// <summary>
@@ -163,11 +120,9 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddSingleton<ITokenCredentialProvider, TTokenCredentialProvider>();
 
         // Register the API token provider
-        serviceCollection.AddSingleton<IApiTokenProvider, ApiTokenProvider>();
-
-        serviceCollection.Configure<ApiClientOptions>(options =>
+        serviceCollection.AddSingleton<IApiTokenProvider, ApiTokenProvider>(); serviceCollection.Configure<ApiClientOptions>(options =>
         {
-            options.AuthenticationOptions = new EntraIdAuthenticationOptions
+            options.AuthenticationOptions = new AzureCredentialAuthenticationOptions
             {
                 ApiAudience = apiAudience
             };
