@@ -8,9 +8,9 @@ namespace MxIO.ApiClient;
 /// <summary>
 /// A simplified token provider implementation for API authentication.
 /// </summary>
-public class SimpleApiTokenProvider : IApiTokenProvider
+public class ApiTokenProvider : IApiTokenProvider
 {
-    private readonly ILogger<SimpleApiTokenProvider> logger;
+    private readonly ILogger<ApiTokenProvider> logger;
     private readonly IMemoryCache memoryCache;
     private readonly ITokenCredentialProvider tokenCredentialProvider;
     private readonly TimeSpan tokenExpiryBuffer;
@@ -19,13 +19,13 @@ public class SimpleApiTokenProvider : IApiTokenProvider
     private static readonly TimeSpan DefaultExpiryBuffer = TimeSpan.FromMinutes(5);
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="SimpleApiTokenProvider"/> class.
+    /// Initializes a new instance of the <see cref="ApiTokenProvider"/> class.
     /// </summary>
     /// <param name="logger">The logger for recording diagnostic information.</param>
     /// <param name="memoryCache">The memory cache for storing acquired tokens.</param>
     /// <param name="tokenCredentialProvider">The provider for token credentials.</param>
-    public SimpleApiTokenProvider(
-        ILogger<SimpleApiTokenProvider> logger,
+    public ApiTokenProvider(
+        ILogger<ApiTokenProvider> logger,
         IMemoryCache memoryCache,
         ITokenCredentialProvider tokenCredentialProvider)
         : this(logger, memoryCache, tokenCredentialProvider, DefaultExpiryBuffer)
@@ -33,14 +33,14 @@ public class SimpleApiTokenProvider : IApiTokenProvider
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="SimpleApiTokenProvider"/> class with a custom token expiry buffer.
+    /// Initializes a new instance of the <see cref="ApiTokenProvider"/> class with a custom token expiry buffer.
     /// </summary>
     /// <param name="logger">The logger for recording diagnostic information.</param>
     /// <param name="memoryCache">The memory cache for storing acquired tokens.</param>
     /// <param name="tokenCredentialProvider">The provider for token credentials.</param>
     /// <param name="tokenExpiryBuffer">Time buffer before token expiry to consider a token expired.</param>
-    public SimpleApiTokenProvider(
-        ILogger<SimpleApiTokenProvider> logger,
+    public ApiTokenProvider(
+        ILogger<ApiTokenProvider> logger,
         IMemoryCache memoryCache,
         ITokenCredentialProvider tokenCredentialProvider,
         TimeSpan tokenExpiryBuffer)

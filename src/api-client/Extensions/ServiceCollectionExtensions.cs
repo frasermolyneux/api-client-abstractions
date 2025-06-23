@@ -84,7 +84,7 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddSingleton<ITokenCredentialProvider, DefaultTokenCredentialProvider>();
 
         // Register the API token provider
-        serviceCollection.AddSingleton<IApiTokenProvider, SimpleApiTokenProvider>();
+        serviceCollection.AddSingleton<IApiTokenProvider, ApiTokenProvider>();
 
         serviceCollection.Configure<ApiClientOptions>(options =>
         {
@@ -128,7 +128,7 @@ public static class ServiceCollectionExtensions
         });
 
         // Register the API token provider
-        serviceCollection.AddSingleton<IApiTokenProvider, SimpleApiTokenProvider>();
+        serviceCollection.AddSingleton<IApiTokenProvider, ApiTokenProvider>();
 
         serviceCollection.Configure<ApiClientOptions>(options =>
         {
@@ -163,7 +163,7 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddSingleton<ITokenCredentialProvider, TTokenCredentialProvider>();
 
         // Register the API token provider
-        serviceCollection.AddSingleton<IApiTokenProvider, SimpleApiTokenProvider>();
+        serviceCollection.AddSingleton<IApiTokenProvider, ApiTokenProvider>();
 
         serviceCollection.Configure<ApiClientOptions>(options =>
         {
