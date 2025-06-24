@@ -21,15 +21,17 @@ public class ApiClientOptions
     /// Gets or sets the authentication options for this API client.
     /// Can be null if no authentication is required.
     /// </summary>
-    public AuthenticationOptions? AuthenticationOptions { get; set; }    /// <summary>
-                                                                         /// Gets or sets an optional path prefix to append to the base URL.
-                                                                         /// </summary>
-                                                                         /// <remarks>
-                                                                         /// When provided, this value will be appended to the BaseUrl with appropriate
-                                                                         /// handling of slashes to form the complete endpoint URL.
-                                                                         /// For example, if BaseUrl is "https://api.example.com" and ApiPathPrefix is "v1",
-                                                                         /// the resulting URL used for requests will be "https://api.example.com/v1".
-                                                                         /// </remarks>
+    public AuthenticationOptions? AuthenticationOptions { get; set; }
+
+    /// <summary>
+    /// Gets or sets an optional path prefix to append to the base URL.
+    /// </summary>
+    /// <remarks>
+    /// When provided, this value will be appended to the BaseUrl with appropriate
+    /// handling of slashes to form the complete endpoint URL.
+    /// For example, if BaseUrl is "https://api.example.com" and ApiPathPrefix is "v1",
+    /// the resulting URL used for requests will be "https://api.example.com/v1".
+    /// </remarks>
     public string? ApiPathPrefix { get; set; }
 
     /// <summary>
