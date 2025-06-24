@@ -31,8 +31,113 @@ public static class ServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(serviceCollection);
 
         // Ensure that IMemoryCache is registered
-        serviceCollection.AddMemoryCache();        // Register the REST client service
+        serviceCollection.AddMemoryCache();
+
+        // Register the REST client service
         serviceCollection.AddSingleton<IRestClientService, RestClientService>();
+
+        return serviceCollection;
+    }
+
+    /// <summary>
+    /// Configures all API client options at once using an instance of <see cref="ApiClientOptions"/> or an action to configure it.
+    /// </summary>
+    /// <param name="serviceCollection">The service collection to configure.</param>
+    /// <param name="optionsOrConfigureAction">Either an instance of ApiClientOptions or an action to configure the options.</param>
+    /// <returns>The same service collection for method chaining.</returns>
+    /// <exception cref="ArgumentNullException">Thrown if serviceCollection is null.</exception>
+    public static IServiceCollection WithOptions(
+        this IServiceCollection serviceCollection,
+        object optionsOrConfigureAction)
+    {
+        ArgumentNullException.ThrowIfNull(serviceCollection);
+        ArgumentNullException.ThrowIfNull(optionsOrConfigureAction);
+
+        if (optionsOrConfigureAction is ApiClientOptions options)
+        {
+            // Configuring with an existing options instance
+            serviceCollection.Configure<ApiClientOptions>(o =>
+            {
+                o.BaseUrl = options.BaseUrl;
+                o.AuthenticationOptions = options.AuthenticationOptions;
+                o.ApiPathPrefix = options.ApiPathPrefix;
+                o.MaxRetryCount = options.MaxRetryCount;
+            });
+
+            // Register token providers if using Entra ID authentication
+            if (options.AuthenticationOptions is EntraIdAuthenticationOptions)
+            {
+                // Ensure that IMemoryCache is registered
+                serviceCollection.AddMemoryCache();
+
+                // Register the token credential provider if using Azure credentials
+                if (options.AuthenticationOptions is AzureCredentialAuthenticationOptions)
+                {
+                    serviceCollection.AddSingleton<ITokenCredentialProvider, DefaultTokenCredentialProvider>();
+                }
+                // Register the token credential provider if using client credentials
+                else if (options.AuthenticationOptions is ClientCredentialAuthenticationOptions clientCredOptions)
+                {
+                    serviceCollection.AddSingleton<ITokenCredentialProvider>(sp =>
+                    {
+                        var logger = sp.GetService<ILogger<ClientCredentialProvider>>();
+                        return new ClientCredentialProvider(logger,
+                            clientCredOptions.TenantId,
+                            clientCredOptions.ClientId,
+                            clientCredOptions.ClientSecret);
+                    });
+                }
+
+                // Register the API token provider for all Entra ID authentication types
+                serviceCollection.AddSingleton<IApiTokenProvider, ApiTokenProvider>();
+            }
+        }
+        else if (optionsOrConfigureAction is Action<ApiClientOptions> configureAction)
+        {
+            // Configuring with an action
+            serviceCollection.Configure<ApiClientOptions>(configureAction);
+
+            // Since we can't determine the authentication type here, 
+            // let the caller register any required additional services
+        }
+        else
+        {
+            throw new ArgumentException(
+                "Parameter must be either an ApiClientOptions instance or an Action<ApiClientOptions>",
+                nameof(optionsOrConfigureAction));
+        }
+
+        return serviceCollection;
+    }
+
+    /// <summary>
+    /// Configures the base URL for the API client.
+    /// </summary>
+    /// <param name="serviceCollection">The service collection to configure.</param>
+    /// <param name="baseUrl">The base URL of the API.</param>
+    /// <param name="configureOptions">Optional action to configure additional options.</param>
+    /// <returns>The same service collection for method chaining.</returns>
+    /// <exception cref="ArgumentNullException">Thrown if serviceCollection is null.</exception>
+    /// <exception cref="ArgumentException">Thrown if baseUrl is null or empty.</exception>
+    public static IServiceCollection WithBaseUrl(
+        this IServiceCollection serviceCollection,
+        string baseUrl,
+        Action<ApiClientOptions>? configureOptions = null)
+    {
+        ArgumentNullException.ThrowIfNull(serviceCollection);
+
+        if (string.IsNullOrEmpty(baseUrl))
+        {
+            throw new ArgumentException("Base URL cannot be null or empty", nameof(baseUrl));
+        }
+
+        serviceCollection.Configure<ApiClientOptions>(options =>
+        {
+            options.BaseUrl = baseUrl;
+
+            // Apply any additional configuration
+            configureOptions?.Invoke(options);
+        });
 
         return serviceCollection;
     }

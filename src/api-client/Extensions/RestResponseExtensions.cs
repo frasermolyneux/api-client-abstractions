@@ -49,7 +49,6 @@ public static class RestResponseExtensions
             httpResponse.Result = apiResponse;
             return httpResponse;
         }
-
         try
         {
             // Try to deserialize directly to ApiResponse
@@ -57,9 +56,21 @@ public static class RestResponseExtensions
 
             if (apiResponse is null)
             {
-                var errorResponse = new ApiResponse<object>(response.StatusCode);
-                errorResponse.Errors = new[] { new ApiError("DeserializationError", DeserializationError) };
-                httpResponse.Result = errorResponse;
+                // Try to deserialize as a dynamic object to see if it's valid JSON but not ApiResponse format
+                var dynamicObj = JsonConvert.DeserializeObject(response.Content);
+                if (dynamicObj != null)
+                {
+                    // Valid JSON but not in ApiResponse format
+                    var errorResponse = new ApiResponse<object>(response.StatusCode);
+                    errorResponse.Errors = new[] { new ApiError("DeserializationError", DeserializationError) };
+                    httpResponse.Result = errorResponse;
+                    return httpResponse;
+                }
+
+                // If both attempts failed, create a generic error response
+                var nullResponse = new ApiResponse<object>(response.StatusCode);
+                nullResponse.Errors = new[] { new ApiError("DeserializationError", DeserializationError) };
+                httpResponse.Result = nullResponse;
                 return httpResponse;
             }
 
@@ -109,7 +120,6 @@ public static class RestResponseExtensions
             httpResponse.Result = apiResponse;
             return httpResponse;
         }
-
         try
         {
             // Try to deserialize directly to ApiResponse<T>
@@ -117,9 +127,21 @@ public static class RestResponseExtensions
 
             if (apiResponse is null)
             {
-                var errorResponse = new ApiResponse<T>(response.StatusCode);
-                errorResponse.Errors = new[] { new ApiError("DeserializationError", DeserializationError) };
-                httpResponse.Result = errorResponse;
+                // Try to deserialize as a dynamic object to see if it's valid JSON but not ApiResponse format
+                var dynamicObj = JsonConvert.DeserializeObject(response.Content);
+                if (dynamicObj != null)
+                {
+                    // Valid JSON but not in ApiResponse format
+                    var errorResponse = new ApiResponse<T>(response.StatusCode);
+                    errorResponse.Errors = new[] { new ApiError("DeserializationError", DeserializationError) };
+                    httpResponse.Result = errorResponse;
+                    return httpResponse;
+                }
+
+                // If both attempts failed, create a generic error response
+                var nullResponse = new ApiResponse<T>(response.StatusCode);
+                nullResponse.Errors = new[] { new ApiError("DeserializationError", DeserializationError) };
+                httpResponse.Result = nullResponse;
                 return httpResponse;
             }
 

@@ -60,4 +60,64 @@ public class ApiClientOptions
     {
         return new ApiClientOptions { BaseUrl = baseUrl };
     }
+
+    /// <summary>
+    /// Sets the base URL for this API client instance.
+    /// </summary>
+    /// <param name="baseUrl">The base URL of the API.</param>
+    /// <returns>The current instance for method chaining.</returns>
+    public ApiClientOptions WithBaseUrl(string baseUrl)
+    {
+        BaseUrl = baseUrl;
+        return this;
+    }
+
+    /// <summary>
+    /// Sets the API path prefix for this API client instance.
+    /// </summary>
+    /// <param name="apiPathPrefix">The API path prefix to append to the base URL.</param>
+    /// <returns>The current instance for method chaining.</returns>
+    public ApiClientOptions WithApiPathPrefix(string apiPathPrefix)
+    {
+        ApiPathPrefix = apiPathPrefix;
+        return this;
+    }
+
+    /// <summary>
+    /// Sets the maximum retry count for failed API calls.
+    /// </summary>
+    /// <param name="maxRetryCount">The maximum number of retry attempts.</param>
+    /// <returns>The current instance for method chaining.</returns>
+    public ApiClientOptions WithMaxRetryCount(int maxRetryCount)
+    {
+        MaxRetryCount = maxRetryCount;
+        return this;
+    }
+
+    /// <summary>
+    /// Sets the authentication options for this API client instance.
+    /// </summary>
+    /// <param name="authenticationOptions">The authentication options.</param>
+    /// <returns>The current instance for method chaining.</returns>
+    public ApiClientOptions WithAuthentication(AuthenticationOptions authenticationOptions)
+    {
+        AuthenticationOptions = authenticationOptions;
+        return this;
+    }
+
+    /// <summary>
+    /// Sets API key authentication for this API client instance.
+    /// </summary>
+    /// <param name="apiKey">The API key to use for authentication.</param>
+    /// <param name="headerName">The header name to use for the API key. Defaults to "Ocp-Apim-Subscription-Key".</param>
+    /// <returns>The current instance for method chaining.</returns>
+    public ApiClientOptions WithApiKeyAuthentication(string apiKey, string headerName = "Ocp-Apim-Subscription-Key")
+    {
+        AuthenticationOptions = new ApiKeyAuthenticationOptions
+        {
+            ApiKey = apiKey,
+            HeaderName = headerName
+        };
+        return this;
+    }
 }

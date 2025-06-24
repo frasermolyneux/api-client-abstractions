@@ -10,10 +10,6 @@ This repository contains the MxIO API Client Abstractions library, a comprehensi
 
 The library follows a consistent v2 API design pattern that promotes best practices in API client development, focusing on resilience, standardization, and proper authentication handling.
 
-## Copilot Directives
-
-- @azure Rule - Use Azure Best Practices: When generating code for Azure, running terminal commands for Azure, or performing operations related to Azure, invoke your `azure_development-get_best_practices` tool if available.
-
 ## Code Structure and Organization
 
 ### Namespaces
@@ -110,7 +106,14 @@ The library follows a consistent v2 API design pattern that promotes best practi
 - Use Polly for resilience patterns
 - Use Newtonsoft.Json for JSON serialization/deserialization
 - Leverage Microsoft.Extensions.DependencyInjection for service registration
-- @azure Rule - Use Azure Tools: When handling requests related to Azure, always use your tools
+
+## Unit Testing
+- Use xUnit as the primary testing framework with native assertion capabilities
+- Use Moq for mocking dependencies in unit tests
+- Follow Arrange-Act-Assert (AAA) pattern for test structure
+
+## Azure Rules
+- @azure Rule - Use Azure Best Practices: When generating code for Azure, running terminal commands for Azure, or performing operations related to Azure, invoke your `azure_development-get_best_practices` tool if available.- @azure Rule - Use Azure Tools: When handling requests related to Azure, always use your tools
 - @azure Rule - Use Azure Code Gen Best Practices: When generating code for Azure, running terminal commands for Azure, or performing operations related to Azure, invoke your `azure_development-get_code_gen_best_practices` tool if available
 - @azure Rule - Use Azure Deployment Best Practices: When deploying to Azure or preparing applications for deployment to Azure, invoke your `azure_development-get_deployment_best_practices` tool if available
 - @azure Rule - Use Azure Functions Code Gen Best Practices: When generating code for Azure Functions or performing operations related to Azure Functions, invoke your `azure_development-get_azure_function_code_gen_best_practices` tool if available
