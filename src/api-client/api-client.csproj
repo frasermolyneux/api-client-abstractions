@@ -18,12 +18,12 @@
     <PackageLicenseExpression>GPL-3.0-only</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
-
   <ItemGroup>
 	<PackageReference Include="Azure.Identity" Version="1.14.0" />
 	<PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="9.0.6" />
 	<PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.6" />
 	<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.6" />
+	<PackageReference Include="Microsoft.Extensions.Http" Version="9.0.6" />
 	<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.6" />
 	<PackageReference Include="Microsoft.Extensions.Options" Version="9.0.6" />
 	<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />

@@ -12,29 +12,27 @@ namespace MxIO.ApiClient.Extensions;
 /// Provides extension methods for <see cref="IServiceCollection"/> to register and configure API client services.
 /// </summary>
 public static class ServiceCollectionExtensions
-{
-    /// <summary>
-    /// Registers the required API client services with the service collection.
-    /// </summary>
-    /// <remarks>
-    /// This method registers the following core services:
-    /// <list type="bullet">
-    ///   <item><description><see cref="IRestClientSingleton"/> as a singleton</description></item>
-    ///   <item><description><see cref="IMemoryCache"/> if not already registered</description></item>
-    /// </list>
-    /// </remarks>
-    /// <param name="serviceCollection">The service collection to add the services to.</param>
-    /// <returns>The same service collection for method chaining.</returns>
-    /// <exception cref="ArgumentNullException">Thrown if serviceCollection is null.</exception>
+{    /// <summary>
+     /// Registers the required API client services with the service collection.
+     /// </summary>
+     /// <remarks>
+     /// This method registers the following core services:
+     /// <list type="bullet">
+     ///   <item><description><see cref="IRestClientService"/> as a singleton</description></item>
+     ///   <item><description><see cref="IMemoryCache"/> if not already registered</description></item>
+     ///   <item><description>HttpClientFactory for connection pooling</description></item>
+     /// </list>
+     /// </remarks>
+     /// <param name="serviceCollection">The service collection to add the services to.</param>
+     /// <returns>The same service collection for method chaining.</returns>
+     /// <exception cref="ArgumentNullException">Thrown if serviceCollection is null.</exception>
     public static IServiceCollection AddApiClient(this IServiceCollection serviceCollection)
     {
         ArgumentNullException.ThrowIfNull(serviceCollection);
 
         // Ensure that IMemoryCache is registered
-        serviceCollection.AddMemoryCache();
-
-        // Register the REST client singleton
-        serviceCollection.AddSingleton<IRestClientSingleton, RestClientSingleton>();
+        serviceCollection.AddMemoryCache();        // Register the REST client service
+        serviceCollection.AddSingleton<IRestClientService, RestClientService>();
 
         return serviceCollection;
     }

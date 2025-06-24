@@ -24,11 +24,9 @@ namespace MxIO.ApiClient;
 public class BaseApi
 {
     private const string AuthorizationHeaderName = "Authorization";
-    private const string BearerTokenPrefix = "Bearer ";
-
-    private readonly ILogger<BaseApi> logger;
+    private const string BearerTokenPrefix = "Bearer "; private readonly ILogger<BaseApi> logger;
     private readonly IApiTokenProvider? apiTokenProvider;
-    private readonly IRestClientSingleton restClientSingleton;
+    private readonly IRestClientService restClientService;
     private readonly ApiClientOptions options;
 
     private readonly AsyncRetryPolicy<RestResponse> retryPolicy; private static readonly HttpStatusCode[] SuccessStatusCodes = { HttpStatusCode.OK, HttpStatusCode.Created, HttpStatusCode.NoContent, HttpStatusCode.NotFound };
@@ -38,20 +36,19 @@ public class BaseApi
     /// Initializes a new instance of the <see cref="BaseApi"/> class.
     /// </summary>
     /// <param name="logger">The logger instance.</param>
-    /// <param name="apiTokenProvider">The optional API token provider (required for Entra ID authentication).</param>
-    /// <param name="restClientSingleton">The REST client singleton.</param>
+    /// <param name="apiTokenProvider">The optional API token provider (required for Entra ID authentication).</param>    /// <param name="restClientService">The REST client service.</param>
     /// <param name="options">The API client options.</param>
     /// <exception cref="ArgumentNullException">Thrown when any required dependency is null.</exception>
     /// <exception cref="ArgumentException">Thrown when required options are missing.</exception>
     public BaseApi(
         ILogger<BaseApi> logger,
         IApiTokenProvider? apiTokenProvider,
-        IRestClientSingleton restClientSingleton,
+        IRestClientService restClientService,
         IOptions<ApiClientOptions> options)
     {
         this.logger = logger ?? new NullLogger<BaseApi>();
         this.apiTokenProvider = apiTokenProvider;
-        this.restClientSingleton = restClientSingleton ?? throw new ArgumentNullException(nameof(restClientSingleton));
+        this.restClientService = restClientService ?? throw new ArgumentNullException(nameof(restClientService));
 
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(options.Value);
@@ -208,11 +205,9 @@ public class BaseApi
         try
         {
             // Build the base URL with optional path prefix
-            string baseUrl = BuildBaseUrl();
-
-            // Execute the request with retry policy
+            string baseUrl = BuildBaseUrl();            // Execute the request with retry policy
             var response = await retryPolicy.ExecuteAsync(
-                async (token) => await restClientSingleton.ExecuteAsync(baseUrl, request, token),
+                async (token) => await restClientService.ExecuteAsync(baseUrl, request, token),
                 cancellationToken);
 
             // Ensure response is not null to prevent NullReferenceException
