@@ -23,7 +23,6 @@ public class DefaultTokenCredentialProvider : ITokenCredentialProvider
         : this(null, new DefaultAzureCredentialOptions
         {
             ExcludeSharedTokenCacheCredential = true,
-            ExcludeVisualStudioCodeCredential = false,
             ExcludeAzurePowerShellCredential = false,
             ExcludeEnvironmentCredential = false,
             ExcludeManagedIdentityCredential = false
@@ -74,10 +73,9 @@ public class DefaultTokenCredentialProvider : ITokenCredentialProvider
     public Task<TokenCredential> GetTokenCredentialAsync(CancellationToken cancellationToken = default)
     {
         logger?.LogDebug("Creating DefaultAzureCredential asynchronously with authentication settings: ManagedIdentity={ManagedIdentityEnabled}, " +
-                         "Environment={EnvironmentEnabled}, VisualStudioCode={VSCodeEnabled}, AzurePowerShell={PowerShellEnabled}",
+                         "Environment={EnvironmentEnabled}, AzurePowerShell={PowerShellEnabled}",
             !options.ExcludeManagedIdentityCredential,
             !options.ExcludeEnvironmentCredential,
-            !options.ExcludeVisualStudioCodeCredential,
             !options.ExcludeAzurePowerShellCredential);
 
         // Creating DefaultAzureCredential is not an async operation,
