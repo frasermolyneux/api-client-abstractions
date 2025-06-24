@@ -72,6 +72,9 @@ public class ClientCredentialProvider : ITokenCredentialProvider
     /// <returns>A task containing a ClientSecretCredential instance for token acquisition.</returns>
     public Task<TokenCredential> GetTokenCredentialAsync(CancellationToken cancellationToken = default)
     {
+        // Check for cancellation before proceeding
+        cancellationToken.ThrowIfCancellationRequested();
+
         logger?.LogDebug("Creating ClientSecretCredential for client ID: {ClientId}, tenant ID: {TenantId}",
             clientId, tenantId);
 

@@ -24,19 +24,23 @@ namespace MxIO.ApiClient;
 public class BaseApi
 {
     private const string AuthorizationHeaderName = "Authorization";
-    private const string BearerTokenPrefix = "Bearer "; private readonly ILogger<BaseApi> logger;
+    private const string BearerTokenPrefix = "Bearer ";
+
+    private readonly ILogger<BaseApi> logger;
     private readonly IApiTokenProvider? apiTokenProvider;
     private readonly IRestClientService restClientService;
     private readonly ApiClientOptions options;
+    private readonly AsyncRetryPolicy<RestResponse> retryPolicy;
 
-    private readonly AsyncRetryPolicy<RestResponse> retryPolicy; private static readonly HttpStatusCode[] SuccessStatusCodes = { HttpStatusCode.OK, HttpStatusCode.Created, HttpStatusCode.NoContent, HttpStatusCode.NotFound };
+    private static readonly HttpStatusCode[] SuccessStatusCodes = { HttpStatusCode.OK, HttpStatusCode.Created, HttpStatusCode.NoContent, HttpStatusCode.NotFound };
     private static readonly HttpStatusCode[] NoRetryStatusCodes = { HttpStatusCode.OK, HttpStatusCode.Created, HttpStatusCode.NoContent, HttpStatusCode.NotFound, HttpStatusCode.Unauthorized, HttpStatusCode.BadRequest, HttpStatusCode.UnprocessableEntity };
 
     /// <summary>
     /// Initializes a new instance of the <see cref="BaseApi"/> class.
     /// </summary>
     /// <param name="logger">The logger instance.</param>
-    /// <param name="apiTokenProvider">The optional API token provider (required for Entra ID authentication).</param>    /// <param name="restClientService">The REST client service.</param>
+    /// <param name="apiTokenProvider">The optional API token provider (required for Entra ID authentication).</param>
+    /// <param name="restClientService">The REST client service.</param>
     /// <param name="options">The API client options.</param>
     /// <exception cref="ArgumentNullException">Thrown when any required dependency is null.</exception>
     /// <exception cref="ArgumentException">Thrown when required options are missing.</exception>
@@ -94,6 +98,8 @@ public class BaseApi
                         this.logger.LogWarning("Request failed with null response. Waiting {Timespan} before next retry. Retry attempt {RetryCount}",
                             timespan, attemptCount);
                     }
+
+                    return Task.CompletedTask;
                 }
             );
     }
@@ -124,13 +130,15 @@ public class BaseApi
         await ApplyAuthenticationAsync(request, cancellationToken);
 
         return request;
-    }    /// <summary>
-         /// Applies the appropriate authentication to the request based on configuration.
-         /// </summary>
-         /// <param name="request">The request to authenticate.</param>
-         /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
-         /// <exception cref="InvalidOperationException">Thrown when authentication is not properly configured.</exception>
-         /// <exception cref="AuthenticationException">Thrown when authentication token acquisition fails.</exception>
+    }
+
+    /// <summary>
+    /// Applies the appropriate authentication to the request based on configuration.
+    /// </summary>
+    /// <param name="request">The request to authenticate.</param>
+    /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
+    /// <exception cref="InvalidOperationException">Thrown when authentication is not properly configured.</exception>
+    /// <exception cref="AuthenticationException">Thrown when authentication token acquisition fails.</exception>
     private async Task ApplyAuthenticationAsync(RestRequest request, CancellationToken cancellationToken)
     {
         switch (options.AuthenticationOptions)
@@ -205,7 +213,9 @@ public class BaseApi
         try
         {
             // Build the base URL with optional path prefix
-            string baseUrl = BuildBaseUrl();            // Execute the request with retry policy
+            string baseUrl = BuildBaseUrl();
+
+            // Execute the request with retry policy
             var response = await retryPolicy.ExecuteAsync(
                 async (token) => await restClientService.ExecuteAsync(baseUrl, request, token),
                 cancellationToken);
@@ -251,13 +261,15 @@ public class BaseApi
         return string.IsNullOrWhiteSpace(options.ApiPathPrefix)
             ? options.BaseUrl
             : $"{options.BaseUrl.TrimEnd('/')}/{options.ApiPathPrefix.TrimStart('/')}";
-    }    /// <summary>
-         /// Handles the REST response and processes according to status code.
-         /// </summary>
-         /// <param name="response">The REST response to handle.</param>
-         /// <param name="request">The original request for context in error messages.</param>
-         /// <returns>The response if successful.</returns>
-         /// <exception cref="HttpRequestException">Thrown when a non-successful status code is returned.</exception>
+    }
+
+    /// <summary>
+    /// Handles the REST response and processes according to status code.
+    /// </summary>
+    /// <param name="response">The REST response to handle.</param>
+    /// <param name="request">The original request for context in error messages.</param>
+    /// <returns>The response if successful.</returns>
+    /// <exception cref="HttpRequestException">Thrown when a non-successful status code is returned.</exception>
     private RestResponse HandleResponse(RestResponse response, RestRequest request)
     {
         if (SuccessStatusCodes.Contains(response.StatusCode))
