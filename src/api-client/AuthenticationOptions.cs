@@ -1,6 +1,6 @@
 using System;
 
-namespace MxIO.ApiClient;
+namespace MxIO.ApiClient.V2;
 
 /// <summary>
 /// Base class for all authentication options.

@@ -1,6 +1,6 @@
 using Newtonsoft.Json;
 
-namespace MxIO.ApiClient.Abstractions;
+namespace MxIO.ApiClient.Abstractions.V2;
 
 /// <summary>
 /// Represents pagination information in an API response.

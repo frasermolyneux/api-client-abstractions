@@ -2,9 +2,9 @@
 
 using Microsoft.AspNetCore.Mvc;
 
-using MxIO.ApiClient.Abstractions;
+using MxIO.ApiClient.Abstractions.V2;
 
-namespace MxIO.ApiClient.WebExtensions;
+namespace MxIO.ApiClient.WebExtensions.V2;
 
 /// <summary>
 /// Extension methods for transforming HTTP response wrappers into ASP.NET Core action results.

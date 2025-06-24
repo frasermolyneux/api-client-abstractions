@@ -1,6 +1,6 @@
 using Azure.Core;
 
-namespace MxIO.ApiClient;
+namespace MxIO.ApiClient.V2;
 
 /// <summary>
 /// Interface for providing token credentials.

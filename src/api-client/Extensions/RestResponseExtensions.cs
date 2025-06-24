@@ -1,13 +1,13 @@
 ﻿using System.Net;
 
-using MxIO.ApiClient.Abstractions;
+using MxIO.ApiClient.Abstractions.V2;
 
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
 using RestSharp;
 
-namespace MxIO.ApiClient.Extensions;
+namespace MxIO.ApiClient.V2.Extensions;
 
 /// <summary>
 /// Extension methods for working with RestSharp response objects.

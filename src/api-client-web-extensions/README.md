@@ -1,4 +1,4 @@
-# MxIO.ApiClient.WebExtensions
+# MxIO.ApiClient.WebExtensions.V2
 
 Extensions for converting API response objects to HTTP results in ASP.NET Core applications. This package simplifies the process of transforming API client responses into appropriate HTTP responses.
 
@@ -11,7 +11,7 @@ Extensions for converting API response objects to HTTP results in ASP.NET Core a
 ## Installation
 
 ```
-dotnet add package MxIO.ApiClient.WebExtensions
+dotnet add package MxIO.ApiClient.WebExtensions.V2
 ```
 
 ## Basic Usage

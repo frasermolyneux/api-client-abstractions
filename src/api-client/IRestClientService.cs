@@ -1,6 +1,6 @@
 using RestSharp;
 
-namespace MxIO.ApiClient;
+namespace MxIO.ApiClient.V2;
 
 /// <summary>
 /// Interface for a service that executes RestSharp requests.

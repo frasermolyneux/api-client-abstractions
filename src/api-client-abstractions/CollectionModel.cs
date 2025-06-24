@@ -1,6 +1,6 @@
 using Newtonsoft.Json;
 
-namespace MxIO.ApiClient.Abstractions;
+namespace MxIO.ApiClient.Abstractions.V2;
 
 /// <summary>
 /// Represents a collection of items with additional metadata.

@@ -1,4 +1,4 @@
-# MxIO.ApiClient.Abstractions
+# MxIO.ApiClient.Abstractions.V2
 
 A library containing common abstractions and models for API clients in .NET applications. This package provides the fundamental data structures and interfaces for building API clients that conform to the v2 API design.
 
@@ -13,7 +13,7 @@ A library containing common abstractions and models for API clients in .NET appl
 ## Installation
 
 ```
-dotnet add package MxIO.ApiClient.Abstractions
+dotnet add package MxIO.ApiClient.Abstractions.V2
 ```
 
 ## API Response Model Structure

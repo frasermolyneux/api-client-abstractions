@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
-    <RootNamespace>MxIO.ApiClient.Abstractions.Tests</RootNamespace>
+    <RootNamespace>MxIO.ApiClient.Abstractions.V2.Tests</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>

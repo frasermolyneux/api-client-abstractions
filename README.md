@@ -25,7 +25,7 @@ Core library providing the base API client implementation with support for:
 - Thread-safe REST client management
 - Support for common query parameters and filtering options
 
-### MxIO.ApiClient.Abstractions
+### MxIO.ApiClient.Abstractions.V2
 
 Contains common model definitions used across API implementations:
 - `ApiResponse<T>` - Standard API response model following v2 API design
@@ -35,7 +35,7 @@ Contains common model definitions used across API implementations:
 - `ApiPagination` - Pagination information
 - `FilterOptions` - OData-like filtering options
 
-### MxIO.ApiClient.WebExtensions
+### MxIO.ApiClient.WebExtensions.V2
 
 Extension methods for working with API responses in web applications, including conversion to ActionResults.
 
@@ -44,9 +44,9 @@ Extension methods for working with API responses in web applications, including 
 Install the packages via NuGet:
 
 ```bash
-dotnet add package MxIO.ApiClient
-dotnet add package MxIO.ApiClient.Abstractions
-dotnet add package MxIO.ApiClient.WebExtensions
+dotnet add package MxIO.ApiClient"
+dotnet add package MxIO.ApiClient.Abstractions.V2
+dotnet add package MxIO.ApiClient.WebExtensions.V2
 ```
 
 ## Getting Started

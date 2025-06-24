@@ -1,4 +1,4 @@
-﻿namespace MxIO.ApiClient;
+﻿namespace MxIO.ApiClient.V2;
 
 /// <summary>
 /// Options for configuring the API client.

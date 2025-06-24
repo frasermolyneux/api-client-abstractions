@@ -2,7 +2,7 @@
 
 using Newtonsoft.Json;
 
-namespace MxIO.ApiClient.Abstractions;
+namespace MxIO.ApiClient.Abstractions.V2;
 
 /// <summary>
 /// Represents a response from an API.
