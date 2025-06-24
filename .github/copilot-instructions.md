@@ -83,6 +83,9 @@ The library follows a consistent v2 API design pattern that promotes best practi
 - Include example usage in documentation for complex APIs
 - Document thread-safety considerations where applicable
 - Provide clear documentation for authentication mechanisms and token handling
+- Maintain a README.md file with an overview of the project, setup instructions, and usage examples
+- For projects published to NuGet, maintain a README file in the project directory that provides an overview of the package, its purpose, and usage examples
+- Use the `/docs` directory for additional documentation files, including architecture diagrams, API design decisions, and usage guides
 
 ## HTTP Client Pattern
 

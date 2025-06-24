@@ -1,66 +1,358 @@
 # MxIO.ApiClient
 
-A generic API client helper library for .NET applications. This package provides a set of base classes and utilities for creating API clients with features including:
+A comprehensive library for building resilient, authenticated REST API clients in .NET applications. This package provides base classes, interfaces, and utilities for creating API clients with features such as authentication, token management, request execution, and response processing.
 
-- Token-based authentication support
-- Configurable retry policies
-- Centralized REST client management
-- Default Azure AD credential provider integration
-- Standardized response handling with ApiResponse<T>
-- Unified HTTP response wrapper with HttpResponseWrapper<T>
-- Consistent error handling and validation
+## Features
+
+- Token-based authentication support with automatic acquisition and caching
+- API key authentication with primary/secondary failover capability
+- Entra ID (Azure AD) authentication with DefaultAzureCredential support
+- Configurable retry policies with exponential backoff
+- Thread-safe REST client management
+- Standardized response handling with ApiResponse<T> model
+- Support for filtering, pagination, and OData-like queries
+- Comprehensive error handling and validation
+- Extension methods for common operations
 
 ## Installation
 
-```
+```bash
 dotnet add package MxIO.ApiClient
 ```
 
-## Basic Usage
+## Core Components
+
+### BaseApi
+
+The `BaseApi` class provides the foundation for building API clients:
 
 ```csharp
-// Add API client services to your DI container
-services.AddApiClient(Configuration);
-
-// Inject and use the base API in your services
-public class MyService
+public abstract class BaseApi
 {
-    private readonly BaseApi _baseApi;
+    // Constructor
+    protected BaseApi(
+        ILogger logger,
+        IApiTokenProvider apiTokenProvider,
+        IRestClientService restClientService,
+        IOptions<ApiClientOptions> options);
+        
+    // Create authenticated requests
+    protected Task<RestRequest> CreateRequestAsync(
+        string resourcePath,
+        Method method,
+        CancellationToken cancellationToken = default);
+        
+    // Execute requests
+    protected Task<RestResponse> ExecuteAsync(
+        RestRequest request,
+        bool rethrowExceptions = true,
+        CancellationToken cancellationToken = default);
+        
+    // Execute requests with strong typing
+    protected Task<HttpResponseWrapper<T>> ExecuteWithResponseWrapperAsync<T>(
+        RestRequest request,
+        bool rethrowExceptions = true,
+        CancellationToken cancellationToken = default);
+        
+    protected Task<ApiResponse<T>> ExecuteWithApiResponseAsync<T>(
+        RestRequest request,
+        bool rethrowExceptions = true,
+        CancellationToken cancellationToken = default);
+        
+    protected Task<T> ExecuteWithResultAsync<T>(
+        RestRequest request,
+        bool rethrowExceptions = true,
+        CancellationToken cancellationToken = default);
+}
+```
 
-    public MyService(BaseApi baseApi)
+### IApiTokenProvider
+
+Interface for token-based authentication providers:
+
+```csharp
+public interface IApiTokenProvider
+{
+    Task<string> GetTokenAsync(CancellationToken cancellationToken = default);
+}
+```
+
+### IRestClientService
+
+Interface for REST client operations:
+
+```csharp
+public interface IRestClientService
+{
+    Task<RestResponse> ExecuteAsync(RestRequest request, CancellationToken cancellationToken = default);
+    void ConfigureOptions(Action<RestClientOptions> configureOptions);
+}
+```
+
+### ApiClientOptions
+
+Configuration options for API clients:
+
+```csharp
+public class ApiClientOptions
+{
+    public string BaseUrl { get; set; } = string.Empty;
+    public string ApiPathPrefix { get; set; } = string.Empty;
+    public string PrimaryApiKey { get; set; } = string.Empty;
+    public string SecondaryApiKey { get; set; } = string.Empty;
+    public string ApiKeyHeaderName { get; set; } = "X-API-Key";
+    public string ApiAudience { get; set; } = string.Empty;
+    public int MaxRetryCount { get; set; } = 3;
+    
+    // Auxiliary methods
+    public string ApiKey => !string.IsNullOrEmpty(PrimaryApiKey) ? PrimaryApiKey : SecondaryApiKey;
+    public void UpdateApiKey(string apiKey) => PrimaryApiKey = apiKey;
+}
+```
+
+## Usage Examples
+
+### Setup and Registration
+
+```csharp
+// Add API client to services
+public void ConfigureServices(IServiceCollection services)
+{
+    // Basic registration
+    services.AddApiClient()
+        .WithApiKeyAuthentication("your-api-key");
+        
+    // Configure options
+    services.Configure<ApiClientOptions>(options =>
     {
-        _baseApi = baseApi;
+        options.BaseUrl = "https://api.example.com";
+        options.ApiPathPrefix = "v2";
+        options.MaxRetryCount = 3;
+        options.ApiKeyHeaderName = "X-Custom-Api-Key";
+    });
+}
+```
+
+### Creating a Custom API Client
+
+```csharp
+public class UsersApiClient : BaseApi
+{
+    private readonly ILogger<UsersApiClient> logger;
+    
+    public UsersApiClient(
+        ILogger<UsersApiClient> logger,
+        IApiTokenProvider apiTokenProvider,
+        IRestClientService restClientService,
+        IOptions<ApiClientOptions> options)
+        : base(logger, apiTokenProvider, restClientService, options)
+    {
+        this.logger = logger;
     }
-
-    public async Task<CollectionModel<MyEntity>> GetEntities(FilterOptions filter, CancellationToken cancellationToken = default)
+    
+    // Get a single user
+    public async Task<ApiResponse<UserDto>> GetUserAsync(
+        string userId, 
+        CancellationToken cancellationToken = default)
     {
-        var request = await _baseApi.CreateRequestAsync("v2/entities", Method.Get, cancellationToken);
-        request.AddFilterOptions(filter);
-        
-        // Option 1: Get typed HttpResponseWrapper with full context
-        var wrapper = await _baseApi.ExecuteWithResponseWrapperAsync<CollectionModel<MyEntity>>(request, cancellationToken);
-        // Access wrapper.StatusCode, wrapper.IsSuccess, wrapper.Result, etc.
-        
-        // Option 2: Get just the ApiResponse<T>
-        var apiResponse = await _baseApi.ExecuteWithApiResponseAsync<CollectionModel<MyEntity>>(request, cancellationToken);
-        // Access apiResponse.Data, apiResponse.Pagination, apiResponse.Errors, etc.
-        
-        // Option 3: Get just the data directly
-        return await _baseApi.ExecuteWithResultAsync<CollectionModel<MyEntity>>(request, cancellationToken);
+        try
+        {
+            var request = await CreateRequestAsync($"users/{userId}", Method.Get, cancellationToken);
+            return await ExecuteWithApiResponseAsync<UserDto>(request, false, cancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogError(ex, "Error retrieving user {UserId}", userId);
+            return HttpStatusCode.InternalServerError.CreateResponse<UserDto>(
+                $"An unexpected error occurred while retrieving user {userId}");
+        }
+    }
+    
+    // Get a collection of users with filtering
+    public async Task<ApiResponse<CollectionModel<UserDto>>> GetUsersAsync(
+        FilterOptions filter, 
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var request = await CreateRequestAsync("users", Method.Get, cancellationToken);
+            request.AddFilterOptions(filter);
+            
+            return await ExecuteWithApiResponseAsync<CollectionModel<UserDto>>(
+                request, false, cancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogError(ex, "Error retrieving users");
+            return HttpStatusCode.InternalServerError.CreateResponse<CollectionModel<UserDto>>(
+                "An unexpected error occurred while retrieving users");
+        }
+    }
+    
+    // Create a new user
+    public async Task<ApiResponse<UserDto>> CreateUserAsync(
+        CreateUserDto userDto, 
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var request = await CreateRequestAsync("users", Method.Post, cancellationToken);
+            request.AddJsonBody(userDto);
+            
+            return await ExecuteWithApiResponseAsync<UserDto>(request, false, cancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogError(ex, "Error creating user");
+            return HttpStatusCode.InternalServerError.CreateResponse<UserDto>(
+                "An unexpected error occurred while creating user");
+        }
     }
 }
 ```
 
-## Response Models
+### Working with Request Extensions
 
-The library uses a standard set of response models:
+```csharp
+// Add filter options to a request
+var request = await CreateRequestAsync("resources", Method.Get, cancellationToken);
+request.AddFilterOptions(new FilterOptions
+{
+    FilterExpression = "category eq 'books' and price lt 20",
+    OrderBy = "title asc",
+    Top = 10,
+    Skip = 0,
+    Expand = new[] { "author", "publisher" },
+    Select = new[] { "title", "price", "author.name" }
+});
 
-- `ApiResponse<T>`: Contains the data, errors, pagination, metadata, and status code
-- `HttpResponseWrapper<T>`: Wraps an ApiResponse with additional HTTP context
-- `ApiError`: Standard error format with code, message, target, and details
-- `ApiPagination`: Pagination information for collection responses
-- `CollectionModel<T>`: Contains a standard list of items for collection endpoints
-- `FilterOptions`: Standard filtering and pagination options for queries
+// Add paging parameters
+request.AddPagingParameters(pageNumber: 2, pageSize: 20);
+
+// Add query parameters
+request.AddQueryParameter("includeDeleted", "true");
+```
+
+### Error Handling
+
+```csharp
+try
+{
+    var response = await ExecuteAsync(request, rethrowExceptions: true, cancellationToken);
+    // Process successful response
+}
+catch (ApiException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+{
+    logger.LogWarning("Resource {Id} not found", id);
+    return HttpStatusCode.NotFound.CreateResponse<ResourceDto>("Resource not found");
+}
+catch (ApiException ex) when (ex.StatusCode == HttpStatusCode.Unauthorized)
+{
+    logger.LogWarning("Unauthorized access to resource {Id}", id);
+    return HttpStatusCode.Unauthorized.CreateResponse<ResourceDto>("Unauthorized");
+}
+catch (Exception ex) when (ex is not OperationCanceledException)
+{
+    logger.LogError(ex, "An error occurred while retrieving resource {Id}", id);
+    return HttpStatusCode.InternalServerError.CreateResponse<ResourceDto>(
+        "An unexpected error occurred");
+}
+```
+
+### API Response Creation Helpers
+
+```csharp
+// Create success response
+return HttpStatusCode.OK.CreateResponse(user);
+
+// Create error response
+return HttpStatusCode.BadRequest.CreateResponse<UserDto>(
+    "Validation failed",
+    new ApiError
+    {
+        Code = "ValidationError",
+        Message = "The provided data is invalid",
+        Target = "email",
+        Details = new[]
+        {
+            new ApiError
+            {
+                Code = "InvalidFormat",
+                Message = "Email format is invalid",
+                Target = "email"
+            }
+        }
+    });
+```
+
+## Authentication Methods
+
+### API Key Authentication
+
+```csharp
+// Add API client with API key authentication
+services.AddApiClient()
+    .WithApiKeyAuthentication(
+        apiKey: "your-api-key",
+        headerName: "X-API-Key");  // Optional, defaults to "X-API-Key"
+```
+
+### Entra ID (Azure AD) Authentication
+
+```csharp
+// Add API client with Entra ID authentication
+services.AddApiClient()
+    .WithEntraIdAuthentication(
+        apiAudience: "api://your-api-audience",
+        configureCredentialOptions: options => {
+            // Configure DefaultAzureCredentialOptions
+            options.ExcludeVisualStudioCredential = true;
+            options.ExcludeManagedIdentityCredential = true;
+        });
+```
+
+### Custom Token Provider
+
+```csharp
+// Implement a custom token provider
+public class CustomTokenProvider : IApiTokenProvider
+{
+    public async Task<string> GetTokenAsync(CancellationToken cancellationToken = default)
+    {
+        // Custom implementation to retrieve a token
+        return await GetTokenFromCustomSourceAsync(cancellationToken);
+    }
+}
+
+// Register with custom token provider
+services.AddApiClient()
+    .WithCustomTokenProvider<CustomTokenProvider>();
+```
+
+## Resilience and Retry Policies
+
+The library uses Polly for resilience patterns:
+
+```csharp
+// Configure retry count
+services.Configure<ApiClientOptions>(options =>
+{
+    options.MaxRetryCount = 3;  // Default is 3
+});
+
+// Custom retry policy
+services.AddApiClient()
+    .WithCustomRetryPolicy(retryCount =>
+        Policy
+            .Handle<HttpRequestException>()
+            .OrResult<RestResponse>(r => r.StatusCode == HttpStatusCode.TooManyRequests)
+            .WaitAndRetryAsync(
+                retryCount,
+                retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)) +
+                                TimeSpan.FromMilliseconds(Random.Shared.Next(0, 1000))
+            )
+    );
+```
 
 ## License
 

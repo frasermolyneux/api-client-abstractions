@@ -7,9 +7,9 @@
 
 ## Overview
 
-This repository provides common abstractions and implementations for building robust API clients in .NET applications. The library offers standardized approaches for handling authentication, token management, request execution, and response processing when interacting with REST APIs. 
+This repository provides a comprehensive toolkit for building robust .NET API clients. The library offers standardized approaches for handling authentication, token management, request execution, and response processing when interacting with REST APIs.
 
-The implementation follows the v2 API design pattern, which provides a consistent approach to API interactions with standardized response formats, filtering, and pagination.
+The implementation follows the v2 API design pattern, which provides a consistent approach to API interactions with standardized response formats, error handling, filtering, and pagination.
 
 ## Libraries
 
@@ -17,9 +17,9 @@ The solution consists of three main packages:
 
 ### MxIO.ApiClient
 
-Core library providing the base API client implementation with support for:
+Core library providing resilient, authenticated REST API client implementation with:
 - Automatic token acquisition and caching
-- Request authentication with API keys
+- Request authentication with API keys or Entra ID (formerly Azure AD)
 - Primary/secondary API key failover
 - Resilient HTTP requests with configurable retry policies
 - Thread-safe REST client management
@@ -27,7 +27,7 @@ Core library providing the base API client implementation with support for:
 
 ### MxIO.ApiClient.Abstractions.V2
 
-Contains common model definitions used across API implementations:
+Common models and interfaces for standardized API response handling:
 - `ApiResponse<T>` - Standard API response model following v2 API design
 - `HttpResponseWrapper<T>` - HTTP response wrapper containing API responses
 - `CollectionModel<T>` - Collection wrapper for API result sets
@@ -37,14 +37,16 @@ Contains common model definitions used across API implementations:
 
 ### MxIO.ApiClient.WebExtensions.V2
 
-Extension methods for working with API responses in web applications, including conversion to ActionResults.
+Extension methods for integrating with ASP.NET Core web applications:
+- Converting API responses to ActionResults with appropriate status codes
+- Simplified controller implementations for API endpoints
 
 ## Installation
 
 Install the packages via NuGet:
 
 ```bash
-dotnet add package MxIO.ApiClient"
+dotnet add package MxIO.ApiClient
 dotnet add package MxIO.ApiClient.Abstractions.V2
 dotnet add package MxIO.ApiClient.WebExtensions.V2
 ```
@@ -57,18 +59,12 @@ Register the API client services in your application's startup:
 
 ```csharp
 // Add API client with default credential provider
-services.AddApiClient();
+services.AddApiClient()
+    .WithApiKeyAuthentication("your-api-key");
 
-// Configure client options
-services.Configure<ApiClientOptions>(options =>
-{
-    options.BaseUrl = "https://api.example.com";
-    options.ApiPathPrefix = "v1";
-    options.PrimaryApiKey = "your-primary-api-key";
-    options.SecondaryApiKey = "your-secondary-api-key";
-    options.ApiAudience = "api-audience";
-    options.MaxRetryCount = 3;
-});
+// Or with Entra ID authentication
+services.AddApiClient()
+    .WithEntraIdAuthentication("api://your-api-audience");
 ```
 
 ### Custom Credential Provider
@@ -102,14 +98,14 @@ public class UserApi : BaseApi
     public UserApi(
         ILogger<UserApi> logger,
         IApiTokenProvider apiTokenProvider,
-        IRestClientSingleton restClientSingleton,
+        IRestClientService restClientService,
         IOptions<ApiClientOptions> options)
-        : base(logger, apiTokenProvider, restClientSingleton, options)
+        : base(logger, apiTokenProvider, restClientService, options)
     {
         this.logger = logger;
     }
 
-    public async Task<ApiResponseDto<User>> GetUserAsync(string userId, CancellationToken cancellationToken = default)
+    public async Task<ApiResponse<User>> GetUserAsync(string userId, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -172,8 +168,8 @@ public class UserService
 The library supports multiple authentication mechanisms:
 
 1. **API Keys**: Provided via `ApiClientOptions.PrimaryApiKey` and `ApiClientOptions.SecondaryApiKey`
-2. **Bearer Tokens**: Automatically managed and cached by `SimpleApiTokenProvider`
-3. **Azure Authentication**: Leverages `DefaultAzureCredential` for Azure resource access
+2. **Bearer Tokens**: Automatically managed and cached by `ApiTokenProvider`
+3. **Entra ID (formerly Azure AD)**: Leverages `DefaultAzureCredential` for Azure resource access
 
 The `DefaultTokenCredentialProvider` attempts to authenticate via:
 - Environment variables
@@ -185,6 +181,17 @@ The `DefaultTokenCredentialProvider` attempts to authenticate via:
 ## Error Handling and Resilience
 
 The `BaseApi` class implements automatic retries with exponential backoff for transient failures. You can configure retry behavior through `ApiClientOptions.MaxRetryCount`.
+
+## API Design Pattern
+
+This library implements the v2 API design pattern, which provides:
+
+- Standardized response formats with consistent error handling
+- OData-like filtering with `$filter`, `$select`, `$expand`, etc.
+- Pagination support with skip/take and metadata
+- Consistent URL structure and query parameters
+
+For more details on the v2 API design pattern, see the [API Design V2 Documentation](docs/api-design-v2.md).
 
 ## Contributing
 

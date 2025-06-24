@@ -1,35 +1,52 @@
-# v2 API Design
+# v2 API Design Pattern
 
-## Overview of the New API Structure
+## Overview
 
-The new v2 API will follow a RESTful approach with consistent URL structure, unified query parameters, and standardized responses. It will address the current issues of inconsistent filtering, lack of count-only queries, inefficient relationship handling, and lack of a unified query pattern.
+The v2 API design pattern provides a consistent approach to building RESTful APIs with standardized URL structure, query parameters, response formats, and error handling. This design pattern addresses common issues with API design, such as inconsistent filtering, lack of count-only queries, inefficient relationship handling, and lack of standardized query patterns.
+
+## Key Principles
+
+1. **Consistent URL Structure** - Clear and consistent resource naming and URL structure
+2. **Uniform Parameter Handling** - Standardized query parameters for filtering, sorting, and pagination
+3. **Standardized Response Format** - Unified response structure for all endpoints
+4. **Comprehensive Error Model** - Detailed error information with consistent structure
+5. **Efficient Relationship Handling** - Use of entity expansion instead of separate requests
 
 ## URL Structure
+
+The v2 API follows a RESTful URL structure:
 
 ```
 /v2/{resource}/{id}
 /v2/{resource}/{id}/{subresource}
+/v2/{resource}/{id}/{subresource}/{subresourceId}
 ```
+
+Examples:
+- `/v2/users` - Get all users
+- `/v2/users/123` - Get user with ID 123
+- `/v2/users/123/permissions` - Get permissions for user with ID 123
+- `/v2/users/123/permissions/456` - Get specific permission with ID 456 for user with ID 123
 
 ## Common Query Parameters
 
-All collection endpoints will support the following query parameters:
+All collection endpoints support the following standardized query parameters:
 
-| Parameter  | Description                                           |
-| ---------- | ----------------------------------------------------- |
-| `$filter`  | OData-like filter expression                          |
-| `$select`  | Select specific fields                                |
-| `$expand`  | Expand related entities                               |
-| `$orderby` | Sort by field(s)                                      |
-| `$top`     | Number of records to take                             |
-| `$skip`    | Number of records to skip                             |
-| `$count`   | When true, returns only the count of matching records |
+| Parameter  | Description                                           | Example                                |
+| ---------- | ----------------------------------------------------- | -------------------------------------- |
+| `$filter`  | OData-like filter expression                          | `$filter=status eq 'active'`           |
+| `$select`  | Select specific fields                                | `$select=name,email,phone`             |
+| `$expand`  | Expand related entities                               | `$expand=profile,roles`                |
+| `$orderby` | Sort by field(s)                                      | `$orderby=lastName asc,firstName desc` |
+| `$top`     | Number of records to take                             | `$top=10`                              |
+| `$skip`    | Number of records to skip                             | `$skip=20`                             |
+| `$count`   | When true, returns only the count of matching records | `$count=true`                          |
 
-## Common Models
+## Response Models
 
-### Response Model
+### Standard Response Model
 
-All responses will use a common format:
+All API endpoints use a consistent response format:
 
 ```csharp
 public class ApiResponse<T>
@@ -59,9 +76,9 @@ public class ApiPagination
 }
 ```
 
-### Collection Model
+### Collection Response Format
 
-All collections will use a common format:
+Collections use a standard wrapper:
 
 ```csharp
 public class CollectionModel<T>
@@ -70,26 +87,19 @@ public class CollectionModel<T>
 }
 ```
 
-### Filter Model
+## Filter Expressions
 
-All filtering will use a common approach:
+The v2 API uses OData-like filter expressions for querying data. Examples of filter expressions:
 
-```csharp
-public class FilterOptions
-{
-    public string? FilterExpression { get; set; }
-    public string[]? Select { get; set; }
-    public string[]? Expand { get; set; }
-    public string? OrderBy { get; set; }
-    public int Skip { get; set; }
-    public int Top { get; set; }
-    public bool Count { get; set; }
-}
-```
+- Simple equality: `status eq 'active'`
+- Multiple conditions: `status eq 'active' and createdDate gt 2023-01-01`
+- Logical operators: `(status eq 'active' or status eq 'pending') and not deleted`
+- String functions: `startswith(name, 'J') eq true`
+- Collection functions: `tags/any(t: t eq 'important')`
 
-### Entity Expansion
+## Entity Expansion
 
-Rather than using flags, the new API will use a more flexible expansion model:
+Rather than using flags or separate requests for related data, the v2 API uses a flexible expansion model:
 
 ```
 $expand=aliases,ipAddresses,adminActions
@@ -99,48 +109,191 @@ This allows for more granular control over which related entities are included i
 
 ## Example Requests
 
-1. Get players with filtering and pagination:
+### Get Collection with Filtering and Pagination
+
 ```
 GET /v2/players?$filter=gameType eq 'CallOfDuty2' and lastSeen gt '2023-01-01'&$top=10&$skip=0&$orderby=username asc
 ```
 
-2. Get a player with expanded related entities:
+Response:
+
+```json
+{
+  "statusCode": 200,
+  "data": {
+    "items": [
+      { "playerId": 123, "username": "Player1", "gameType": "CallOfDuty2", "lastSeen": "2023-05-10" },
+      { "playerId": 456, "username": "Player2", "gameType": "CallOfDuty2", "lastSeen": "2023-04-15" }
+    ]
+  },
+  "pagination": {
+    "totalCount": 150,
+    "filteredCount": 42,
+    "skip": 0,
+    "top": 10,
+    "hasMore": true
+  },
+  "metadata": {
+    "requestId": "abc-123-xyz"
+  }
+}
+```
+
+### Get Single Entity with Expanded Relations
+
 ```
 GET /v2/players/1234?$expand=aliases,adminActions,ipAddresses
 ```
 
-3. Get only the count of matching players:
-```
-GET /v2/players/$count?$filter=gameType eq 'CallOfDuty4' and username startswith 'John'
-```
+Response:
 
-4. Get game servers with specific fields:
-```
-GET /v2/game-servers?$select=gameServerId,title,hostname,queryPort&$top=20
-```
-
-5. Update specific fields of a player:
-```
-PATCH /v2/players/1234
+```json
 {
-    "username": "NewUsername",
-    "ipAddress": "192.168.1.1"
+  "statusCode": 200,
+  "data": {
+    "playerId": 1234,
+    "username": "MainPlayer",
+    "gameType": "CallOfDuty2",
+    "lastSeen": "2023-05-20",
+    "aliases": [
+      { "aliasId": 1, "name": "OtherName1" },
+      { "aliasId": 2, "name": "OtherName2" }
+    ],
+    "adminActions": [
+      { "actionId": 101, "actionType": "Ban", "date": "2023-01-15" }
+    ],
+    "ipAddresses": [
+      { "ipAddressId": 500, "address": "192.168.1.1", "lastSeen": "2023-05-20" }
+    ]
+  },
+  "metadata": {
+    "requestId": "def-456-uvw"
+  }
 }
 ```
 
-## Implementation Recommendations
+### Count-Only Query
 
-1. **Filter Parser**: Implement a flexible filter parser that can translate OData-like filter expressions into LINQ queries.
+```
+GET /v2/players?$filter=gameType eq 'CallOfDuty4' and username startswith 'John'&$count=true
+```
+
+Response:
+
+```json
+{
+  "statusCode": 200,
+  "data": 27,
+  "metadata": {
+    "requestId": "ghi-789-rst"
+  }
+}
+```
+
+### Error Response
+
+```
+POST /v2/players
+```
+
+Response:
+
+```json
+{
+  "statusCode": 400,
+  "errors": [
+    {
+      "code": "ValidationError",
+      "message": "The request is invalid",
+      "details": [
+        {
+          "code": "RequiredField",
+          "message": "Username is required",
+          "target": "username"
+        },
+        {
+          "code": "InvalidFormat",
+          "message": "Email format is invalid",
+          "target": "email"
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "requestId": "jkl-012-opq"
+  }
+}
+```
+
+## Implementation Guidelines
+
+### API Client Implementation
+
+For implementing API clients that work with the v2 API design:
+
+1. **Use Standardized Models**:
+   - Use the `ApiResponse<T>`, `ApiError`, and `ApiPagination` classes
+   - Use `CollectionModel<T>` for collection endpoints
+   - Use `FilterOptions` for query parameters
+
+2. **Request Building**:
+   - Add query parameters with standard parameter names
+   - Use extension methods for adding filter options
+   - Include Accept and Content-Type headers
+
+3. **Response Handling**:
+   - Deserialize responses into appropriate models
+   - Check status codes for success/failure
+   - Handle errors consistently
+   - Process pagination information
+
+4. **Error Handling**:
+   - Handle transient errors with retry policies
+   - Process API errors from the error model
+   - Provide detailed error information
+
+### API Implementation
+
+For implementing APIs that follow the v2 API design:
+
+1. **Request Processing**:
+   - Validate query parameters
+   - Parse filter expressions
+   - Handle pagination parameters
+   - Process entity expansion requests
+
+2. **Response Building**:
+   - Use standard response models
+   - Include pagination information
+   - Add appropriate metadata
+   - Use standard error format
+   - Set correct HTTP status codes
+
+3. **Entity Projection and Expansion**:
+   - Implement efficient data loading
+   - Use select expressions to limit fields
+   - Use expand expressions to include relations
+   - Optimize database queries
+
+4. **Security and Performance**:
+   - Implement proper authentication
+   - Add rate limiting
+   - Use appropriate caching
+   - Add logging and telemetry
+
+## Best Practices
+
+1. **Filter Parser**: Implement a flexible filter parser that can translate OData-like filter expressions into LINQ or SQL queries.
 
 2. **Entity Projection**: Use the `$select` parameter to project only the requested fields, reducing response size and improving performance.
 
 3. **Entity Expansion**: Use the `$expand` parameter to include related entities in the response, avoiding multiple API calls.
 
-4. **Count-Only Queries**: For count-only queries, optimize by not retrieving the actual data.
+4. **Count-Only Queries**: Optimize count-only queries by not retrieving the actual data.
 
 5. **Bulk Operations**: Implement bulk operations for create, update, and delete to reduce the number of API calls.
 
-6. **Metadata**: Include metadata in the response such as entities counts, filtering constraints, etc.
+6. **Metadata**: Include metadata in the response such as entity counts, filtering constraints, etc.
 
 7. **Consistent Error Handling**: Use standard error codes and formats across all endpoints.
 
@@ -149,3 +302,7 @@ PATCH /v2/players/1234
 9. **Caching**: Implement appropriate caching headers for improved performance.
 
 10. **Rate Limiting**: Consider implementing rate limiting to protect the API from abuse.
+
+11. **Documentation**: Provide comprehensive API documentation with examples for common scenarios.
+
+12. **Testing**: Create unit and integration tests for all endpoints and scenarios.
