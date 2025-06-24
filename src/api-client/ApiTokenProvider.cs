@@ -78,7 +78,7 @@ public class ApiTokenProvider : IApiTokenProvider
         var cacheKey = $"access_token:{audience}";
 
         // Try to get token from cache
-        if (memoryCache.TryGetValue(cacheKey, out string cachedToken))
+        if (memoryCache.TryGetValue(cacheKey, out string? cachedToken) && cachedToken != null)
         {
             logger.LogDebug("Using cached token for audience '{Audience}'", audience);
             return cachedToken;
