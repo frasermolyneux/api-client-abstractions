@@ -1,10 +1,10 @@
 using System.Net;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using MxIO.ApiClient.Abstractions.V2;
-using MxIO.ApiClient.WebExtensions.V2;
+using MxIO.ApiClient.Abstractions;
+using MxIO.ApiClient.WebExtensions;
 
-namespace MxIO.ApiClient.WebExtensions.V2.Tests;
+namespace MxIO.ApiClient.WebExtensions.Tests;
 
 public class HttpResponseExtensionsTests
 {

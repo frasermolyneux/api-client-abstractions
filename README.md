@@ -9,7 +9,7 @@
 
 This repository provides a comprehensive toolkit for building robust .NET API clients. The library offers standardized approaches for handling authentication, token management, request execution, and response processing when interacting with REST APIs.
 
-The implementation follows the v2 API design pattern, which provides a consistent approach to API interactions with standardized response formats, error handling, filtering, and pagination.
+The implementation follows the API design pattern, which provides a consistent approach to API interactions with standardized response formats, error handling, filtering, and pagination.
 
 ## Libraries
 
@@ -25,17 +25,17 @@ Core library providing resilient, authenticated REST API client implementation w
 - Thread-safe REST client management
 - Support for common query parameters and filtering options
 
-### MxIO.ApiClient.Abstractions.V2
+### MxIO.ApiClient.Abstractions
 
 Common models and interfaces for standardized API response handling:
-- `ApiResponse<T>` - Standard API response model following v2 API design
+- `ApiResponse<T>` - Standard API response model following API design
 - `HttpResponseWrapper<T>` - HTTP response wrapper containing API responses
 - `CollectionModel<T>` - Collection wrapper for API result sets
 - `ApiError` - Standardized error model
 - `ApiPagination` - Pagination information
 - `FilterOptions` - OData-like filtering options
 
-### MxIO.ApiClient.WebExtensions.V2
+### MxIO.ApiClient.WebExtensions
 
 Extension methods for integrating with ASP.NET Core web applications:
 - Converting API responses to ActionResults with appropriate status codes
@@ -47,8 +47,8 @@ Install the packages via NuGet:
 
 ```bash
 dotnet add package MxIO.ApiClient
-dotnet add package MxIO.ApiClient.Abstractions.V2
-dotnet add package MxIO.ApiClient.WebExtensions.V2
+dotnet add package MxIO.ApiClient.Abstractions
+dotnet add package MxIO.ApiClient.WebExtensions
 ```
 
 ## Getting Started
@@ -184,14 +184,14 @@ The `BaseApi` class implements automatic retries with exponential backoff for tr
 
 ## API Design Pattern
 
-This library implements the v2 API design pattern, which provides:
+This library implements the API design pattern, which provides:
 
 - Standardized response formats with consistent error handling
 - OData-like filtering with `$filter`, `$select`, `$expand`, etc.
 - Pagination support with skip/take and metadata
 - Consistent URL structure and query parameters
 
-For more details on the v2 API design pattern, see the [API Design V2 Documentation](docs/api-design-v2.md).
+For more details on the API design pattern, see the [API Design Documentation](docs/api-design.md).
 
 ## Contributing
 

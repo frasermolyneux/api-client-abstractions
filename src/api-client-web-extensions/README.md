@@ -1,11 +1,11 @@
-# MxIO.ApiClient.WebExtensions.V2
+# MxIO.ApiClient.WebExtensions
 
 This library provides extension methods for integrating API client responses with ASP.NET Core web applications, simplifying the process of converting API responses to appropriate HTTP responses.
 
 ## Installation
 
 ```bash
-dotnet add package MxIO.ApiClient.WebExtensions.V2
+dotnet add package MxIO.ApiClient.WebExtensions
 ```
 
 ## Features

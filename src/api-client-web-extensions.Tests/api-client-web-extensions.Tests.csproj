@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
-    <RootNamespace>MxIO.ApiClient.WebExtensions.V2.Tests</RootNamespace>
+    <RootNamespace>MxIO.ApiClient.WebExtensions.Tests</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>

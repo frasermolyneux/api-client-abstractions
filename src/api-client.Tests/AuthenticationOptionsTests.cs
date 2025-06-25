@@ -1,6 +1,6 @@
 using Xunit;
 
-namespace MxIO.ApiClient.V2.Tests;
+namespace MxIO.ApiClient.Tests;
 
 public class AuthenticationOptionsTests
 {

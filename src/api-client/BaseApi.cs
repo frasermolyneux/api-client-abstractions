@@ -5,8 +5,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 
-using MxIO.ApiClient.Abstractions.V2;
-using MxIO.ApiClient.V2.Extensions;
+using MxIO.ApiClient.Abstractions;
+using MxIO.ApiClient.Extensions;
 
 using Polly;
 using Polly.Retry;
@@ -15,7 +15,7 @@ using RestSharp;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace MxIO.ApiClient.V2;
+namespace MxIO.ApiClient;
 
 /// <summary>
 /// Base class for API clients providing common functionality for REST API calls.

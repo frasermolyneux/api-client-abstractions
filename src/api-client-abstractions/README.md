@@ -1,11 +1,11 @@
-# MxIO.ApiClient.Abstractions.V2
+# MxIO.ApiClient.Abstractions
 
 This library provides common models and interfaces for standardized API response handling, including pagination, filtering, and error management.
 
 ## Installation
 
 ```bash
-dotnet add package MxIO.ApiClient.Abstractions.V2
+dotnet add package MxIO.ApiClient.Abstractions
 ```
 
 ## Features

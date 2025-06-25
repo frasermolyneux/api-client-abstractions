@@ -1,7 +1,7 @@
 using System.Net;
-using MxIO.ApiClient.Abstractions.V2;
+using MxIO.ApiClient.Abstractions;
 
-namespace MxIO.ApiClient.WebExtensions.V2.Tests;
+namespace MxIO.ApiClient.WebExtensions.Tests;
 
 public class ApiResponseExtensionsTests
 {

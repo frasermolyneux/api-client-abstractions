@@ -4,11 +4,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
-using MxIO.ApiClient.V2.Extensions;
+using MxIO.ApiClient.Extensions;
 using System;
 using Xunit;
 
-namespace MxIO.ApiClient.V2.Tests.Extensions;
+namespace MxIO.ApiClient.Tests.Extensions;
 
 public class ServiceCollectionExtensionsTests
 {

@@ -2,7 +2,7 @@ using System.Net;
 
 using Newtonsoft.Json;
 
-namespace MxIO.ApiClient.Abstractions.V2;
+namespace MxIO.ApiClient.Abstractions;
 
 /// <summary>
 /// Interface for the HTTP response wrapper that contains an API response.

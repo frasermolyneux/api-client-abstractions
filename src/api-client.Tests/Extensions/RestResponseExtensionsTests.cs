@@ -1,12 +1,12 @@
 using System.Net;
-using MxIO.ApiClient.Abstractions.V2;
-using MxIO.ApiClient.V2.Extensions;
+using MxIO.ApiClient.Abstractions;
+using MxIO.ApiClient.Extensions;
 using Newtonsoft.Json;
 using RestSharp;
 using Moq;
 using Xunit;
 
-namespace MxIO.ApiClient.V2.Tests.Extensions;
+namespace MxIO.ApiClient.Tests.Extensions;
 
 public class RestResponseExtensionsTests
 {

@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
 using System;
 
-namespace MxIO.ApiClient.V2.Extensions;
+namespace MxIO.ApiClient.Extensions;
 
 /// <summary>
 /// Provides extension methods for <see cref="IServiceCollection"/> to register and configure API client services.

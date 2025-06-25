@@ -1,8 +1,8 @@
-# v2 API Design Pattern
+# API Design Pattern
 
 ## Overview
 
-The v2 API design pattern provides a consistent approach to building RESTful APIs with standardized URL structure, query parameters, response formats, and error handling. This design pattern addresses common issues with API design, such as inconsistent filtering, lack of count-only queries, inefficient relationship handling, and lack of standardized query patterns.
+The API design pattern provides a consistent approach to building RESTful APIs with standardized URL structure, query parameters, response formats, and error handling. This design pattern addresses common issues with API design, such as inconsistent filtering, lack of count-only queries, inefficient relationship handling, and lack of standardized query patterns.
 
 ## Key Principles
 
@@ -14,19 +14,19 @@ The v2 API design pattern provides a consistent approach to building RESTful API
 
 ## URL Structure
 
-The v2 API follows a RESTful URL structure:
+The API follows a RESTful URL structure:
 
 ```
-/v2/{resource}/{id}
-/v2/{resource}/{id}/{subresource}
-/v2/{resource}/{id}/{subresource}/{subresourceId}
+/{resource}/{id}
+/{resource}/{id}/{subresource}
+/{resource}/{id}/{subresource}/{subresourceId}
 ```
 
 Examples:
-- `/v2/users` - Get all users
-- `/v2/users/123` - Get user with ID 123
-- `/v2/users/123/permissions` - Get permissions for user with ID 123
-- `/v2/users/123/permissions/456` - Get specific permission with ID 456 for user with ID 123
+- `/users` - Get all users
+- `/users/123` - Get user with ID 123
+- `/users/123/permissions` - Get permissions for user with ID 123
+- `/users/123/permissions/456` - Get specific permission with ID 456 for user with ID 123
 
 ## Common Query Parameters
 
@@ -89,7 +89,7 @@ public class CollectionModel<T>
 
 ## Filter Expressions
 
-The v2 API uses OData-like filter expressions for querying data. Examples of filter expressions:
+The API uses OData-like filter expressions for querying data. Examples of filter expressions:
 
 - Simple equality: `status eq 'active'`
 - Multiple conditions: `status eq 'active' and createdDate gt 2023-01-01`
@@ -99,7 +99,7 @@ The v2 API uses OData-like filter expressions for querying data. Examples of fil
 
 ## Entity Expansion
 
-Rather than using flags or separate requests for related data, the v2 API uses a flexible expansion model:
+Rather than using flags or separate requests for related data, the API uses a flexible expansion model:
 
 ```
 $expand=aliases,ipAddresses,adminActions
@@ -112,7 +112,7 @@ This allows for more granular control over which related entities are included i
 ### Get Collection with Filtering and Pagination
 
 ```
-GET /v2/players?$filter=gameType eq 'CallOfDuty2' and lastSeen gt '2023-01-01'&$top=10&$skip=0&$orderby=username asc
+GET /players?$filter=gameType eq 'CallOfDuty2' and lastSeen gt '2023-01-01'&$top=10&$skip=0&$orderby=username asc
 ```
 
 Response:
@@ -142,7 +142,7 @@ Response:
 ### Get Single Entity with Expanded Relations
 
 ```
-GET /v2/players/1234?$expand=aliases,adminActions,ipAddresses
+GET /players/1234?$expand=aliases,adminActions,ipAddresses
 ```
 
 Response:
@@ -175,7 +175,7 @@ Response:
 ### Count-Only Query
 
 ```
-GET /v2/players?$filter=gameType eq 'CallOfDuty4' and username startswith 'John'&$count=true
+GET /players?$filter=gameType eq 'CallOfDuty4' and username startswith 'John'&$count=true
 ```
 
 Response:
@@ -193,7 +193,7 @@ Response:
 ### Error Response
 
 ```
-POST /v2/players
+POST /players
 ```
 
 Response:
@@ -229,7 +229,7 @@ Response:
 
 ### API Client Implementation
 
-For implementing API clients that work with the v2 API design:
+For implementing API clients that work with the API design:
 
 1. **Use Standardized Models**:
    - Use the `ApiResponse<T>`, `ApiError`, and `ApiPagination` classes
@@ -254,7 +254,7 @@ For implementing API clients that work with the v2 API design:
 
 ### API Implementation
 
-For implementing APIs that follow the v2 API design:
+For implementing APIs that follow the API design:
 
 1. **Request Processing**:
    - Validate query parameters

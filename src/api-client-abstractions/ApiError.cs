@@ -1,6 +1,6 @@
 using Newtonsoft.Json;
 
-namespace MxIO.ApiClient.Abstractions.V2;
+namespace MxIO.ApiClient.Abstractions;
 
 /// <summary>
 /// Represents an error in an API response.

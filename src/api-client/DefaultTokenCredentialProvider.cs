@@ -3,7 +3,7 @@ using Azure.Identity;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace MxIO.ApiClient.V2;
+namespace MxIO.ApiClient;
 
 /// <summary>
 /// Default implementation of ITokenCredentialProvider that uses DefaultAzureCredential.

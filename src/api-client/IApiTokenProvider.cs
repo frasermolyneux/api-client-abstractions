@@ -1,6 +1,6 @@
 ﻿using System.Security.Authentication;
 
-namespace MxIO.ApiClient.V2;
+namespace MxIO.ApiClient;
 
 /// <summary>
 /// Interface for providing access tokens for API authentication.

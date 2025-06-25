@@ -1,9 +1,9 @@
-using MxIO.ApiClient.Abstractions.V2;
-using MxIO.ApiClient.V2.Extensions;
+using MxIO.ApiClient.Abstractions;
+using MxIO.ApiClient.Extensions;
 using RestSharp;
 using Xunit;
 
-namespace MxIO.ApiClient.V2.Tests;
+namespace MxIO.ApiClient.Tests;
 
 public class RequestExtensionsTests
 {

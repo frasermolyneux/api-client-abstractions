@@ -1,6 +1,6 @@
 using System.Net;
 
-namespace MxIO.ApiClient.Abstractions.V2.Tests;
+namespace MxIO.ApiClient.Abstractions.Tests;
 
 public class HttpResponseWrapperTests
 {

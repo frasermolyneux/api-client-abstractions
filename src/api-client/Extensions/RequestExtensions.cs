@@ -1,7 +1,7 @@
-using MxIO.ApiClient.Abstractions.V2;
+using MxIO.ApiClient.Abstractions;
 using RestSharp;
 
-namespace MxIO.ApiClient.V2.Extensions;
+namespace MxIO.ApiClient.Extensions;
 
 /// <summary>
 /// Extension methods for RestRequest to add common query parameters.

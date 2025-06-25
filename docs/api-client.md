@@ -126,7 +126,6 @@ public void ConfigureServices(IServiceCollection services)
     services.Configure<ApiClientOptions>(options =>
     {
         options.BaseUrl = "https://api.example.com";
-        options.ApiPathPrefix = "v2";
         options.MaxRetryCount = 3;
         options.ApiKeyHeaderName = "X-Custom-Api-Key";
     });
