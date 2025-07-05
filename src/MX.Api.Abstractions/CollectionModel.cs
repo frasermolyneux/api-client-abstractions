@@ -6,7 +6,7 @@ namespace MX.Api.Abstractions;
 /// Represents a collection of items with additional metadata.
 /// </summary>
 /// <typeparam name="T">The type of items in the collection.</typeparam>
-public class CollectionModel<T>
+public record CollectionModel<T>
 {
     /// <summary>
     /// Gets or sets the collection of items.
