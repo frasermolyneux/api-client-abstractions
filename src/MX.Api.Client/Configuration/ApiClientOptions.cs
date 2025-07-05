@@ -18,10 +18,11 @@ public class ApiClientOptions
     public string BaseUrl { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the authentication options for this API client.
-    /// Can be null if no authentication is required.
+    /// Gets or sets the collection of authentication options for this API client.
+    /// Multiple authentication methods can be applied in the order they are configured.
+    /// Can be empty if no authentication is required.
     /// </summary>
-    public AuthenticationOptions? AuthenticationOptions { get; set; }
+    public IList<AuthenticationOptions> AuthenticationOptions { get; set; } = new List<AuthenticationOptions>();
 
 
 
@@ -77,30 +78,60 @@ public class ApiClientOptions
     }
 
     /// <summary>
-    /// Sets the authentication options for this API client instance.
+    /// Adds an authentication option to the collection.
+    /// Multiple authentication methods can be configured and will be applied in order.
     /// </summary>
-    /// <param name="authenticationOptions">The authentication options.</param>
+    /// <param name="authenticationOptions">The authentication options to add.</param>
     /// <returns>The current instance for method chaining.</returns>
     public ApiClientOptions WithAuthentication(AuthenticationOptions authenticationOptions)
     {
-        AuthenticationOptions = authenticationOptions;
+        ArgumentNullException.ThrowIfNull(authenticationOptions);
+        AuthenticationOptions.Add(authenticationOptions);
         return this;
     }
 
     /// <summary>
-    /// Sets API key authentication for this API client instance.
+    /// Convenience method to add API key authentication (typically for API Management subscription keys).
     /// </summary>
     /// <param name="apiKey">The API key to use for authentication.</param>
     /// <param name="headerName">The header name to use for the API key. Defaults to "Ocp-Apim-Subscription-Key".</param>
     /// <returns>The current instance for method chaining.</returns>
     public ApiClientOptions WithApiKeyAuthentication(string apiKey, string headerName = "Ocp-Apim-Subscription-Key")
     {
+        ArgumentException.ThrowIfNullOrEmpty(apiKey);
+        ArgumentException.ThrowIfNullOrEmpty(headerName);
+
         var apiKeyOptions = new ApiKeyAuthenticationOptions
         {
             HeaderName = headerName
         };
         apiKeyOptions.SetApiKey(apiKey);
-        AuthenticationOptions = apiKeyOptions;
+        AuthenticationOptions.Add(apiKeyOptions);
+        return this;
+    }
+
+    /// <summary>
+    /// Convenience method to add a subscription key for Azure API Management.
+    /// This is an alias for WithApiKeyAuthentication with the default APIM header.
+    /// </summary>
+    /// <param name="subscriptionKey">The subscription key value.</param>
+    /// <param name="headerName">The header name (default: "Ocp-Apim-Subscription-Key").</param>
+    /// <returns>The current instance for method chaining.</returns>
+    public ApiClientOptions WithSubscriptionKey(string subscriptionKey, string headerName = "Ocp-Apim-Subscription-Key")
+    {
+        return WithApiKeyAuthentication(subscriptionKey, headerName);
+    }
+
+    /// <summary>
+    /// Convenience method to add Entra ID authentication.
+    /// </summary>
+    /// <param name="apiAudience">The API audience/scope for Entra ID authentication.</param>
+    /// <returns>The current instance for method chaining.</returns>
+    public ApiClientOptions WithEntraIdAuthentication(string apiAudience)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(apiAudience);
+
+        AuthenticationOptions.Add(new AzureCredentialAuthenticationOptions { ApiAudience = apiAudience });
         return this;
     }
 }

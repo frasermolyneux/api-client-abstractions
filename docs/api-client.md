@@ -7,6 +7,7 @@ A comprehensive implementation for building resilient, authenticated REST API cl
 - Token-based authentication support with automatic acquisition and caching
 - API key authentication with resilient handling
 - Entra ID (Azure AD) authentication with DefaultAzureCredential support
+- **Multiple authentication methods can be combined** (e.g., subscription keys + identity tokens)
 - Configurable retry policies with exponential backoff
 - Thread-safe REST client management
 - Standardized response handling with ApiResponse<T> model
@@ -97,11 +98,13 @@ Configuration options for API clients:
 public class ApiClientOptions
 {
     public string BaseUrl { get; set; } = string.Empty;
-    public AuthenticationOptions? AuthenticationOptions { get; set; }
+    public IList<AuthenticationOptions> AuthenticationOptions { get; set; } = new List<AuthenticationOptions>();
     public int MaxRetryCount { get; set; } = 3;
     
     // Fluent configuration methods
     public ApiClientOptions WithApiKeyAuthentication(string apiKey, string headerName = "Ocp-Apim-Subscription-Key")
+    public ApiClientOptions WithSubscriptionKey(string subscriptionKey, string headerName = "Ocp-Apim-Subscription-Key")
+    public ApiClientOptions WithEntraIdAuthentication(string apiAudience)
     public ApiClientOptions WithAuthentication(AuthenticationOptions authenticationOptions)
 }
 
@@ -126,18 +129,11 @@ public void ConfigureServices(IServiceCollection services)
             .WithBaseUrl("https://api.example.com")
             .WithApiKeyAuthentication("your-api-key", "X-Custom-Api-Key");
         
-    // Alternative configuration using configuration action
-    services.AddApiClient()
-            .WithOptions(options =>
-            {
-                options.BaseUrl = "https://api.example.com";
-                options.MaxRetryCount = 3;
-                options.AuthenticationOptions = new ApiKeyAuthenticationOptions
-                {
-                    ApiKey = "your-api-key",
-                    HeaderName = "X-Custom-Api-Key"
-                };
-            });
+    // Alternative configuration using fluent API
+    services.Configure<ApiClientOptions>(options => options
+        .WithBaseUrl("https://api.example.com")
+        .WithMaxRetryCount(3)
+        .WithApiKeyAuthentication("your-api-key", "X-Custom-Api-Key"));
 }
 ```
 
@@ -364,7 +360,21 @@ return new ApiResult<UserDto>
 services.AddApiClient()
     .WithApiKeyAuthentication(
         apiKey: "your-api-key",
-        headerName: "X-API-Key");  // Optional, defaults to "X-API-Key"
+        headerName: "X-API-Key");  // Optional, defaults to "Ocp-Apim-Subscription-Key"
+
+// Using fluent configuration
+services.Configure<ApiClientOptions>(options => options
+    .WithBaseUrl("https://api.example.com")
+    .WithApiKeyAuthentication("your-api-key", "X-API-Key"));
+```
+
+### Azure API Management Subscription Keys
+
+```csharp
+// Convenient method for APIM subscription keys
+services.Configure<ApiClientOptions>(options => options
+    .WithBaseUrl("https://your-api.azure-api.net")
+    .WithSubscriptionKey("your-subscription-key")); // Uses Ocp-Apim-Subscription-Key header
 ```
 
 ### Entra ID (Azure AD) Authentication
@@ -379,6 +389,39 @@ services.AddApiClient()
             options.ExcludeVisualStudioCredential = true;
             options.ExcludeManagedIdentityCredential = true;
         });
+
+// Using fluent configuration
+services.Configure<ApiClientOptions>(options => options
+    .WithBaseUrl("https://api.example.com")
+    .WithEntraIdAuthentication("api://your-api-audience"));
+```
+
+### Multiple Authentication Methods
+
+For APIs behind Azure API Management that require both subscription keys and identity tokens:
+
+```csharp
+// Common scenario: APIM + Entra ID
+services.Configure<ApiClientOptions>(options => options
+    .WithBaseUrl("https://your-api-via-apim.azure-api.net")
+    .WithSubscriptionKey("your-apim-subscription-key")      // For API Management
+    .WithEntraIdAuthentication("api://your-api-audience")); // For underlying API
+
+// This results in requests having both:
+// - Ocp-Apim-Subscription-Key: your-apim-subscription-key
+// - Authorization: Bearer <entra-id-token>
+```
+
+Custom authentication combinations:
+
+```csharp
+services.Configure<ApiClientOptions>(options => options
+    .WithBaseUrl("https://api.example.com")
+    .WithApiKeyAuthentication("primary-key", "X-Primary-Key")
+    .WithApiKeyAuthentication("secondary-key", "X-Secondary-Key")
+    .WithEntraIdAuthentication("api://your-api-audience"));
+
+// This will apply all three authentication methods to each request
 ```
 
 ### Custom Token Provider

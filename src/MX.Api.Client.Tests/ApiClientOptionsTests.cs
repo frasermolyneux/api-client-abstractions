@@ -13,7 +13,8 @@ public class ApiClientOptionsTests
 
         // Assert
         Assert.Equal(string.Empty, options.BaseUrl);
-        Assert.Null(options.AuthenticationOptions);
+        Assert.NotNull(options.AuthenticationOptions);
+        Assert.Empty(options.AuthenticationOptions);
         Assert.Equal(3, options.MaxRetryCount); // Default retry count is 3
     }
 
@@ -28,7 +29,8 @@ public class ApiClientOptionsTests
 
         // Assert
         Assert.Equal(baseUrl, options.BaseUrl);
-        Assert.Null(options.AuthenticationOptions);
+        Assert.NotNull(options.AuthenticationOptions);
+        Assert.Empty(options.AuthenticationOptions);
         Assert.Equal(3, options.MaxRetryCount); // Default retry count is 3
     }
 
@@ -45,12 +47,12 @@ public class ApiClientOptionsTests
         // Act
         options.BaseUrl = baseUrl;
         options.MaxRetryCount = maxRetryCount;
-        options.AuthenticationOptions = authOptions;
+        options.AuthenticationOptions.Add(authOptions);
 
         // Assert
         Assert.Equal(baseUrl, options.BaseUrl);
         Assert.Equal(maxRetryCount, options.MaxRetryCount);
-        Assert.Same(authOptions, options.AuthenticationOptions);
+        Assert.Contains(authOptions, options.AuthenticationOptions);
     }
 
     [Fact]
@@ -95,7 +97,8 @@ public class ApiClientOptionsTests
         var result = options.WithAuthentication(authOptions);
 
         // Assert
-        Assert.Same(authOptions, options.AuthenticationOptions);
+        Assert.Contains(authOptions, options.AuthenticationOptions);
+        Assert.Single(options.AuthenticationOptions);
         Assert.Same(options, result); // Returns the same instance for fluent chaining
 
         // Clean up
@@ -115,8 +118,9 @@ public class ApiClientOptionsTests
 
         // Assert
         Assert.NotNull(options.AuthenticationOptions);
-        Assert.IsType<ApiKeyAuthenticationOptions>(options.AuthenticationOptions);
-        var apiKeyOptions = options.AuthenticationOptions as ApiKeyAuthenticationOptions;
+        Assert.Single(options.AuthenticationOptions);
+        Assert.IsType<ApiKeyAuthenticationOptions>(options.AuthenticationOptions.First());
+        var apiKeyOptions = options.AuthenticationOptions.First() as ApiKeyAuthenticationOptions;
         Assert.Equal(apiKey, apiKeyOptions?.GetApiKeyAsString());
         Assert.Equal(headerName, apiKeyOptions?.HeaderName);
         Assert.Same(options, result); // Returns the same instance for fluent chaining
@@ -139,8 +143,103 @@ public class ApiClientOptionsTests
         // Assert
         Assert.Equal(baseUrl, options.BaseUrl);
         Assert.Equal(maxRetryCount, options.MaxRetryCount);
-        Assert.IsType<ApiKeyAuthenticationOptions>(options.AuthenticationOptions);
-        var apiKeyOptions = options.AuthenticationOptions as ApiKeyAuthenticationOptions;
+        Assert.Single(options.AuthenticationOptions);
+        Assert.IsType<ApiKeyAuthenticationOptions>(options.AuthenticationOptions.First());
+        var apiKeyOptions = options.AuthenticationOptions.First() as ApiKeyAuthenticationOptions;
         Assert.Equal(apiKey, apiKeyOptions?.GetApiKeyAsString());
+    }
+
+    [Fact]
+    public void WithMultipleAuthenticationOptions_AddsAllOptionsToCollection()
+    {
+        // Arrange
+        var options = new ApiClientOptions();
+        var apiKey = "test-key";
+        var apiAudience = "api://resource";
+
+        // Act
+        var result = options
+            .WithApiKeyAuthentication(apiKey)
+            .WithEntraIdAuthentication(apiAudience);
+
+        // Assert
+        Assert.Equal(2, options.AuthenticationOptions.Count);
+
+        var apiKeyOptions = options.AuthenticationOptions.OfType<ApiKeyAuthenticationOptions>().First();
+        Assert.Equal(apiKey, apiKeyOptions.GetApiKeyAsString());
+
+        var entraIdOptions = options.AuthenticationOptions.OfType<AzureCredentialAuthenticationOptions>().First();
+        Assert.Equal(apiAudience, entraIdOptions.ApiAudience);
+
+        Assert.Same(options, result); // Returns the same instance for fluent chaining
+
+        // Clean up
+        apiKeyOptions.Dispose();
+    }
+
+    [Fact]
+    public void WithSubscriptionKey_AddsApiKeyAuthentication()
+    {
+        // Arrange
+        var options = new ApiClientOptions();
+        var subscriptionKey = "subscription-key-123";
+
+        // Act
+        var result = options.WithSubscriptionKey(subscriptionKey);
+
+        // Assert
+        Assert.Single(options.AuthenticationOptions);
+        Assert.IsType<ApiKeyAuthenticationOptions>(options.AuthenticationOptions.First());
+
+        var apiKeyOptions = (ApiKeyAuthenticationOptions)options.AuthenticationOptions.First();
+        Assert.Equal(subscriptionKey, apiKeyOptions.GetApiKeyAsString());
+        Assert.Equal("Ocp-Apim-Subscription-Key", apiKeyOptions.HeaderName);
+        Assert.Same(options, result);
+
+        // Clean up
+        apiKeyOptions.Dispose();
+    }
+
+    [Fact]
+    public void WithSubscriptionKey_CustomHeader_AddsApiKeyAuthentication()
+    {
+        // Arrange
+        var options = new ApiClientOptions();
+        var subscriptionKey = "subscription-key-123";
+        var customHeader = "X-Custom-Subscription-Key";
+
+        // Act
+        var result = options.WithSubscriptionKey(subscriptionKey, customHeader);
+
+        // Assert
+        Assert.Single(options.AuthenticationOptions);
+        Assert.IsType<ApiKeyAuthenticationOptions>(options.AuthenticationOptions.First());
+
+        var apiKeyOptions = (ApiKeyAuthenticationOptions)options.AuthenticationOptions.First();
+        Assert.Equal(subscriptionKey, apiKeyOptions.GetApiKeyAsString());
+        Assert.Equal(customHeader, apiKeyOptions.HeaderName);
+        Assert.Same(options, result);
+
+        // Clean up
+        apiKeyOptions.Dispose();
+    }
+
+    [Fact]
+    public void WithEntraIdAuthentication_AddsAzureCredentialAuthentication()
+    {
+        // Arrange
+        var options = new ApiClientOptions();
+        var apiAudience = "api://test-resource";
+
+        // Act
+        var result = options.WithEntraIdAuthentication(apiAudience);
+
+        // Assert
+        Assert.Single(options.AuthenticationOptions);
+        Assert.IsType<AzureCredentialAuthenticationOptions>(options.AuthenticationOptions.First());
+
+        var entraIdOptions = (AzureCredentialAuthenticationOptions)options.AuthenticationOptions.First();
+        Assert.Equal(apiAudience, entraIdOptions.ApiAudience);
+        Assert.Same(options, result);
     }
 }

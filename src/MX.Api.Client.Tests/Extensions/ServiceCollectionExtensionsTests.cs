@@ -84,12 +84,12 @@ public class ServiceCollectionExtensionsTests
 
         var options = new ApiClientOptions
         {
-            BaseUrl = "https://api.example.com",
-            AuthenticationOptions = new AzureCredentialAuthenticationOptions
-            {
-                ApiAudience = "api://resource"
-            }
+            BaseUrl = "https://api.example.com"
         };
+        options.AuthenticationOptions.Add(new AzureCredentialAuthenticationOptions
+        {
+            ApiAudience = "api://resource"
+        });
 
         // Act
         services.WithOptions(options);
@@ -134,7 +134,7 @@ public class ServiceCollectionExtensionsTests
             ClientId = "client-id"
         };
         clientCredOptions.SetClientSecret("client-secret");
-        options.AuthenticationOptions = clientCredOptions;
+        options.AuthenticationOptions.Add(clientCredOptions);
 
         // Act
         services.WithOptions(options);
@@ -281,8 +281,9 @@ public class ServiceCollectionExtensionsTests
         var serviceProvider = services.BuildServiceProvider();
         var options = serviceProvider.GetRequiredService<IOptions<ApiClientOptions>>().Value;
 
-        Assert.IsType<ApiKeyAuthenticationOptions>(options.AuthenticationOptions);
-        var authOptions = (ApiKeyAuthenticationOptions)options.AuthenticationOptions;
+        Assert.Single(options.AuthenticationOptions);
+        Assert.IsType<ApiKeyAuthenticationOptions>(options.AuthenticationOptions.First());
+        var authOptions = (ApiKeyAuthenticationOptions)options.AuthenticationOptions.First();
         Assert.Equal(apiKey, authOptions.GetApiKeyAsString());
         Assert.Equal("Ocp-Apim-Subscription-Key", authOptions.HeaderName); // Default header name
     }
@@ -302,8 +303,9 @@ public class ServiceCollectionExtensionsTests
         var serviceProvider = services.BuildServiceProvider();
         var options = serviceProvider.GetRequiredService<IOptions<ApiClientOptions>>().Value;
 
-        Assert.IsType<ApiKeyAuthenticationOptions>(options.AuthenticationOptions);
-        var authOptions = (ApiKeyAuthenticationOptions)options.AuthenticationOptions;
+        Assert.Single(options.AuthenticationOptions);
+        Assert.IsType<ApiKeyAuthenticationOptions>(options.AuthenticationOptions.First());
+        var authOptions = (ApiKeyAuthenticationOptions)options.AuthenticationOptions.First();
         Assert.Equal(apiKey, authOptions.GetApiKeyAsString());
         Assert.Equal(headerName, authOptions.HeaderName);
     }
@@ -348,8 +350,9 @@ public class ServiceCollectionExtensionsTests
 
         // Verify correct authentication options
         var options = serviceProvider.GetRequiredService<IOptions<ApiClientOptions>>().Value;
-        Assert.IsType<AzureCredentialAuthenticationOptions>(options.AuthenticationOptions);
-        var authOptions = (AzureCredentialAuthenticationOptions)options.AuthenticationOptions;
+        Assert.Single(options.AuthenticationOptions);
+        Assert.IsType<AzureCredentialAuthenticationOptions>(options.AuthenticationOptions.First());
+        var authOptions = (AzureCredentialAuthenticationOptions)options.AuthenticationOptions.First();
         Assert.Equal(apiAudience, authOptions.ApiAudience);
     }
 
@@ -398,8 +401,9 @@ public class ServiceCollectionExtensionsTests
 
         // Verify correct authentication options
         var options = serviceProvider.GetRequiredService<IOptions<ApiClientOptions>>().Value;
-        Assert.IsType<AzureCredentialAuthenticationOptions>(options.AuthenticationOptions);
-        var authOptions = (AzureCredentialAuthenticationOptions)options.AuthenticationOptions;
+        Assert.Single(options.AuthenticationOptions);
+        Assert.IsType<AzureCredentialAuthenticationOptions>(options.AuthenticationOptions.First());
+        var authOptions = (AzureCredentialAuthenticationOptions)options.AuthenticationOptions.First();
         Assert.Equal(apiAudience, authOptions.ApiAudience);
 
         // Verify DefaultAzureCredentialOptions are configured
@@ -459,8 +463,9 @@ public class ServiceCollectionExtensionsTests
 
         // Verify correct authentication options
         var options = serviceProvider.GetRequiredService<IOptions<ApiClientOptions>>().Value;
-        Assert.IsType<ClientCredentialAuthenticationOptions>(options.AuthenticationOptions);
-        var authOptions = (ClientCredentialAuthenticationOptions)options.AuthenticationOptions;
+        Assert.Single(options.AuthenticationOptions);
+        Assert.IsType<ClientCredentialAuthenticationOptions>(options.AuthenticationOptions.First());
+        var authOptions = (ClientCredentialAuthenticationOptions)options.AuthenticationOptions.First();
         Assert.Equal(apiAudience, authOptions.ApiAudience);
         Assert.Equal(tenantId, authOptions.TenantId);
         Assert.Equal(clientId, authOptions.ClientId);
@@ -500,4 +505,54 @@ public class ServiceCollectionExtensionsTests
         Assert.Throws<ArgumentException>(() =>
             services.WithClientCredentials(apiAudience!, tenantId!, clientId!, clientSecret!));
     }
+
+    [Fact]
+    public void MultipleAuthenticationMethods_CanBeConfiguredTogether()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+
+        // Add required services
+        var loggerFactoryMock = new Mock<ILoggerFactory>();
+        loggerFactoryMock.Setup(x => x.CreateLogger(It.IsAny<string>()))
+            .Returns(Mock.Of<ILogger>());
+        services.AddSingleton(loggerFactoryMock.Object);
+        services.AddLogging();
+
+        var subscriptionKey = "subscription-key-123";
+        var apiAudience = "api://resource";
+
+        var options = new ApiClientOptions
+        {
+            BaseUrl = "https://api.example.com"
+        };
+        options.WithSubscriptionKey(subscriptionKey)
+               .WithEntraIdAuthentication(apiAudience);
+
+        // Act
+        services.WithOptions(options);
+
+        // Assert
+        var serviceProvider = services.BuildServiceProvider();
+
+        // Verify authentication services are registered for Entra ID
+        Assert.NotNull(serviceProvider.GetService<IMemoryCache>());
+        Assert.NotNull(serviceProvider.GetService<ITokenCredentialProvider>());
+        Assert.NotNull(serviceProvider.GetService<IApiTokenProvider>());
+
+        // Verify multiple authentication options are configured
+        var configuredOptions = serviceProvider.GetRequiredService<IOptions<ApiClientOptions>>().Value;
+        Assert.Equal(2, configuredOptions.AuthenticationOptions.Count);
+
+        var apiKeyAuth = configuredOptions.AuthenticationOptions.OfType<ApiKeyAuthenticationOptions>().First();
+        Assert.Equal(subscriptionKey, apiKeyAuth.GetApiKeyAsString());
+        Assert.Equal("Ocp-Apim-Subscription-Key", apiKeyAuth.HeaderName);
+
+        var entraIdAuth = configuredOptions.AuthenticationOptions.OfType<AzureCredentialAuthenticationOptions>().First();
+        Assert.Equal(apiAudience, entraIdAuth.ApiAudience);
+
+        // Clean up
+        apiKeyAuth.Dispose();
+    }
+
 }

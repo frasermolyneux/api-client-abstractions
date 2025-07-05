@@ -30,7 +30,7 @@ Core abstractions library providing common models and interfaces for standardize
 
 API client library providing resilient, authenticated REST API client implementation:
 - Automatic token acquisition and caching
-- Request authentication with API keys or Entra ID (formerly Azure AD)
+- Multiple authentication methods that can be combined (API keys, Entra ID)
 - API key authentication with resilient handling
 - Resilient HTTP requests with configurable retry policies
 - Thread-safe REST client management
@@ -90,13 +90,19 @@ You can use any combination of these packages based on your application's needs.
 Register the API client services in your application's startup:
 
 ```csharp
-// Add API client with default credential provider
+// Add API client with API key authentication
 services.AddApiClient()
     .WithApiKeyAuthentication("your-api-key");
 
 // Or with Entra ID authentication
 services.AddApiClient()
     .WithEntraIdAuthentication("api://your-api-audience");
+
+// Multiple authentication methods (e.g., for Azure API Management)
+services.Configure<ApiClientOptions>(options => options
+    .WithBaseUrl("https://your-api-via-apim.azure-api.net")
+    .WithSubscriptionKey("your-apim-subscription-key")      // For API Management
+    .WithEntraIdAuthentication("api://your-api-audience")); // For underlying API
 ```
 
 ### Custom Credential Provider

@@ -4,7 +4,7 @@ This library provides a comprehensive implementation for creating resilient, aut
 
 ## Features
 
-- Support for multiple authentication methods (API Key and Entra ID authentication)
+- Support for multiple authentication methods that can be combined (API Key and Entra ID authentication)
 - Automatic token acquisition and caching with thread-safe operations
 - Built-in retry policies with exponential backoff and circuit breaker patterns
 - Thread-safe REST client management
@@ -23,7 +23,7 @@ dotnet add package MX.Api.Client
 ### Basic Setup
 
 ```csharp
-// Register the API client services
+// Register the API client services with single authentication
 services.AddApiClient()
     .WithApiKeyAuthentication("your-api-key");
 
@@ -31,12 +31,16 @@ services.AddApiClient()
 services.AddApiClient()
     .WithEntraIdAuthentication("api://your-api-audience");
 
-// Configure client options
-services.Configure<ApiClientOptions>(options =>
-{
-    options.BaseUrl = "https://api.example.com";
-    options.MaxRetryCount = 3;
-});
+// Configure client options with fluent API
+services.Configure<ApiClientOptions>(options => options
+    .WithBaseUrl("https://api.example.com")
+    .WithMaxRetryCount(3));
+
+// Multiple authentication methods (e.g., for Azure API Management + Identity)
+services.Configure<ApiClientOptions>(options => options
+    .WithBaseUrl("https://your-api-via-apim.azure-api.net")
+    .WithSubscriptionKey("your-apim-subscription-key")      // Adds Ocp-Apim-Subscription-Key header
+    .WithEntraIdAuthentication("api://your-api-audience")); // Adds Authorization: Bearer token
 ```
 
 ### Creating a Custom API Client
@@ -97,6 +101,14 @@ Use this when your API requires an API key in a header (like Azure API Managemen
 ```csharp
 services.AddApiClient()
     .WithApiKeyAuthentication("your-api-key", "X-API-Key"); // Custom header name
+
+// Or configure via options
+services.Configure<ApiClientOptions>(options => options
+    .WithApiKeyAuthentication("your-api-key", "X-API-Key"));
+
+// For Azure API Management subscription keys
+services.Configure<ApiClientOptions>(options => options
+    .WithSubscriptionKey("your-subscription-key")); // Uses Ocp-Apim-Subscription-Key header
 ```
 
 ### Entra ID Authentication
@@ -106,6 +118,34 @@ Use this when your API requires OAuth tokens from Entra ID (formerly Azure AD).
 ```csharp
 services.AddApiClient()
     .WithEntraIdAuthentication("api://your-api-audience");
+
+// Or configure via options
+services.Configure<ApiClientOptions>(options => options
+    .WithEntraIdAuthentication("api://your-api-audience"));
+```
+
+### Multiple Authentication Methods
+
+For APIs behind Azure API Management that require both subscription keys and identity tokens:
+
+```csharp
+services.Configure<ApiClientOptions>(options => options
+    .WithBaseUrl("https://your-api-via-apim.azure-api.net")
+    .WithSubscriptionKey("your-apim-subscription-key")      // For API Management
+    .WithEntraIdAuthentication("api://your-api-audience")); // For underlying API
+
+// This will result in requests having both:
+// - Ocp-Apim-Subscription-Key: your-apim-subscription-key
+// - Authorization: Bearer <entra-id-token>
+```
+
+Custom combinations:
+
+```csharp
+services.Configure<ApiClientOptions>(options => options
+    .WithApiKeyAuthentication("primary-key", "X-Primary-Key")
+    .WithApiKeyAuthentication("secondary-key", "X-Secondary-Key")
+    .WithEntraIdAuthentication("api://your-api-audience"));
 ```
 
 With custom credential options:

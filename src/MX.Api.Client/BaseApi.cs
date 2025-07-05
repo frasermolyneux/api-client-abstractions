@@ -57,7 +57,7 @@ public class BaseApi
             throw new ArgumentException("BaseUrl must be specified in ApiClientOptions", nameof(options));
         }
 
-        if (options.Value.AuthenticationOptions is EntraIdAuthenticationOptions && apiTokenProvider == null)
+        if (options.Value.AuthenticationOptions.OfType<EntraIdAuthenticationOptions>().Any() && apiTokenProvider == null)
         {
             throw new ArgumentException("IApiTokenProvider must be provided when using Entra ID authentication", nameof(apiTokenProvider));
         }
@@ -128,7 +128,7 @@ public class BaseApi
     }
 
     /// <summary>
-    /// Applies the appropriate authentication to the request based on configuration.
+    /// Applies all configured authentication methods to the request.
     /// </summary>
     /// <param name="request">The request to authenticate.</param>
     /// <param name="cancellationToken">A cancellation token to cancel the operation.</param>
@@ -136,15 +136,28 @@ public class BaseApi
     /// <exception cref="AuthenticationException">Thrown when authentication token acquisition fails.</exception>
     private async Task ApplyAuthenticationAsync(RestRequest request, CancellationToken cancellationToken)
     {
-        switch (options.AuthenticationOptions)
+        if (options.AuthenticationOptions == null || !options.AuthenticationOptions.Any())
         {
-            case ApiKeyAuthenticationOptions apiKeyOptions:
-                ApplyApiKeyAuthentication(request, apiKeyOptions);
-                break;
+            logger.LogDebug("No authentication options configured");
+            return;
+        }
 
-            case EntraIdAuthenticationOptions entraIdOptions:
-                await ApplyEntraIdAuthenticationAsync(request, entraIdOptions, cancellationToken);
-                break;
+        foreach (var authOption in options.AuthenticationOptions)
+        {
+            switch (authOption)
+            {
+                case ApiKeyAuthenticationOptions apiKeyOptions:
+                    ApplyApiKeyAuthentication(request, apiKeyOptions);
+                    break;
+
+                case EntraIdAuthenticationOptions entraIdOptions:
+                    await ApplyEntraIdAuthenticationAsync(request, entraIdOptions, cancellationToken);
+                    break;
+
+                default:
+                    logger.LogWarning("Unsupported authentication type: {AuthenticationType}", authOption.GetType().Name);
+                    break;
+            }
         }
     }
 

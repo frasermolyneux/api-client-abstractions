@@ -64,18 +64,22 @@ public static class ServiceCollectionExtensions
             });
 
             // Register token providers if using Entra ID authentication
-            if (options.AuthenticationOptions is EntraIdAuthenticationOptions)
+            var entraIdOptions = options.AuthenticationOptions.OfType<EntraIdAuthenticationOptions>().ToList();
+            if (entraIdOptions.Any())
             {
                 // Ensure that IMemoryCache is registered
                 serviceCollection.AddMemoryCache();
 
+                // Register the appropriate token credential provider based on the first Entra ID option
+                var firstEntraIdOption = entraIdOptions.First();
+
                 // Register the token credential provider if using Azure credentials
-                if (options.AuthenticationOptions is AzureCredentialAuthenticationOptions)
+                if (firstEntraIdOption is AzureCredentialAuthenticationOptions)
                 {
                     serviceCollection.AddSingleton<ITokenCredentialProvider, DefaultTokenCredentialProvider>();
                 }
                 // Register the token credential provider if using client credentials
-                else if (options.AuthenticationOptions is ClientCredentialAuthenticationOptions clientCredOptions)
+                else if (firstEntraIdOption is ClientCredentialAuthenticationOptions clientCredOptions)
                 {
                     serviceCollection.AddSingleton<ITokenCredentialProvider>(sp =>
                     {
@@ -160,7 +164,7 @@ public static class ServiceCollectionExtensions
                 HeaderName = headerName
             };
             apiKeyOptions.SetApiKey(apiKey);
-            options.AuthenticationOptions = apiKeyOptions;
+            options.AuthenticationOptions.Add(apiKeyOptions);
         });
 
         return serviceCollection;
@@ -194,10 +198,10 @@ public static class ServiceCollectionExtensions
 
         serviceCollection.Configure<ApiClientOptions>(options =>
         {
-            options.AuthenticationOptions = new AzureCredentialAuthenticationOptions
+            options.AuthenticationOptions.Add(new AzureCredentialAuthenticationOptions
             {
                 ApiAudience = apiAudience
-            };
+            });
         });
 
         return serviceCollection;
@@ -242,10 +246,10 @@ public static class ServiceCollectionExtensions
 
         serviceCollection.Configure<ApiClientOptions>(options =>
         {
-            options.AuthenticationOptions = new AzureCredentialAuthenticationOptions
+            options.AuthenticationOptions.Add(new AzureCredentialAuthenticationOptions
             {
                 ApiAudience = apiAudience
-            };
+            });
         });
 
         return serviceCollection;
@@ -320,7 +324,7 @@ public static class ServiceCollectionExtensions
                 ClientId = clientId
             };
             clientCredOptions.SetClientSecret(clientSecret);
-            options.AuthenticationOptions = clientCredOptions;
+            options.AuthenticationOptions.Add(clientCredOptions);
         });
 
         return serviceCollection;
