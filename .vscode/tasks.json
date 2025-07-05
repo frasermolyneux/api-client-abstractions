@@ -7,7 +7,7 @@
             "type": "shell",
             "args": [
                 "build",
-                "${workspaceFolder}/src/api-client-abstractions.sln",
+                "${workspaceFolder}/src/MX.Api.Abstractions.sln",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary",
                 "--configuration",
@@ -25,7 +25,7 @@
             "type": "shell",
             "args": [
                 "build",
-                "${workspaceFolder}/src/api-client-abstractions.sln",
+                "${workspaceFolder}/src/MX.Api.Abstractions.sln",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary",
                 "--configuration",
@@ -39,7 +39,7 @@
             "type": "shell",
             "args": [
                 "test",
-                "${workspaceFolder}/src/api-client-abstractions.sln",
+                "${workspaceFolder}/src/MX.Api.Abstractions.sln",
                 "--configuration",
                 "Debug"
             ],
@@ -55,7 +55,7 @@
             "type": "shell",
             "args": [
                 "test",
-                "${workspaceFolder}/src/api-client-abstractions.sln",
+                "${workspaceFolder}/src/MX.Api.Abstractions.sln",
                 "--configuration",
                 "Release"
             ],

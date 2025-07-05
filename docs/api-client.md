@@ -1,4 +1,4 @@
-# MxIO.ApiClient
+# MX.Api.Client
 
 A comprehensive library for building resilient, authenticated REST API clients in .NET applications. This package provides base classes, interfaces, and utilities for creating API clients with features such as authentication, token management, request execution, and response processing.
 
@@ -17,7 +17,7 @@ A comprehensive library for building resilient, authenticated REST API clients i
 ## Installation
 
 ```bash
-dotnet add package MxIO.ApiClient
+dotnet add package MX.Api.Client
 ```
 
 ## Core Components

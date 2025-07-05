@@ -15,7 +15,7 @@ The implementation follows the API design pattern, which provides a consistent a
 
 The solution consists of three main packages:
 
-### MxIO.ApiClient
+### MX.Api.Client
 
 Core library providing resilient, authenticated REST API client implementation with:
 - Automatic token acquisition and caching
@@ -25,7 +25,7 @@ Core library providing resilient, authenticated REST API client implementation w
 - Thread-safe REST client management
 - Support for common query parameters and filtering options
 
-### MxIO.ApiClient.Abstractions
+### MX.Api.Abstractions
 
 Common models and interfaces for standardized API response handling:
 - `ApiResponse<T>` - Standard API response model following API design
@@ -35,7 +35,7 @@ Common models and interfaces for standardized API response handling:
 - `ApiPagination` - Pagination information
 - `FilterOptions` - OData-like filtering options
 
-### MxIO.ApiClient.WebExtensions
+### MX.Api.Web.Extensions
 
 Extension methods for integrating with ASP.NET Core web applications:
 - Converting API responses to ActionResults with appropriate status codes
@@ -46,9 +46,9 @@ Extension methods for integrating with ASP.NET Core web applications:
 Install the packages via NuGet:
 
 ```bash
-dotnet add package MxIO.ApiClient
-dotnet add package MxIO.ApiClient.Abstractions
-dotnet add package MxIO.ApiClient.WebExtensions
+dotnet add package MX.Api.Client
+dotnet add package MX.Api.Abstractions
+dotnet add package MX.Api.Web.Extensions
 ```
 
 ## Getting Started

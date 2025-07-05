@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <RootNamespace>MX.Api.Client</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageId>MX.Api.Client</PackageId>
+    <Authors>Fraser Molyneux</Authors>
+    <Company>Molyneux.IO</Company>
+    <Product>Molyneux.IO ApiClient</Product>
+    <Title>Generic API Client Helper Library</Title>
+    <Description>An abstractions library containing common API client functionality for .NET 7. Contains common interfaces, extensions and models for API clients.</Description>
+    <PackageProjectUrl>https://github.com/frasermolyneux/api-client-abstractions</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/frasermolyneux/api-client-abstractions</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>GPL-3.0-only</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+  <ItemGroup>
+	<PackageReference Include="Azure.Identity" Version="1.14.1" />
+	<PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="9.0.6" />
+	<PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.6" />
+	<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.6" />
+	<PackageReference Include="Microsoft.Extensions.Http" Version="9.0.6" />
+	<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.6" />
+	<PackageReference Include="Microsoft.Extensions.Options" Version="9.0.6" />
+	<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+	<PackageReference Include="Polly" Version="8.6.1" />
+	<PackageReference Include="RestSharp" Version="112.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MX.Api.Abstractions\MX.Api.Abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>

@@ -1,4 +1,4 @@
-# MxIO.ApiClient.Abstractions
+# MX.Api.Abstractions
 
 A library containing common abstractions and models for API clients in .NET applications. This package provides the fundamental data structures and interfaces for building API clients that conform to the API design.
 
@@ -14,7 +14,7 @@ A library containing common abstractions and models for API clients in .NET appl
 ## Installation
 
 ```bash
-dotnet add package MxIO.ApiClient.Abstractions
+dotnet add package MX.Api.Abstractions
 ```
 
 ## Core Components

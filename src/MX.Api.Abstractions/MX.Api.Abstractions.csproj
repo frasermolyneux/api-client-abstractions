@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <RootNamespace>MX.Api.Abstractions</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageId>MX.Api.Abstractions</PackageId>
+    <Authors>Fraser Molyneux</Authors>
+    <Company>Molyneux.IO</Company>
+    <Product>Molyneux.IO ApiClient</Product>
+    <Title>Generic API Client Abstractions Library</Title>
+    <Description>An abstractions library containing common API client functionality for .NET 7. Contains common interfaces, extensions and models for API clients.</Description>
+    <PackageProjectUrl>https://github.com/frasermolyneux/api-client-abstractions</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/frasermolyneux/api-client-abstractions</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>GPL-3.0-only</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>

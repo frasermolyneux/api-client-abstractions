@@ -4,18 +4,18 @@
 
 This repository contains the MxIO API Client Abstractions library, a comprehensive toolkit for building robust .NET API clients. The project consists of three primary components:
 
-1. **MxIO.ApiClient** - Core library providing resilient, authenticated REST API client implementation with support for token acquisition, caching, and failover mechanisms
-2. **MxIO.ApiClient.Abstractions** - Common models and interfaces for standardized API response handling, including pagination, filtering, and error management
-3. **MxIO.ApiClient.WebExtensions** - Extensions for integrating with ASP.NET Core web applications
+1. **MX.Api.Client** - Core library providing resilient, authenticated REST API client implementation with support for token acquisition, caching, and failover mechanisms
+2. **MX.Api.Abstractions** - Common models and interfaces for standardized API response handling, including pagination, filtering, and error management
+3. **MX.Api.Web.Extensions** - Extensions for integrating with ASP.NET Core web applications
 
 The library follows a consistent API design pattern that promotes best practices in API client development, focusing on resilience, standardization, and proper authentication handling.
 
 ## Code Structure and Organization
 
 ### Namespaces
-- Use the root namespace `MxIO.ApiClient` for core client functionality
-- Use `MxIO.ApiClient.Abstractions` for response and model abstractions
-- Use `MxIO.ApiClient.Extensions` for extension methods
+- Use the root namespace `MX.Api.Client` for core client functionality
+- Use `MX.Api.Abstractions` for response and model abstractions
+- Use `MX.Api.Client.Extensions` for extension methods
 - Follow a hierarchical structure reflecting the organization and project purpose
 
 ### Naming Conventions
