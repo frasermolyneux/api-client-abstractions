@@ -9,7 +9,7 @@ This library provides a comprehensive implementation for creating resilient, aut
 - Built-in retry policies with exponential backoff and circuit breaker patterns
 - Thread-safe REST client management
 - Standardized error handling and response processing using ApiResponse<T> model
-- Support for primary/secondary API key failover for high availability
+- Support for API key authentication with resilient handling
 - Integration with Microsoft.Extensions.Logging for comprehensive diagnostics
 
 ## Installation
@@ -80,9 +80,12 @@ public class MyApiClient : BaseApi
 ### Updating API Key at Runtime
 
 ```csharp
-// Inject IOptions<ApiClientOptions> and update
-var options = apiClientOptions.Value;
-options.PrimaryApiKey = "new-api-key";
+// Update authentication options
+var authOptions = new ApiKeyAuthenticationOptions
+{
+    ApiKey = "new-api-key",
+    HeaderName = "Ocp-Apim-Subscription-Key" // or your custom header name
+};
 ```
 
 ## Authentication Methods

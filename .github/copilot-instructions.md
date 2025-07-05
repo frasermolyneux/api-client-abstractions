@@ -5,7 +5,7 @@
 This repository contains the MX API Abstractions approach, a comprehensive toolkit for building robust .NET applications that interact with APIs. The project consists of three primary components:
 
 1. **MX.Api.Abstractions** - Core abstractions library providing common models and interfaces for standardized API handling, including response models, pagination, filtering, and error management
-2. **MX.Api.Client** - API client library providing resilient, authenticated REST API client implementation with support for token acquisition, caching, and failover mechanisms
+2. **MX.Api.Client** - API client library providing resilient, authenticated REST API client implementation with support for token acquisition, caching, and robust error handling mechanisms
 3. **MX.Api.Web.Extensions** - ASP.NET Core integration library providing extensions for integrating API responses with web applications
 
 The library follows a consistent API design pattern that promotes best practices in API interactions from both client and web perspectives, focusing on resilience, standardization, and proper authentication handling.
@@ -94,7 +94,7 @@ The library follows a consistent API design pattern that promotes best practices
   - Use jitter in retry delays to prevent thundering herd issues
   - Implement circuit breakers for external service dependencies
 - Use consistent authentication mechanisms across clients:
-  - Support API key authentication with failover capabilities
+  - Support API key authentication with resilient handling
   - Implement token-based authentication with proper caching
   - Support Azure Entra ID (formerly Azure AD) authentication
 - Implement proper request/response logging with appropriate sensitive data handling

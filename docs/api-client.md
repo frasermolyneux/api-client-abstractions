@@ -5,7 +5,7 @@ A comprehensive implementation for building resilient, authenticated REST API cl
 ## Features
 
 - Token-based authentication support with automatic acquisition and caching
-- API key authentication with primary/secondary failover capability
+- API key authentication with resilient handling
 - Entra ID (Azure AD) authentication with DefaultAzureCredential support
 - Configurable retry policies with exponential backoff
 - Thread-safe REST client management
@@ -97,16 +97,20 @@ Configuration options for API clients:
 public class ApiClientOptions
 {
     public string BaseUrl { get; set; } = string.Empty;
-    public string ApiPathPrefix { get; set; } = string.Empty;
-    public string PrimaryApiKey { get; set; } = string.Empty;
-    public string SecondaryApiKey { get; set; } = string.Empty;
-    public string ApiKeyHeaderName { get; set; } = "X-API-Key";
-    public string ApiAudience { get; set; } = string.Empty;
+    public string? ApiPathPrefix { get; set; }
+    public AuthenticationOptions? AuthenticationOptions { get; set; }
     public int MaxRetryCount { get; set; } = 3;
     
-    // Auxiliary methods
-    public string ApiKey => !string.IsNullOrEmpty(PrimaryApiKey) ? PrimaryApiKey : SecondaryApiKey;
-    public void UpdateApiKey(string apiKey) => PrimaryApiKey = apiKey;
+    // Fluent configuration methods
+    public ApiClientOptions WithApiKeyAuthentication(string apiKey, string headerName = "Ocp-Apim-Subscription-Key")
+    public ApiClientOptions WithAuthentication(AuthenticationOptions authenticationOptions)
+}
+
+public class ApiKeyAuthenticationOptions : AuthenticationOptions
+{
+    public string ApiKey { get; set; } = string.Empty;
+    public string HeaderName { get; set; } = "Ocp-Apim-Subscription-Key";
+    public override AuthenticationType AuthenticationType => AuthenticationType.ApiKey;
 }
 ```
 
@@ -118,17 +122,23 @@ public class ApiClientOptions
 // Add API client to services
 public void ConfigureServices(IServiceCollection services)
 {
-    // Basic registration
+    // Basic registration with API key authentication
     services.AddApiClient()
-        .WithApiKeyAuthentication("your-api-key");
+            .WithBaseUrl("https://api.example.com")
+            .WithApiKeyAuthentication("your-api-key", "X-Custom-Api-Key");
         
-    // Configure options
-    services.Configure<ApiClientOptions>(options =>
-    {
-        options.BaseUrl = "https://api.example.com";
-        options.MaxRetryCount = 3;
-        options.ApiKeyHeaderName = "X-Custom-Api-Key";
-    });
+    // Alternative configuration using configuration action
+    services.AddApiClient()
+            .WithOptions(options =>
+            {
+                options.BaseUrl = "https://api.example.com";
+                options.MaxRetryCount = 3;
+                options.AuthenticationOptions = new ApiKeyAuthenticationOptions
+                {
+                    ApiKey = "your-api-key",
+                    HeaderName = "X-Custom-Api-Key"
+                };
+            });
 }
 ```
 

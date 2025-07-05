@@ -30,7 +30,7 @@ Core abstractions library providing common models and interfaces for standardize
 API client library providing resilient, authenticated REST API client implementation:
 - Automatic token acquisition and caching
 - Request authentication with API keys or Entra ID (formerly Azure AD)
-- Primary/secondary API key failover
+- API key authentication with resilient handling
 - Resilient HTTP requests with configurable retry policies
 - Thread-safe REST client management
 - Support for common query parameters and filtering options
@@ -198,7 +198,7 @@ public class UserService
 
 The library supports multiple authentication mechanisms:
 
-1. **API Keys**: Provided via `ApiClientOptions.PrimaryApiKey` and `ApiClientOptions.SecondaryApiKey`
+1. **API Keys**: Provided via `ApiClientOptions.WithApiKeyAuthentication(apiKey)` or `AuthenticationOptions.ApiKey`
 2. **Bearer Tokens**: Automatically managed and cached by `ApiTokenProvider`
 3. **Entra ID (formerly Azure AD)**: Leverages `DefaultAzureCredential` for Azure resource access
 
