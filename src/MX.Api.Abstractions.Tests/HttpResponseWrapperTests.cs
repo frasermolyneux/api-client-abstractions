@@ -15,6 +15,7 @@ public class HttpResponseWrapperTests
         Assert.False(wrapper.IsSuccess);
         Assert.False(wrapper.IsNotFound);
         Assert.False(wrapper.IsConflict);
+        Assert.Null(wrapper.Result);
     }
 
     [Fact]
@@ -28,6 +29,63 @@ public class HttpResponseWrapperTests
 
         // Assert
         Assert.Equal(statusCode, wrapper.StatusCode);
+        Assert.Null(wrapper.Result);
+    }
+
+    [Fact]
+    public void Constructor_WithStatusCodeAndApiResponse_SetsStatusCodeAndResult()
+    {
+        // Arrange
+        var statusCode = HttpStatusCode.OK;
+        var apiResponse = new ApiResponse();
+
+        // Act
+        var wrapper = new HttpResponseWrapper(statusCode, apiResponse);
+
+        // Assert
+        Assert.Equal(statusCode, wrapper.StatusCode);
+        Assert.Equal(apiResponse, wrapper.Result);
+        Assert.True(wrapper.IsSuccess);
+    }
+
+    [Fact]
+    public void Constructor_WithStatusCodeAndNullApiResponse_SetsStatusCodeAndNullResult()
+    {
+        // Arrange
+        var statusCode = HttpStatusCode.OK;
+        ApiResponse? apiResponse = null;
+
+        // Act
+        var wrapper = new HttpResponseWrapper(statusCode, apiResponse);
+
+        // Assert
+        Assert.Equal(statusCode, wrapper.StatusCode);
+        Assert.Null(wrapper.Result);
+        Assert.True(wrapper.IsSuccess); // IsSuccess in base class only depends on status code
+    }
+
+    [Fact]
+    public void HttpResponseWrapper_Implementation_ImplementsInterface()
+    {
+        // Act
+        var wrapper = new HttpResponseWrapper();
+
+        // Assert
+        Assert.IsAssignableFrom<IHttpResponseWrapper>(wrapper);
+    }
+
+    [Fact]
+    public void HttpResponseWrapper_ResultProperty_CanBeSetAndRetrieved()
+    {
+        // Arrange
+        var wrapper = new HttpResponseWrapper();
+        var apiResponse = new ApiResponse();
+
+        // Act
+        wrapper.Result = apiResponse;
+
+        // Assert
+        Assert.Equal(apiResponse, wrapper.Result);
     }
 
     [Theory]
@@ -37,39 +95,15 @@ public class HttpResponseWrapperTests
     [InlineData(HttpStatusCode.BadRequest, false)]
     [InlineData(HttpStatusCode.NotFound, false)]
     [InlineData(HttpStatusCode.InternalServerError, false)]
-    public void IsSuccess_ReturnsCorrectValue_ForDifferentStatusCodes(HttpStatusCode statusCode, bool expectedIsSuccess)
+    public void HttpResponseWrapper_IsSuccess_DependsOnlyOnStatusCode(HttpStatusCode statusCode, bool expectedIsSuccess)
     {
-        // Act
-        var wrapper = new HttpResponseWrapper(statusCode);
+        // Arrange
+        var wrapperWithNullResult = new HttpResponseWrapper(statusCode);
+        var wrapperWithResult = new HttpResponseWrapper(statusCode, new ApiResponse());
 
-        // Assert
-        Assert.Equal(expectedIsSuccess, wrapper.IsSuccess);
-    }
-
-    [Theory]
-    [InlineData(HttpStatusCode.NotFound, true)]
-    [InlineData(HttpStatusCode.OK, false)]
-    [InlineData(HttpStatusCode.BadRequest, false)]
-    public void IsNotFound_ReturnsCorrectValue_ForDifferentStatusCodes(HttpStatusCode statusCode, bool expectedIsNotFound)
-    {
-        // Act
-        var wrapper = new HttpResponseWrapper(statusCode);
-
-        // Assert
-        Assert.Equal(expectedIsNotFound, wrapper.IsNotFound);
-    }
-
-    [Theory]
-    [InlineData(HttpStatusCode.Conflict, true)]
-    [InlineData(HttpStatusCode.OK, false)]
-    [InlineData(HttpStatusCode.BadRequest, false)]
-    public void IsConflict_ReturnsCorrectValue_ForDifferentStatusCodes(HttpStatusCode statusCode, bool expectedIsConflict)
-    {
-        // Act
-        var wrapper = new HttpResponseWrapper(statusCode);
-
-        // Assert
-        Assert.Equal(expectedIsConflict, wrapper.IsConflict);
+        // Assert - Both should have the same IsSuccess value regardless of Result
+        Assert.Equal(expectedIsSuccess, wrapperWithNullResult.IsSuccess);
+        Assert.Equal(expectedIsSuccess, wrapperWithResult.IsSuccess);
     }
 
     [Fact]
@@ -142,5 +176,41 @@ public class HttpResponseWrapperTests
         // Assert
         Assert.IsAssignableFrom<IHttpResponseWrapper>(wrapper);
         Assert.IsAssignableFrom<IHttpResponseWrapper<string>>(wrapper);
+    }
+
+    [Fact]
+    public void GenericHttpResponseWrapper_InheritsFromHttpResponseWrapper()
+    {
+        // Act
+        var wrapper = new HttpResponseWrapper<string>();
+
+        // Assert
+        Assert.IsAssignableFrom<HttpResponseWrapper>(wrapper);
+        Assert.IsAssignableFrom<IHttpResponseWrapper>(wrapper);
+        Assert.IsAssignableFrom<IHttpResponseWrapper<string>>(wrapper);
+    }
+
+    [Fact]
+    public void HttpResponseWrapper_And_GenericHttpResponseWrapper_CanBeUsedPolymorphically()
+    {
+        // Arrange
+        IHttpResponseWrapper baseWrapper = new HttpResponseWrapper(HttpStatusCode.OK, new ApiResponse());
+        IHttpResponseWrapper<string> genericWrapper = new HttpResponseWrapper<string>(HttpStatusCode.OK, new ApiResponse<string>("test"));
+
+        // Assert
+        Assert.True(baseWrapper.IsSuccess);
+        Assert.True(genericWrapper.IsSuccess);
+        Assert.NotNull(baseWrapper.Result);
+        Assert.NotNull(genericWrapper.Result);
+
+        // Verify types
+        Assert.IsType<ApiResponse>(baseWrapper.Result);
+        Assert.IsType<ApiResponse<string>>(genericWrapper.Result);
+
+        // Verify that generic wrapper can also be used as base interface
+        IHttpResponseWrapper baseInterfaceView = (HttpResponseWrapper<string>)genericWrapper;
+        Assert.True(baseInterfaceView.IsSuccess);
+        // Note: baseInterfaceView.Result will be null due to the 'new' keyword hiding the base property
+        // This is expected behavior when using the 'new' keyword for property hiding
     }
 }

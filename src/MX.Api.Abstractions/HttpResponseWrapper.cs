@@ -28,6 +28,11 @@ public interface IHttpResponseWrapper
     /// Gets a value indicating whether the HTTP response indicates a conflict occurred.
     /// </summary>
     bool IsConflict { get; }
+
+    /// <summary>
+    /// Gets the API response contained in this HTTP response wrapper.
+    /// </summary>
+    ApiResponse? Result { get; }
 }
 
 /// <summary>
@@ -39,7 +44,7 @@ public interface IHttpResponseWrapper<T> : IHttpResponseWrapper
     /// <summary>
     /// Gets the API response contained in this HTTP response wrapper.
     /// </summary>
-    ApiResponse<T>? Result { get; }
+    new ApiResponse<T>? Result { get; }
 }
 
 /// <summary>
@@ -53,6 +58,12 @@ public class HttpResponseWrapper : IHttpResponseWrapper
     /// </summary>
     [JsonProperty(PropertyName = "statusCode")]
     public HttpStatusCode StatusCode { get; set; }
+
+    /// <summary>
+    /// Gets or sets the API response contained in this HTTP response wrapper.
+    /// </summary>
+    [JsonProperty(PropertyName = "result")]
+    public ApiResponse? Result { get; set; }
 
     /// <summary>
     /// Gets a value indicating whether the HTTP response was successful.
@@ -89,6 +100,16 @@ public class HttpResponseWrapper : IHttpResponseWrapper
     {
         StatusCode = statusCode;
     }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="HttpResponseWrapper"/> class with the specified status code and API response.
+    /// </summary>
+    /// <param name="statusCode">The HTTP status code of the response.</param>
+    /// <param name="result">The API response.</param>
+    public HttpResponseWrapper(HttpStatusCode statusCode, ApiResponse? result) : this(statusCode)
+    {
+        Result = result;
+    }
 }
 
 /// <summary>
@@ -102,7 +123,7 @@ public class HttpResponseWrapper<T> : HttpResponseWrapper, IHttpResponseWrapper<
     /// Gets or sets the API response contained in this HTTP response wrapper.
     /// </summary>
     [JsonProperty(PropertyName = "result")]
-    public ApiResponse<T>? Result { get; set; }
+    public new ApiResponse<T>? Result { get; set; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="HttpResponseWrapper{T}"/> class.

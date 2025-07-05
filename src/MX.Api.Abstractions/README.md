@@ -119,14 +119,14 @@ public class FilterOptions
 }
 ```
 
-### HttpResponseWrapper\<T>
+### HttpResponseWrapper
 
-The `HttpResponseWrapper<T>` class wraps API responses with HTTP-specific information, providing separation between transport concerns and business data:
+The `HttpResponseWrapper` class wraps API responses with HTTP-specific information, providing separation between transport concerns and business data. This class works specifically with non-generic `ApiResponse` objects:
 
 ```csharp
-public class HttpResponseWrapper<T>
+public class HttpResponseWrapper : IHttpResponseWrapper
 {
-    public ApiResponse<T>? Result { get; set; }
+    public ApiResponse? Result { get; set; }
     public HttpStatusCode StatusCode { get; set; }
     
     // Helper properties
@@ -136,11 +136,45 @@ public class HttpResponseWrapper<T>
 }
 ```
 
+**Use this when:**
+- Wrapping API responses that don't return typed data (e.g., DELETE operations, status checks)
+- Working with validation endpoints that only return success/failure status
+- Handling responses where no specific data payload type is expected
+
+### HttpResponseWrapper\<T>
+
+The `HttpResponseWrapper<T>` class wraps strongly-typed API responses with HTTP-specific information, providing separation between transport concerns and business data. This class works specifically with generic `ApiResponse<T>` objects:
+
+```csharp
+public class HttpResponseWrapper<T> : HttpResponseWrapper, IHttpResponseWrapper<T>
+{
+    public new ApiResponse<T>? Result { get; set; }
+    public HttpStatusCode StatusCode { get; set; }
+    
+    // Helper properties  
+    public new bool IsSuccess { get; } // Requires both successful status code AND non-null Result
+    public bool IsNotFound { get; }
+    public bool IsConflict { get; }
+}
+```
+
+**Use this when:**
+- Wrapping API responses that return typed data (e.g., GET, POST, PUT operations)
+- Working with endpoints that return specific resource types
+- Handling responses where a strongly-typed data payload is expected
+
+**Key differences:**
+- `HttpResponseWrapper` uses `ApiResponse` (non-generic) for responses without typed data
+- `HttpResponseWrapper<T>` uses `ApiResponse<T>` (generic) for responses with typed data
+- Generic wrapper's `IsSuccess` property requires both successful HTTP status code AND non-null `Result`
+- Non-generic wrapper's `IsSuccess` property only depends on HTTP status code
+
 **Key benefits:**
 - Separates HTTP transport concerns from business data models
 - Provides status code information at the transport layer
 - Offers convenience properties for common status checks
 - Enables clean API response models focused on data
+- Type-safe handling of different response scenarios
 ```
 
 ## Usage Examples
@@ -192,12 +226,27 @@ var collectionResponse = new ApiResponse<CollectionModel<User>>
     }
 };
 
-// HTTP Response Wrapper with status code
+// HTTP Response Wrapper for non-data response (e.g., DELETE operation)
+var deleteHttpResponse = new HttpResponseWrapper
+{
+    StatusCode = HttpStatusCode.NoContent,
+    Result = new ApiResponse()
+};
+
+// HTTP Response Wrapper for typed data response  
 var httpResponse = new HttpResponseWrapper<User>
 {
     StatusCode = HttpStatusCode.OK,
     Result = successResponse
 };
+
+// Alternative constructor usage
+var createdResponse = new HttpResponseWrapper<User>(
+    HttpStatusCode.Created, 
+    new ApiResponse<User> { Data = newUser }
+);
+
+var notFoundResponse = new HttpResponseWrapper(HttpStatusCode.NotFound);
 ```
 
 ### Working with Filter Options
