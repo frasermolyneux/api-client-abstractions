@@ -24,8 +24,7 @@ public class RestResponseExtensionsTests
     {
         // Arrange
         var statusCode = HttpStatusCode.OK;
-        var data = new { id = 1, name = "Test" };
-        var apiResponse = new ApiResponse<object>(data);
+        var apiResponse = new ApiResponse();
 
         var response = new RestResponse
         {
@@ -40,7 +39,6 @@ public class RestResponseExtensionsTests
         Assert.Equal(statusCode, result.StatusCode);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Result);
-        // Can't directly compare the data object because of JsonConvert serialization/deserialization
     }
     [Fact]
     public void ToHttpResponse_WithEmptyContent_ReturnsHttpResponseWrapperWithError()
