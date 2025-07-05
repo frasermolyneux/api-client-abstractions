@@ -11,7 +11,7 @@ dotnet add package MX.Api.Web.Extensions
 ## Features
 
 - Extension methods to convert ApiResponse<T> objects to IActionResult with proper status codes
-- Extension methods to convert HttpResponseWrapper<T> objects to IActionResult
+- Extension methods to convert ApiResult<T> objects to IActionResult
 - Automatic HTTP status code mapping based on API response status
 - Preservation of error details and metadata in HTTP responses
 - Support for proper pagination headers following API design standards
@@ -65,10 +65,10 @@ public async Task<IActionResult> GetResource(string id)
     return response.ToHttpResult();
 }
 
-// Converting HttpResponseWrapper<T> to IActionResult
+// Converting ApiResult<T> to IActionResult
 public async Task<IActionResult> GetResource(string id)
 {
-    HttpResponseWrapper<ResourceDto> wrapper = await _apiClient.GetResourceWithWrapperAsync(id);
+    ApiResult<ResourceDto> wrapper = await _apiClient.GetResourceWithWrapperAsync(id);
     return wrapper.ToHttpResult();
 }
 ```

@@ -49,13 +49,13 @@ public class ApiResponse<T>
 }
 ```
 
-> **Note**: HTTP status codes are handled by the `HttpResponseWrapper<T>` at the transport layer, not within the API response models themselves.
+> **Note**: HTTP status codes are handled by the `ApiResult<T>` at the transport layer, not within the API response models themselves.
 
 ### HTTP Response Wrapper
 
 ```csharp
 // Wrapper that handles HTTP response concerns
-public class HttpResponseWrapper<T>
+public class ApiResult<T>
 {
     public ApiResponse<T>? Result { get; set; }
     public HttpStatusCode StatusCode { get; set; }
@@ -128,8 +128,8 @@ public class FilterOptions
 ### Working with API Responses
 
 ```csharp
-// Example of using the HttpResponseWrapper with ApiResponse
-HttpResponseWrapper<UserDto> responseWrapper = await apiClient.GetUserAsync("123");
+// Example of using the ApiResult with ApiResponse
+ApiResult<UserDto> responseWrapper = await apiClient.GetUserAsync("123");
 
 if (responseWrapper.IsSuccess && responseWrapper.Result?.Data != null)
 {
@@ -155,7 +155,7 @@ else
 
 ```csharp
 // Example of working with collections
-HttpResponseWrapper<CollectionModel<UserDto>> collectionWrapper = await apiClient.GetUsersAsync(new FilterOptions 
+ApiResult<CollectionModel<UserDto>> collectionWrapper = await apiClient.GetUsersAsync(new FilterOptions 
 {
     FilterExpression = "active eq true",
     OrderBy = "lastName asc",
@@ -228,7 +228,7 @@ ApiResponse<UserDto> dataErrorResponse = new ApiResponse<UserDto>
 };
 ```
 
-> **Note**: HTTP status codes are set on the `HttpResponseWrapper<T>` that contains these API responses, not on the API response models themselves.
+> **Note**: HTTP status codes are set on the `ApiResult<T>` that contains these API responses, not on the API response models themselves.
 
 ## Common Query Parameters
 
@@ -254,7 +254,7 @@ All collection endpoints support the following query parameters:
 
 4. **Filtering**: Implement comprehensive filtering support through the FilterOptions model.
 
-5. **HTTP Status Codes**: HTTP status codes are handled by the `HttpResponseWrapper<T>` at the transport layer to properly separate HTTP concerns from API response models.
+5. **HTTP Status Codes**: HTTP status codes are handled by the `ApiResult<T>` at the transport layer to properly separate HTTP concerns from API response models.
 
 6. **Metadata**: Use the Metadata dictionary to include additional context information with responses.
 

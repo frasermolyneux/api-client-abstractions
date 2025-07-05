@@ -72,7 +72,7 @@ public class MyApiClient : BaseApi
         {
             logger.LogError(ex, "Failed to retrieve resource with ID {ResourceId}", id);
             var errorResponse = new ApiResponse<ResourceDto>(new ApiError("InternalError", "An unexpected error occurred"));
-            return new HttpResponseWrapper<ResourceDto>(HttpStatusCode.InternalServerError, errorResponse);
+            return new ApiResult<ResourceDto>(HttpStatusCode.InternalServerError, errorResponse);
         }
     }
 }
@@ -169,7 +169,7 @@ public async Task<ApiResponse<CollectionModel<ResourceDto>>> GetResourcesAsync(F
     {
         logger.LogError(ex, "Failed to retrieve resources");
         var errorResponse = new ApiResponse<CollectionModel<ResourceDto>>(new ApiError("InternalError", "An unexpected error occurred"));
-        return new HttpResponseWrapper<CollectionModel<ResourceDto>>(HttpStatusCode.InternalServerError, errorResponse);
+        return new ApiResult<CollectionModel<ResourceDto>>(HttpStatusCode.InternalServerError, errorResponse);
     }
 }
 ```

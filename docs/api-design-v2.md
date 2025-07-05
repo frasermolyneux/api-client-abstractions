@@ -60,7 +60,7 @@ public class ApiResponse
 }
 ```
 
-**Note:** HTTP status codes are handled by the HTTP transport layer (HttpResponseWrapper), keeping the API response model focused on business data.
+**Note:** HTTP status codes are handled by the HTTP transport layer (ApiResult), keeping the API response model focused on business data.
 
 #### ApiResponse\<T> (Data Responses)
 
@@ -76,7 +76,7 @@ public class ApiResponse<T>
 }
 ```
 
-**Note:** HTTP status codes are handled by the HTTP transport layer (HttpResponseWrapper), keeping the API response model focused on business data.
+**Note:** HTTP status codes are handled by the HTTP transport layer (ApiResult), keeping the API response model focused on business data.
 
 #### Supporting Models
 

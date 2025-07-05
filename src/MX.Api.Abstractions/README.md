@@ -37,7 +37,7 @@ public class ApiResponse
 - Validation endpoints that only return success/failure
 - Any operation where no data payload is expected
 
-**Note:** The HTTP status code is handled by the `HttpResponseWrapper` at the transport layer, keeping the API response model focused on business data.
+**Note:** The HTTP status code is handled by the `ApiResult` at the transport layer, keeping the API response model focused on business data.
 
 ### ApiResponse\<T>
 
@@ -59,7 +59,7 @@ public class ApiResponse<T>
 - PUT/PATCH operations that return updated resources
 - Any operation where a data payload is expected
 
-**Note:** The HTTP status code is handled by the `HttpResponseWrapper` at the transport layer, keeping the API response model focused on business data.
+**Note:** The HTTP status code is handled by the `ApiResult` at the transport layer, keeping the API response model focused on business data.
 ```
 
 ### ApiError
@@ -119,12 +119,12 @@ public class FilterOptions
 }
 ```
 
-### HttpResponseWrapper
+### ApiResult
 
-The `HttpResponseWrapper` class wraps API responses with HTTP-specific information, providing separation between transport concerns and business data. This class works specifically with non-generic `ApiResponse` objects:
+The `ApiResult` class wraps API responses with HTTP-specific information, providing separation between transport concerns and business data. This class works specifically with non-generic `ApiResponse` objects:
 
 ```csharp
-public class HttpResponseWrapper : IHttpResponseWrapper
+public class ApiResult : IApiResult
 {
     public ApiResponse? Result { get; set; }
     public HttpStatusCode StatusCode { get; set; }
@@ -141,12 +141,12 @@ public class HttpResponseWrapper : IHttpResponseWrapper
 - Working with validation endpoints that only return success/failure status
 - Handling responses where no specific data payload type is expected
 
-### HttpResponseWrapper\<T>
+### ApiResult\<T>
 
-The `HttpResponseWrapper<T>` class wraps strongly-typed API responses with HTTP-specific information, providing separation between transport concerns and business data. This class works specifically with generic `ApiResponse<T>` objects:
+The `ApiResult<T>` class wraps strongly-typed API responses with HTTP-specific information, providing separation between transport concerns and business data. This class works specifically with generic `ApiResponse<T>` objects:
 
 ```csharp
-public class HttpResponseWrapper<T> : HttpResponseWrapper, IHttpResponseWrapper<T>
+public class ApiResult<T> : ApiResult, IApiResult<T>
 {
     public new ApiResponse<T>? Result { get; set; }
     public HttpStatusCode StatusCode { get; set; }
@@ -164,8 +164,8 @@ public class HttpResponseWrapper<T> : HttpResponseWrapper, IHttpResponseWrapper<
 - Handling responses where a strongly-typed data payload is expected
 
 **Key differences:**
-- `HttpResponseWrapper` uses `ApiResponse` (non-generic) for responses without typed data
-- `HttpResponseWrapper<T>` uses `ApiResponse<T>` (generic) for responses with typed data
+- `ApiResult` uses `ApiResponse` (non-generic) for responses without typed data
+- `ApiResult<T>` uses `ApiResponse<T>` (generic) for responses with typed data
 - Generic wrapper's `IsSuccess` property requires both successful HTTP status code AND non-null `Result`
 - Non-generic wrapper's `IsSuccess` property only depends on HTTP status code
 
@@ -227,26 +227,26 @@ var collectionResponse = new ApiResponse<CollectionModel<User>>
 };
 
 // HTTP Response Wrapper for non-data response (e.g., DELETE operation)
-var deleteHttpResponse = new HttpResponseWrapper
+var deleteHttpResponse = new ApiResult
 {
     StatusCode = HttpStatusCode.NoContent,
     Result = new ApiResponse()
 };
 
 // HTTP Response Wrapper for typed data response  
-var httpResponse = new HttpResponseWrapper<User>
+var httpResponse = new ApiResult<User>
 {
     StatusCode = HttpStatusCode.OK,
     Result = successResponse
 };
 
 // Alternative constructor usage
-var createdResponse = new HttpResponseWrapper<User>(
+var createdResponse = new ApiResult<User>(
     HttpStatusCode.Created, 
     new ApiResponse<User> { Data = newUser }
 );
 
-var notFoundResponse = new HttpResponseWrapper(HttpStatusCode.NotFound);
+var notFoundResponse = new ApiResult(HttpStatusCode.NotFound);
 ```
 
 ### Working with Filter Options

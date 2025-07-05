@@ -22,17 +22,17 @@ public static class RestResponseExtensions
     };
 
     /// <summary>
-    /// Converts a RestResponse to an HttpResponseWrapper containing an ApiResponse.
+    /// Converts a RestResponse to an ApiResult containing an ApiResponse.
     /// </summary>
     /// <param name="response">The RestSharp response to convert.</param>
     /// <returns>An HTTP response wrapper object.</returns>
     /// <exception cref="ArgumentNullException">Thrown when response is null.</exception>
-    public static HttpResponseWrapper ToHttpResponse(this RestResponse response)
+    public static ApiResult ToHttpResponse(this RestResponse response)
     {
         ArgumentNullException.ThrowIfNull(response);
 
         // Create HTTP response wrapper with the status code
-        var httpResponse = new HttpResponseWrapper(response.StatusCode);
+        var httpResponse = new ApiResult(response.StatusCode);
 
         // Special handling for HEAD requests which don't return content
         if (response.Request?.Method == Method.Head)
@@ -92,18 +92,18 @@ public static class RestResponseExtensions
     }
 
     /// <summary>
-    /// Converts a RestResponse to an HttpResponseWrapper containing a strongly-typed ApiResponse.
+    /// Converts a RestResponse to an ApiResult containing a strongly-typed ApiResponse.
     /// </summary>
     /// <typeparam name="T">The type of the data expected in the response.</typeparam>
     /// <param name="response">The RestSharp response to convert.</param>
     /// <returns>An HTTP response wrapper object with a strongly-typed API response.</returns>
     /// <exception cref="ArgumentNullException">Thrown when response is null.</exception>
-    public static HttpResponseWrapper<T> ToHttpResponse<T>(this RestResponse response)
+    public static ApiResult<T> ToHttpResponse<T>(this RestResponse response)
     {
         ArgumentNullException.ThrowIfNull(response);
 
         // Create HTTP response wrapper with the status code
-        var httpResponse = new HttpResponseWrapper<T>(response.StatusCode);
+        var httpResponse = new ApiResult<T>(response.StatusCode);
 
         if (string.IsNullOrWhiteSpace(response.Content))
         {

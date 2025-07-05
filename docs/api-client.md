@@ -49,7 +49,7 @@ public abstract class BaseApi
         CancellationToken cancellationToken = default);
         
     // Execute requests with strong typing
-    protected Task<HttpResponseWrapper<T>> ExecuteWithResponseWrapperAsync<T>(
+    protected Task<ApiResult<T>> ExecuteWithResponseWrapperAsync<T>(
         RestRequest request,
         bool rethrowExceptions = true,
         CancellationToken cancellationToken = default);
@@ -173,7 +173,7 @@ public class UsersApiClient : BaseApi
         {
             logger.LogError(ex, "Error retrieving user {UserId}", userId);
             var errorResponse = new ApiResponse<UserDto>(new ApiError("InternalError", $"An unexpected error occurred while retrieving user {userId}"));
-            return new HttpResponseWrapper<UserDto>(HttpStatusCode.InternalServerError, errorResponse);
+            return new ApiResult<UserDto>(HttpStatusCode.InternalServerError, errorResponse);
         }
     }
     
@@ -194,7 +194,7 @@ public class UsersApiClient : BaseApi
         {
             logger.LogError(ex, "Error retrieving users");
             var errorResponse = new ApiResponse<CollectionModel<UserDto>>(new ApiError("InternalError", "An unexpected error occurred while retrieving users"));
-            return new HttpResponseWrapper<CollectionModel<UserDto>>(HttpStatusCode.InternalServerError, errorResponse);
+            return new ApiResult<CollectionModel<UserDto>>(HttpStatusCode.InternalServerError, errorResponse);
         }
     }
     
@@ -214,7 +214,7 @@ public class UsersApiClient : BaseApi
         {
             logger.LogError(ex, "Error creating user");
             var errorResponse = new ApiResponse<UserDto>(new ApiError("InternalError", "An unexpected error occurred while creating user"));
-            return new HttpResponseWrapper<UserDto>(HttpStatusCode.InternalServerError, errorResponse);
+            return new ApiResult<UserDto>(HttpStatusCode.InternalServerError, errorResponse);
         }
     }
     
@@ -234,7 +234,7 @@ public class UsersApiClient : BaseApi
         {
             logger.LogError(ex, "Error deleting user with ID {UserId}", userId);
             var errorResponse = new ApiResponse(new ApiError("InternalError", "An unexpected error occurred while deleting user"));
-            return new HttpResponseWrapper(HttpStatusCode.InternalServerError);
+            return new ApiResult(HttpStatusCode.InternalServerError);
         }
     }
 }
@@ -268,8 +268,8 @@ request.AddQueryParameter("includeDeleted", "true");
 try
 {
     var response = await ExecuteAsync(request, rethrowExceptions: true, cancellationToken);
-    // Process successful response and return HttpResponseWrapper
-    return new HttpResponseWrapper<ResourceDto>
+    // Process successful response and return ApiResult
+    return new ApiResult<ResourceDto>
     {
         StatusCode = HttpStatusCode.OK,
         Result = response.Result
@@ -278,7 +278,7 @@ try
 catch (ApiException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
 {
     logger.LogWarning("Resource {Id} not found", id);
-    return new HttpResponseWrapper<ResourceDto>
+    return new ApiResult<ResourceDto>
     {
         StatusCode = HttpStatusCode.NotFound,
         Result = new ApiResponse<ResourceDto>
@@ -290,7 +290,7 @@ catch (ApiException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
 catch (ApiException ex) when (ex.StatusCode == HttpStatusCode.Unauthorized)
 {
     logger.LogWarning("Unauthorized access to resource {Id}", id);
-    return new HttpResponseWrapper<ResourceDto>
+    return new ApiResult<ResourceDto>
     {
         StatusCode = HttpStatusCode.Unauthorized,
         Result = new ApiResponse<ResourceDto>
@@ -302,7 +302,7 @@ catch (ApiException ex) when (ex.StatusCode == HttpStatusCode.Unauthorized)
 catch (Exception ex) when (ex is not OperationCanceledException)
 {
     logger.LogError(ex, "An error occurred while retrieving resource {Id}", id);
-    return new HttpResponseWrapper<ResourceDto>
+    return new ApiResult<ResourceDto>
     {
         StatusCode = HttpStatusCode.InternalServerError,
         Result = new ApiResponse<ResourceDto>
@@ -316,8 +316,8 @@ catch (Exception ex) when (ex is not OperationCanceledException)
 ### API Response Creation Helpers
 
 ```csharp
-// Create success response wrapped in HttpResponseWrapper
-return new HttpResponseWrapper<UserDto>
+// Create success response wrapped in ApiResult
+return new ApiResult<UserDto>
 {
     StatusCode = HttpStatusCode.OK,
     Result = new ApiResponse<UserDto>
@@ -326,8 +326,8 @@ return new HttpResponseWrapper<UserDto>
     }
 };
 
-// Create error response wrapped in HttpResponseWrapper
-return new HttpResponseWrapper<UserDto>
+// Create error response wrapped in ApiResult
+return new ApiResult<UserDto>
 {
     StatusCode = HttpStatusCode.BadRequest,
     Result = new ApiResponse<UserDto>
@@ -354,7 +354,7 @@ return new HttpResponseWrapper<UserDto>
 };
 ```
 
-> **Note**: The `HttpResponseWrapper<T>` handles HTTP status codes at the transport layer, while the `ApiResponse<T>` contains the business logic response data and errors.
+> **Note**: The `ApiResult<T>` handles HTTP status codes at the transport layer, while the `ApiResponse<T>` contains the business logic response data and errors.
 
 ## Authentication Methods
 

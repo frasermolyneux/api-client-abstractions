@@ -13,7 +13,7 @@ public class HttpResponseExtensionsTests
         var statusCode = HttpStatusCode.OK;
         var data = "Test Data";
         var apiResponse = new ApiResponse<string>(data);
-        var responseWrapper = new HttpResponseWrapper<string>(statusCode, apiResponse);
+        var responseWrapper = new ApiResult<string>(statusCode, apiResponse);
 
         // Act
         var result = responseWrapper.ToHttpResult();
@@ -29,7 +29,7 @@ public class HttpResponseExtensionsTests
     {
         // Arrange
         var statusCode = HttpStatusCode.NoContent;
-        var responseWrapper = new HttpResponseWrapper<string>(statusCode);
+        var responseWrapper = new ApiResult<string>(statusCode);
 
         // Act
         var result = responseWrapper.ToHttpResult();
@@ -43,11 +43,11 @@ public class HttpResponseExtensionsTests
     public void ToHttpResult_Generic_WithNullWrapper_ThrowsArgumentNullException()
     {
         // Arrange
-        IHttpResponseWrapper<string>? responseWrapper = null;
+        IApiResult<string>? apiResult = null;
 
         // Act & Assert
-        var exception = Assert.Throws<ArgumentNullException>(() => responseWrapper!.ToHttpResult());
-        Assert.Equal("responseWrapper", exception.ParamName);
+        var exception = Assert.Throws<ArgumentNullException>(() => apiResult!.ToHttpResult());
+        Assert.Equal("apiResult", exception.ParamName);
     }
 
     [Fact]
@@ -55,7 +55,7 @@ public class HttpResponseExtensionsTests
     {
         // Arrange
         var statusCode = HttpStatusCode.OK;
-        var responseWrapper = new HttpResponseWrapper(statusCode);
+        var responseWrapper = new ApiResult(statusCode);
 
         // Act
         var result = responseWrapper.ToHttpResult();
@@ -69,39 +69,39 @@ public class HttpResponseExtensionsTests
     public void ToHttpResult_NonGeneric_WithNullWrapper_ThrowsArgumentNullException()
     {
         // Arrange
-        IHttpResponseWrapper? responseWrapper = null;
+        IApiResult? apiResult = null;
 
         // Act & Assert
-        var exception = Assert.Throws<ArgumentNullException>(() => responseWrapper!.ToHttpResult());
-        Assert.Equal("responseWrapper", exception.ParamName);
+        var exception = Assert.Throws<ArgumentNullException>(() => apiResult!.ToHttpResult());
+        Assert.Equal("apiResult", exception.ParamName);
     }
 
     [Fact]
-    public void CreateHttpResponse_ReturnsHttpResponseWrapper()
+    public void CreateApiResult_ReturnsApiResult()
     {
         // Arrange
         var statusCode = HttpStatusCode.OK;
 
         // Act
-        var result = statusCode.CreateHttpResponse();
+        var result = statusCode.CreateApiResult();
 
         // Assert
-        Assert.IsType<HttpResponseWrapper>(result);
+        Assert.IsType<ApiResult>(result);
         Assert.Equal(statusCode, result.StatusCode);
     }
 
     [Fact]
-    public void CreateHttpResponse_Generic_ReturnsGenericHttpResponseWrapper()
+    public void CreateApiResult_Generic_ReturnsGenericApiResult()
     {
         // Arrange
         var statusCode = HttpStatusCode.OK;
         var apiResponse = new ApiResponse<string>("Test Data");
 
         // Act
-        var result = statusCode.CreateHttpResponse(apiResponse);
+        var result = statusCode.CreateApiResult(apiResponse);
 
         // Assert
-        Assert.IsType<HttpResponseWrapper<string>>(result);
+        Assert.IsType<ApiResult<string>>(result);
         Assert.Equal(statusCode, result.StatusCode);
         Assert.Equal(apiResponse, result.Result);
     }

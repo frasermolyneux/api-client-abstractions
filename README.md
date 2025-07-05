@@ -20,7 +20,7 @@ The solution consists of three main packages that work together to provide a com
 Core abstractions library providing common models and interfaces for standardized API handling:
 - `ApiResponse` - Standard API response model for operations without data (e.g., DELETE operations)
 - `ApiResponse<T>` - Standard API response model for operations with data following API design
-- `HttpResponseWrapper<T>` - HTTP response wrapper containing API responses
+- `ApiResult<T>` - HTTP response wrapper containing API responses
 - `CollectionModel<T>` - Collection wrapper for API result sets
 - `ApiError` - Standardized error model
 - `ApiPagination` - Pagination information
@@ -152,7 +152,7 @@ public class UserApi : BaseApi
         {
             logger.LogError(ex, "Failed to retrieve user with ID {UserId}", userId);
             var errorResponse = new ApiResponse<User>(new ApiError("InternalError", "An unexpected error occurred while retrieving the user"));
-            return new HttpResponseWrapper<User>(HttpStatusCode.InternalServerError, errorResponse);
+            return new ApiResult<User>(HttpStatusCode.InternalServerError, errorResponse);
         }
     }
 }
