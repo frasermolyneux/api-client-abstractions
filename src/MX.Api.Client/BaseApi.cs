@@ -155,8 +155,16 @@ public class BaseApi
     /// <param name="options">The API key authentication options.</param>
     private void ApplyApiKeyAuthentication(RestRequest request, ApiKeyAuthenticationOptions options)
     {
-        request.AddHeader(options.HeaderName, options.ApiKey);
-        logger.LogDebug("Added API key authentication with header '{HeaderName}'", options.HeaderName);
+        var apiKey = options.GetApiKeyAsString();
+        if (!string.IsNullOrEmpty(apiKey))
+        {
+            request.AddHeader(options.HeaderName, apiKey);
+            logger.LogDebug("Added API key authentication");
+        }
+        else
+        {
+            logger.LogWarning("API key authentication requested but no API key is configured");
+        }
     }
 
     /// <summary>

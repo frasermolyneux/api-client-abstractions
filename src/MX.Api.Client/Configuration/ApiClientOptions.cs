@@ -113,11 +113,12 @@ public class ApiClientOptions
     /// <returns>The current instance for method chaining.</returns>
     public ApiClientOptions WithApiKeyAuthentication(string apiKey, string headerName = "Ocp-Apim-Subscription-Key")
     {
-        AuthenticationOptions = new ApiKeyAuthenticationOptions
+        var apiKeyOptions = new ApiKeyAuthenticationOptions
         {
-            ApiKey = apiKey,
             HeaderName = headerName
         };
+        apiKeyOptions.SetApiKey(apiKey);
+        AuthenticationOptions = apiKeyOptions;
         return this;
     }
 }

@@ -5,6 +5,7 @@
     <RootNamespace>MX.Api.Client</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>MX.Api.Client</PackageId>
     <Authors>Fraser Molyneux</Authors>

@@ -42,7 +42,8 @@ public class ApiClientOptionsTests
         var baseUrl = "https://api.example.com";
         var apiPathPrefix = "v1";
         var maxRetryCount = 5;
-        var authOptions = new ApiKeyAuthenticationOptions { ApiKey = "test-key" };
+        var authOptions = new ApiKeyAuthenticationOptions();
+        authOptions.SetApiKey("test-key");
 
         // Act
         options.BaseUrl = baseUrl;
@@ -107,7 +108,8 @@ public class ApiClientOptionsTests
     {
         // Arrange
         var options = new ApiClientOptions();
-        var authOptions = new ApiKeyAuthenticationOptions { ApiKey = "test-key" };
+        var authOptions = new ApiKeyAuthenticationOptions();
+        authOptions.SetApiKey("test-key");
 
         // Act
         var result = options.WithAuthentication(authOptions);
@@ -115,6 +117,9 @@ public class ApiClientOptionsTests
         // Assert
         Assert.Same(authOptions, options.AuthenticationOptions);
         Assert.Same(options, result); // Returns the same instance for fluent chaining
+
+        // Clean up
+        authOptions.Dispose();
     }
 
     [Fact]
@@ -132,7 +137,7 @@ public class ApiClientOptionsTests
         Assert.NotNull(options.AuthenticationOptions);
         Assert.IsType<ApiKeyAuthenticationOptions>(options.AuthenticationOptions);
         var apiKeyOptions = options.AuthenticationOptions as ApiKeyAuthenticationOptions;
-        Assert.Equal(apiKey, apiKeyOptions?.ApiKey);
+        Assert.Equal(apiKey, apiKeyOptions?.GetApiKeyAsString());
         Assert.Equal(headerName, apiKeyOptions?.HeaderName);
         Assert.Same(options, result); // Returns the same instance for fluent chaining
     }
@@ -159,6 +164,6 @@ public class ApiClientOptionsTests
         Assert.Equal(maxRetryCount, options.MaxRetryCount);
         Assert.IsType<ApiKeyAuthenticationOptions>(options.AuthenticationOptions);
         var apiKeyOptions = options.AuthenticationOptions as ApiKeyAuthenticationOptions;
-        Assert.Equal(apiKey, apiKeyOptions?.ApiKey);
+        Assert.Equal(apiKey, apiKeyOptions?.GetApiKeyAsString());
     }
 }

@@ -126,15 +126,17 @@ public class ServiceCollectionExtensionsTests
 
         var options = new ApiClientOptions
         {
-            BaseUrl = "https://api.example.com",
-            AuthenticationOptions = new ClientCredentialAuthenticationOptions
-            {
-                ApiAudience = "api://resource",
-                TenantId = "tenant-id",
-                ClientId = "client-id",
-                ClientSecret = "client-secret"
-            }
+            BaseUrl = "https://api.example.com"
         };
+
+        var clientCredOptions = new ClientCredentialAuthenticationOptions
+        {
+            ApiAudience = "api://resource",
+            TenantId = "tenant-id",
+            ClientId = "client-id"
+        };
+        clientCredOptions.SetClientSecret("client-secret");
+        options.AuthenticationOptions = clientCredOptions;
 
         // Act
         services.WithOptions(options);
@@ -287,7 +289,7 @@ public class ServiceCollectionExtensionsTests
 
         Assert.IsType<ApiKeyAuthenticationOptions>(options.AuthenticationOptions);
         var authOptions = (ApiKeyAuthenticationOptions)options.AuthenticationOptions;
-        Assert.Equal(apiKey, authOptions.ApiKey);
+        Assert.Equal(apiKey, authOptions.GetApiKeyAsString());
         Assert.Equal("Ocp-Apim-Subscription-Key", authOptions.HeaderName); // Default header name
     }
 
@@ -308,7 +310,7 @@ public class ServiceCollectionExtensionsTests
 
         Assert.IsType<ApiKeyAuthenticationOptions>(options.AuthenticationOptions);
         var authOptions = (ApiKeyAuthenticationOptions)options.AuthenticationOptions;
-        Assert.Equal(apiKey, authOptions.ApiKey);
+        Assert.Equal(apiKey, authOptions.GetApiKeyAsString());
         Assert.Equal(headerName, authOptions.HeaderName);
     }
 
@@ -468,7 +470,7 @@ public class ServiceCollectionExtensionsTests
         Assert.Equal(apiAudience, authOptions.ApiAudience);
         Assert.Equal(tenantId, authOptions.TenantId);
         Assert.Equal(clientId, authOptions.ClientId);
-        Assert.Equal(clientSecret, authOptions.ClientSecret);
+        Assert.Equal(clientSecret, authOptions.GetClientSecretAsString());
     }
 
     [Fact]

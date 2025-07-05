@@ -81,10 +81,7 @@ public static class ServiceCollectionExtensions
                     serviceCollection.AddSingleton<ITokenCredentialProvider>(sp =>
                     {
                         var logger = sp.GetService<ILogger<ClientCredentialProvider>>();
-                        return new ClientCredentialProvider(logger,
-                            clientCredOptions.TenantId,
-                            clientCredOptions.ClientId,
-                            clientCredOptions.ClientSecret);
+                        return new ClientCredentialProvider(logger, clientCredOptions);
                     });
                 }
 
@@ -159,11 +156,12 @@ public static class ServiceCollectionExtensions
 
         serviceCollection.Configure<ApiClientOptions>(options =>
         {
-            options.AuthenticationOptions = new ApiKeyAuthenticationOptions
+            var apiKeyOptions = new ApiKeyAuthenticationOptions
             {
-                ApiKey = apiKey,
                 HeaderName = headerName
             };
+            apiKeyOptions.SetApiKey(apiKey);
+            options.AuthenticationOptions = apiKeyOptions;
         });
 
         return serviceCollection;
@@ -298,7 +296,17 @@ public static class ServiceCollectionExtensions
         serviceCollection.AddSingleton<ITokenCredentialProvider>(sp =>
         {
             var logger = sp.GetService<ILogger<ClientCredentialProvider>>();
-            return new ClientCredentialProvider(logger, tenantId, clientId, clientSecret);
+
+            // Create secure options object
+            var clientCredOptions = new ClientCredentialAuthenticationOptions
+            {
+                ApiAudience = apiAudience,
+                TenantId = tenantId,
+                ClientId = clientId
+            };
+            clientCredOptions.SetClientSecret(clientSecret);
+
+            return new ClientCredentialProvider(logger, clientCredOptions);
         });
 
         // Register the API token provider
@@ -306,13 +314,14 @@ public static class ServiceCollectionExtensions
 
         serviceCollection.Configure<ApiClientOptions>(options =>
         {
-            options.AuthenticationOptions = new ClientCredentialAuthenticationOptions
+            var clientCredOptions = new ClientCredentialAuthenticationOptions
             {
                 ApiAudience = apiAudience,
                 TenantId = tenantId,
-                ClientId = clientId,
-                ClientSecret = clientSecret
+                ClientId = clientId
             };
+            clientCredOptions.SetClientSecret(clientSecret);
+            options.AuthenticationOptions = clientCredOptions;
         });
 
         return serviceCollection;

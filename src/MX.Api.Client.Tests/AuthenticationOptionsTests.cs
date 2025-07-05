@@ -12,13 +12,14 @@ public class AuthenticationOptionsTests
         var options = new ApiKeyAuthenticationOptions();
 
         // Assert
-        Assert.Equal(string.Empty, options.ApiKey);
+        Assert.Null(options.ApiKey);
         Assert.Equal("Ocp-Apim-Subscription-Key", options.HeaderName);
         Assert.Equal(AuthenticationType.ApiKey, options.AuthenticationType);
+        Assert.Equal(string.Empty, options.GetApiKeyAsString());
     }
 
     [Fact]
-    public void ApiKeyAuthenticationOptions_PropertiesCanBeSet()
+    public void ApiKeyAuthenticationOptions_SetApiKey_StoresSecurely()
     {
         // Arrange
         var options = new ApiKeyAuthenticationOptions();
@@ -26,13 +27,16 @@ public class AuthenticationOptionsTests
         var headerName = "X-API-Key";
 
         // Act
-        options.ApiKey = apiKey;
+        options.SetApiKey(apiKey);
         options.HeaderName = headerName;
 
         // Assert
-        Assert.Equal(apiKey, options.ApiKey);
+        Assert.Equal(apiKey, options.GetApiKeyAsString());
         Assert.Equal(headerName, options.HeaderName);
         Assert.Equal(AuthenticationType.ApiKey, options.AuthenticationType);
+
+        // Clean up
+        options.Dispose();
     }
 
     [Fact]
@@ -71,12 +75,13 @@ public class AuthenticationOptionsTests
         Assert.Equal(string.Empty, options.ApiAudience);
         Assert.Equal(string.Empty, options.TenantId);
         Assert.Equal(string.Empty, options.ClientId);
-        Assert.Equal(string.Empty, options.ClientSecret);
+        Assert.Null(options.ClientSecret);
+        Assert.Equal(string.Empty, options.GetClientSecretAsString());
         Assert.Equal(AuthenticationType.EntraId, options.AuthenticationType);
     }
 
     [Fact]
-    public void ClientCredentialAuthenticationOptions_PropertiesCanBeSet()
+    public void ClientCredentialAuthenticationOptions_SetClientSecret_StoresSecurely()
     {
         // Arrange
         var options = new ClientCredentialAuthenticationOptions();
@@ -89,13 +94,16 @@ public class AuthenticationOptionsTests
         options.ApiAudience = apiAudience;
         options.TenantId = tenantId;
         options.ClientId = clientId;
-        options.ClientSecret = clientSecret;
+        options.SetClientSecret(clientSecret);
 
         // Assert
         Assert.Equal(apiAudience, options.ApiAudience);
         Assert.Equal(tenantId, options.TenantId);
         Assert.Equal(clientId, options.ClientId);
-        Assert.Equal(clientSecret, options.ClientSecret);
+        Assert.Equal(clientSecret, options.GetClientSecretAsString());
         Assert.Equal(AuthenticationType.EntraId, options.AuthenticationType);
+
+        // Clean up
+        options.Dispose();
     }
 }
