@@ -10,17 +10,17 @@ namespace MX.Api.Client.Tests.Extensions;
 public class RestResponseExtensionsTests
 {
     [Fact]
-    public void ToHttpResponse_WithNullResponse_ThrowsArgumentNullException()
+    public void ToApiResult_WithNullResponse_ThrowsArgumentNullException()
     {
         // Arrange
         RestResponse? response = null;
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => response!.ToHttpResponse());
+        Assert.Throws<ArgumentNullException>(() => response!.ToApiResult());
     }
 
     [Fact]
-    public void ToHttpResponse_WithSuccessfulResponse_ReturnsApiResult()
+    public void ToApiResult_WithSuccessfulResponse_ReturnsApiResult()
     {
         // Arrange
         var statusCode = HttpStatusCode.OK;
@@ -33,7 +33,7 @@ public class RestResponseExtensionsTests
         };
 
         // Act
-        var result = response.ToHttpResponse();
+        var result = response.ToApiResult();
 
         // Assert
         Assert.Equal(statusCode, result.StatusCode);
@@ -41,7 +41,7 @@ public class RestResponseExtensionsTests
         Assert.NotNull(result.Result);
     }
     [Fact]
-    public void ToHttpResponse_WithEmptyContent_ReturnsApiResultWithError()
+    public void ToApiResult_WithEmptyContent_ReturnsApiResultWithError()
     {
         // Arrange
         var statusCode = HttpStatusCode.OK;
@@ -52,7 +52,7 @@ public class RestResponseExtensionsTests
         };
 
         // Act
-        var result = response.ToHttpResponse();
+        var result = response.ToApiResult();
 
         // Assert
         Assert.Equal(statusCode, result.StatusCode);
@@ -63,7 +63,7 @@ public class RestResponseExtensionsTests
         Assert.Equal("NullContent", result.Result.Errors![0].Code);
     }
     [Fact]
-    public void ToHttpResponse_WithInvalidJson_ReturnsApiResultWithError()
+    public void ToApiResult_WithInvalidJson_ReturnsApiResultWithError()
     {
         // Arrange
         var statusCode = HttpStatusCode.OK;
@@ -74,7 +74,7 @@ public class RestResponseExtensionsTests
         };
 
         // Act
-        var result = response.ToHttpResponse();
+        var result = response.ToApiResult();
 
         // Assert
         Assert.Equal(statusCode, result.StatusCode);
@@ -85,7 +85,7 @@ public class RestResponseExtensionsTests
         Assert.Equal("JsonError", result.Result.Errors![0].Code);
     }
     [Fact]
-    public void ToHttpResponse_WithValidJsonButNotApiResponse_ReturnsApiResult()
+    public void ToApiResult_WithValidJsonButNotApiResponse_ReturnsApiResult()
     {
         // Arrange
         var statusCode = HttpStatusCode.OK;
@@ -96,7 +96,7 @@ public class RestResponseExtensionsTests
         };
 
         // Act
-        var result = response.ToHttpResponse();
+        var result = response.ToApiResult();
 
         // Assert
         Assert.Equal(statusCode, result.StatusCode);
@@ -107,7 +107,7 @@ public class RestResponseExtensionsTests
     }
 
     [Fact]
-    public void ToHttpResponse_WithHeadRequest_ReturnsEmptyApiResult()
+    public void ToApiResult_WithHeadRequest_ReturnsEmptyApiResult()
     {
         // Arrange
         var statusCode = HttpStatusCode.OK;
@@ -119,7 +119,7 @@ public class RestResponseExtensionsTests
         };
 
         // Act
-        var result = response.ToHttpResponse();
+        var result = response.ToApiResult();
 
         // Assert
         Assert.Equal(statusCode, result.StatusCode);
@@ -128,17 +128,17 @@ public class RestResponseExtensionsTests
     }
 
     [Fact]
-    public void ToHttpResponse_Generic_WithNullResponse_ThrowsArgumentNullException()
+    public void ToApiResult_Generic_WithNullResponse_ThrowsArgumentNullException()
     {
         // Arrange
         RestResponse? response = null;
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => response!.ToHttpResponse<string>());
+        Assert.Throws<ArgumentNullException>(() => response!.ToApiResult<string>());
     }
 
     [Fact]
-    public void ToHttpResponse_Generic_WithSuccessfulResponse_ReturnsApiResult()
+    public void ToApiResult_Generic_WithSuccessfulResponse_ReturnsApiResult()
     {
         // Arrange
         var statusCode = HttpStatusCode.OK;
@@ -152,7 +152,7 @@ public class RestResponseExtensionsTests
         };
 
         // Act
-        var result = response.ToHttpResponse<string>();
+        var result = response.ToApiResult<string>();
 
         // Assert
         Assert.Equal(statusCode, result.StatusCode);
@@ -161,7 +161,7 @@ public class RestResponseExtensionsTests
         Assert.Equal(data, result.Result.Data);
     }
     [Fact]
-    public void ToHttpResponse_Generic_WithEmptyContent_ReturnsApiResultWithError()
+    public void ToApiResult_Generic_WithEmptyContent_ReturnsApiResultWithError()
     {
         // Arrange
         var statusCode = HttpStatusCode.OK;
@@ -172,7 +172,7 @@ public class RestResponseExtensionsTests
         };
 
         // Act
-        var result = response.ToHttpResponse<string>();
+        var result = response.ToApiResult<string>();
 
         // Assert
         Assert.Equal(statusCode, result.StatusCode);
@@ -183,7 +183,7 @@ public class RestResponseExtensionsTests
         Assert.Equal("NullContent", result.Result.Errors![0].Code);
     }
     [Fact]
-    public void ToHttpResponse_Generic_WithInvalidJson_ReturnsApiResultWithError()
+    public void ToApiResult_Generic_WithInvalidJson_ReturnsApiResultWithError()
     {
         // Arrange
         var statusCode = HttpStatusCode.OK;
@@ -194,7 +194,7 @@ public class RestResponseExtensionsTests
         };
 
         // Act
-        var result = response.ToHttpResponse<string>();
+        var result = response.ToApiResult<string>();
 
         // Assert
         Assert.Equal(statusCode, result.StatusCode);
@@ -205,7 +205,7 @@ public class RestResponseExtensionsTests
         Assert.Equal("JsonError", result.Result.Errors![0].Code);
     }
     [Fact]
-    public void ToHttpResponse_Generic_WithValidJsonButNotApiResponse_ReturnsApiResult()
+    public void ToApiResult_Generic_WithValidJsonButNotApiResponse_ReturnsApiResult()
     {
         // Arrange
         var statusCode = HttpStatusCode.OK;
@@ -216,7 +216,7 @@ public class RestResponseExtensionsTests
         };
 
         // Act
-        var result = response.ToHttpResponse<string>();
+        var result = response.ToApiResult<string>();
 
         // Assert
         Assert.Equal(statusCode, result.StatusCode);

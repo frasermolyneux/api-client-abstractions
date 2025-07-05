@@ -25,13 +25,13 @@ public static class RestResponseExtensions
     /// Converts a RestResponse to an ApiResult containing an ApiResponse.
     /// </summary>
     /// <param name="response">The RestSharp response to convert.</param>
-    /// <returns>An HTTP response wrapper object.</returns>
+    /// <returns>An API result wrapper object.</returns>
     /// <exception cref="ArgumentNullException">Thrown when response is null.</exception>
-    public static ApiResult ToHttpResponse(this RestResponse response)
+    public static ApiResult ToApiResult(this RestResponse response)
     {
         ArgumentNullException.ThrowIfNull(response);
 
-        // Create HTTP response wrapper with the status code
+        // Create API result wrapper with the status code
         var httpResponse = new ApiResult(response.StatusCode);
 
         // Special handling for HEAD requests which don't return content
@@ -96,13 +96,13 @@ public static class RestResponseExtensions
     /// </summary>
     /// <typeparam name="T">The type of the data expected in the response.</typeparam>
     /// <param name="response">The RestSharp response to convert.</param>
-    /// <returns>An HTTP response wrapper object with a strongly-typed API response.</returns>
+    /// <returns>An API result wrapper object with a strongly-typed API response.</returns>
     /// <exception cref="ArgumentNullException">Thrown when response is null.</exception>
-    public static ApiResult<T> ToHttpResponse<T>(this RestResponse response)
+    public static ApiResult<T> ToApiResult<T>(this RestResponse response)
     {
         ArgumentNullException.ThrowIfNull(response);
 
-        // Create HTTP response wrapper with the status code
+        // Create API result wrapper with the status code
         var httpResponse = new ApiResult<T>(response.StatusCode);
 
         if (string.IsNullOrWhiteSpace(response.Content))
