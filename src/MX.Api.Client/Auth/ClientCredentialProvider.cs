@@ -1,11 +1,8 @@
 using Azure.Core;
 using Azure.Identity;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 
-namespace MX.Api.Client;
+namespace MX.Api.Client.Auth;
 
 /// <summary>
 /// Client credentials implementation of ITokenCredentialProvider that uses ClientSecretCredential.

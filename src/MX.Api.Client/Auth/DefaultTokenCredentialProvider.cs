@@ -3,7 +3,7 @@ using Azure.Identity;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace MX.Api.Client;
+namespace MX.Api.Client.Auth;
 
 /// <summary>
 /// Default implementation of ITokenCredentialProvider that uses DefaultAzureCredential.

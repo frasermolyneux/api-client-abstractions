@@ -4,8 +4,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
+using MX.Api.Client.Auth;
+using MX.Api.Client.Configuration;
 using MX.Api.Client.Extensions;
-using System;
 using Xunit;
 
 namespace MX.Api.Client.Tests.Extensions;

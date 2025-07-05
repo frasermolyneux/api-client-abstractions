@@ -1,4 +1,4 @@
-﻿namespace MX.Api.Client;
+﻿namespace MX.Api.Client.Configuration;
 
 /// <summary>
 /// Options for configuring the API client.

@@ -3,7 +3,6 @@ using MX.Api.Abstractions;
 using MX.Api.Client.Extensions;
 using Newtonsoft.Json;
 using RestSharp;
-using Moq;
 using Xunit;
 
 namespace MX.Api.Client.Tests.Extensions;

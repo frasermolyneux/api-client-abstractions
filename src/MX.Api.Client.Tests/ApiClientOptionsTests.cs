@@ -1,3 +1,4 @@
+using MX.Api.Client.Configuration;
 using Xunit;
 
 namespace MX.Api.Client.Tests;

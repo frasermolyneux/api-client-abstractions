@@ -1,6 +1,4 @@
-﻿using System.Net;
-
-using MX.Api.Abstractions;
+﻿using MX.Api.Abstractions;
 
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;

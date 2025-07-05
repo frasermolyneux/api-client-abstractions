@@ -1,8 +1,6 @@
 using System.Net;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using MX.Api.Abstractions;
-using MX.Api.Web.Extensions;
 
 namespace MX.Api.Web.Extensions.Tests;
 

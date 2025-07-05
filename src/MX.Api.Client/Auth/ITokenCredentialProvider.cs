@@ -1,6 +1,6 @@
 using Azure.Core;
 
-namespace MX.Api.Client;
+namespace MX.Api.Client.Auth;
 
 /// <summary>
 /// Interface for providing token credentials.

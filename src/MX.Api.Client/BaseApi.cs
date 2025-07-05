@@ -1,19 +1,14 @@
 using System.Net;
-using System.Net.Http;
 using System.Security.Authentication;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
-
-using MX.Api.Abstractions;
-using MX.Api.Client.Extensions;
-
+using MX.Api.Client.Auth;
+using MX.Api.Client.Configuration;
 using Polly;
 using Polly.Retry;
 
 using RestSharp;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace MX.Api.Client;
 

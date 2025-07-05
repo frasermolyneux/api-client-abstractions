@@ -1,10 +1,10 @@
 ﻿using Azure.Identity;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
-using System;
+using Microsoft.Extensions.Options;
+using MX.Api.Client.Auth;
+using MX.Api.Client.Configuration;
 
 namespace MX.Api.Client.Extensions;
 

@@ -1,6 +1,6 @@
 ﻿using System.Security.Authentication;
 
-namespace MX.Api.Client;
+namespace MX.Api.Client.Auth;
 
 /// <summary>
 /// Interface for providing access tokens for API authentication.

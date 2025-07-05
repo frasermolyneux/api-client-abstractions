@@ -3,7 +3,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using System.Security.Authentication;
 
-namespace MX.Api.Client;
+namespace MX.Api.Client.Auth;
 
 /// <summary>
 /// A simplified token provider implementation for API authentication.
