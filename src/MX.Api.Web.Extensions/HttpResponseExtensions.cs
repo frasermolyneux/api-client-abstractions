@@ -80,73 +80,67 @@ public static class HttpResponseExtensions
 public static class ApiResponseExtensions
 {
     /// <summary>
-    /// Creates a new API response with the specified HTTP status code.
+    /// Creates a new API response.
     /// </summary>
     /// <typeparam name="T">The type of the data.</typeparam>
-    /// <param name="statusCode">The HTTP status code to set.</param>
-    /// <returns>A new API response with the specified status code.</returns>
-    public static ApiResponse<T> CreateApiResponse<T>(this HttpStatusCode statusCode)
+    /// <returns>A new API response.</returns>
+    public static ApiResponse<T> CreateApiResponse<T>()
     {
-        return new ApiResponse<T>(statusCode);
+        return new ApiResponse<T>();
     }
 
     /// <summary>
-    /// Creates a new API response with the specified HTTP status code and data.
+    /// Creates a new API response with the specified data.
     /// </summary>
     /// <typeparam name="T">The type of the data.</typeparam>
-    /// <param name="statusCode">The HTTP status code to set.</param>
     /// <param name="data">The data object to include.</param>
-    /// <returns>A new API response with the specified status code and data.</returns>
-    public static ApiResponse<T> CreateApiResponse<T>(this HttpStatusCode statusCode, T? data)
+    /// <returns>A new API response with the specified data.</returns>
+    public static ApiResponse<T> CreateApiResponse<T>(T? data)
     {
-        return new ApiResponse<T>(statusCode, data);
+        return new ApiResponse<T>(data);
     }
 
     /// <summary>
-    /// Creates a new API response with the specified HTTP status code, data, and pagination.
+    /// Creates a new API response with the specified data and pagination.
     /// </summary>
     /// <typeparam name="T">The type of the data.</typeparam>
-    /// <param name="statusCode">The HTTP status code to set.</param>
     /// <param name="data">The data object to include.</param>
     /// <param name="pagination">The pagination information.</param>
-    /// <returns>A new API response with the specified status code, data, and pagination.</returns>
-    public static ApiResponse<T> CreateApiResponse<T>(this HttpStatusCode statusCode, T? data, ApiPagination pagination)
+    /// <returns>A new API response with the specified data and pagination.</returns>
+    public static ApiResponse<T> CreateApiResponse<T>(T? data, ApiPagination pagination)
     {
-        var response = new ApiResponse<T>(statusCode, data);
+        var response = new ApiResponse<T>(data);
         response.Pagination = pagination;
         return response;
     }
 
     /// <summary>
-    /// Creates a new API response with the specified HTTP status code and error.
+    /// Creates a new API response with the specified error.
     /// </summary>
     /// <typeparam name="T">The type of the data.</typeparam>
-    /// <param name="statusCode">The HTTP status code to set.</param>
     /// <param name="error">The error object to include.</param>
-    /// <returns>A new API response with the specified status code and error.</returns>
-    public static ApiResponse<T> CreateApiErrorResponse<T>(this HttpStatusCode statusCode, ApiError error)
+    /// <returns>A new API response with the specified error.</returns>
+    public static ApiResponse<T> CreateApiErrorResponse<T>(ApiError error)
     {
         ArgumentNullException.ThrowIfNull(error);
-        return new ApiResponse<T>(statusCode, default, new[] { error });
+        return new ApiResponse<T>(default, new[] { error });
     }
 
     /// <summary>
-    /// Creates a new API response with the specified HTTP status code and error message.
+    /// Creates a new API response with the specified error message.
     /// </summary>
     /// <typeparam name="T">The type of the data.</typeparam>
-    /// <param name="statusCode">The HTTP status code to set.</param>
     /// <param name="message">The error message.</param>
-    /// <returns>A new API response with the specified status code and error message.</returns>
-    public static ApiResponse<T> CreateApiErrorResponse<T>(this HttpStatusCode statusCode, string message)
+    /// <returns>A new API response with the specified error message.</returns>
+    public static ApiResponse<T> CreateApiErrorResponse<T>(string message)
     {
-        return new ApiResponse<T>(statusCode, default, new ApiError("Error", message));
+        return new ApiResponse<T>(default, new ApiError("Error", message));
     }
 
     /// <summary>
     /// Creates a new API response for a collection of items with pagination information.
     /// </summary>
     /// <typeparam name="T">The type of the items in the collection.</typeparam>
-    /// <param name="statusCode">The HTTP status code to set.</param>
     /// <param name="items">The collection of items.</param>
     /// <param name="totalCount">The total count of records available.</param>
     /// <param name="filteredCount">The count of records after filtering.</param>
@@ -154,7 +148,6 @@ public static class ApiResponseExtensions
     /// <param name="top">The number of records to take.</param>
     /// <returns>A new API response with the specified collection and pagination information.</returns>
     public static ApiResponse<CollectionModel<T>> CreateApiCollectionResponse<T>(
-        this HttpStatusCode statusCode,
         IEnumerable<T>? items,
         int totalCount,
         int filteredCount,
@@ -164,7 +157,6 @@ public static class ApiResponseExtensions
         var collection = new CollectionModel<T>(items, totalCount, filteredCount);
         var response = new ApiResponse<CollectionModel<T>>
         {
-            StatusCode = statusCode,
             Data = collection,
             Pagination = new ApiPagination(totalCount, filteredCount, skip, top)
         };
@@ -174,11 +166,10 @@ public static class ApiResponseExtensions
     /// <summary>
     /// Creates a new API response for a count-only response.
     /// </summary>
-    /// <param name="statusCode">The HTTP status code to set.</param>
     /// <param name="count">The count value.</param>
     /// <returns>A new API response with the specified count as data.</returns>
-    public static ApiResponse<int> CreateApiCountResponse(this HttpStatusCode statusCode, int count)
+    public static ApiResponse<int> CreateApiCountResponse(int count)
     {
-        return new ApiResponse<int>(statusCode, count);
+        return new ApiResponse<int>(count);
     }
 }

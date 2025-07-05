@@ -30,7 +30,6 @@ For operations that don't return data (e.g., DELETE operations, status checks):
 ```csharp
 public class ApiResponse
 {
-    public HttpStatusCode StatusCode { get; set; }
     public ApiError[]? Errors { get; set; }
     public Dictionary<string, string>? Metadata { get; set; }
 }
@@ -43,13 +42,14 @@ For operations that return data (e.g., GET, POST with created resource):
 ```csharp
 public class ApiResponse<T>
 {
-    public HttpStatusCode StatusCode { get; set; }
     public T? Data { get; set; }
     public ApiError[]? Errors { get; set; }
     public ApiPagination? Pagination { get; set; }
     public Dictionary<string, string>? Metadata { get; set; }
 }
 ```
+
+> **Note**: HTTP status codes are handled by the `HttpResponseWrapper<T>` at the transport layer, not within the API response models themselves.
 
 ### HTTP Response Wrapper
 
@@ -187,15 +187,11 @@ if (collectionWrapper.IsSuccess && collectionWrapper.Result?.Data != null)
 
 ```csharp
 // Creating a non-data response (e.g., for DELETE operation)
-ApiResponse deleteResponse = new ApiResponse
-{
-    StatusCode = HttpStatusCode.NoContent
-};
+ApiResponse deleteResponse = new ApiResponse();
 
 // Creating a non-data error response
 ApiResponse errorResponse = new ApiResponse
 {
-    StatusCode = HttpStatusCode.BadRequest,
     Errors = new[]
     {
         new ApiError("INVALID_REQUEST", "The request is invalid")
@@ -205,14 +201,12 @@ ApiResponse errorResponse = new ApiResponse
 // Creating a successful data response
 ApiResponse<UserDto> successResponse = new ApiResponse<UserDto>
 {
-    StatusCode = HttpStatusCode.OK,
     Data = new UserDto { Id = "123", Name = "John Doe" }
 };
 
 // Creating a data error response
 ApiResponse<UserDto> dataErrorResponse = new ApiResponse<UserDto>
 {
-    StatusCode = HttpStatusCode.BadRequest,
     Errors = new[]
     {
         new ApiError
@@ -233,6 +227,8 @@ ApiResponse<UserDto> dataErrorResponse = new ApiResponse<UserDto>
     }
 };
 ```
+
+> **Note**: HTTP status codes are set on the `HttpResponseWrapper<T>` that contains these API responses, not on the API response models themselves.
 
 ## Common Query Parameters
 
@@ -258,7 +254,7 @@ All collection endpoints support the following query parameters:
 
 4. **Filtering**: Implement comprehensive filtering support through the FilterOptions model.
 
-5. **Status Codes**: Use appropriate HTTP status codes in ApiResponse to communicate the result of operations.
+5. **HTTP Status Codes**: HTTP status codes are handled by the `HttpResponseWrapper<T>` at the transport layer to properly separate HTTP concerns from API response models.
 
 6. **Metadata**: Use the Metadata dictionary to include additional context information with responses.
 

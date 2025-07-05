@@ -12,7 +12,7 @@ public class HttpResponseExtensionsTests
         // Arrange
         var statusCode = HttpStatusCode.OK;
         var data = "Test Data";
-        var apiResponse = new ApiResponse<string>(statusCode, data);
+        var apiResponse = new ApiResponse<string>(data);
         var responseWrapper = new HttpResponseWrapper<string>(statusCode, apiResponse);
 
         // Act
@@ -95,7 +95,7 @@ public class HttpResponseExtensionsTests
     {
         // Arrange
         var statusCode = HttpStatusCode.OK;
-        var apiResponse = new ApiResponse<string>(statusCode, "Test Data");
+        var apiResponse = new ApiResponse<string>("Test Data");
 
         // Act
         var result = statusCode.CreateHttpResponse(apiResponse);

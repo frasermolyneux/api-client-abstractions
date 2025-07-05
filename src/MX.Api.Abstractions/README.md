@@ -26,7 +26,6 @@ The `ApiResponse` class is a wrapper for API responses that don't return data (e
 ```csharp
 public class ApiResponse
 {
-    public HttpStatusCode StatusCode { get; set; }
     public ApiError[]? Errors { get; set; }
     public Dictionary<string, string>? Metadata { get; set; }
 }
@@ -34,9 +33,11 @@ public class ApiResponse
 
 **Use this when:**
 - DELETE operations that return no content
-- Status check endpoints
+- Status check endpoints  
 - Validation endpoints that only return success/failure
 - Any operation where no data payload is expected
+
+**Note:** The HTTP status code is handled by the `HttpResponseWrapper` at the transport layer, keeping the API response model focused on business data.
 
 ### ApiResponse\<T>
 
@@ -45,7 +46,6 @@ The `ApiResponse<T>` class is a wrapper for API responses that include data:
 ```csharp
 public class ApiResponse<T>
 {
-    public HttpStatusCode StatusCode { get; set; }
     public T? Data { get; set; }
     public ApiError[]? Errors { get; set; }
     public ApiPagination? Pagination { get; set; }
@@ -55,9 +55,11 @@ public class ApiResponse<T>
 
 **Use this when:**
 - GET operations that return resources
-- POST operations that return created resources
+- POST operations that return created resources  
 - PUT/PATCH operations that return updated resources
 - Any operation where a data payload is expected
+
+**Note:** The HTTP status code is handled by the `HttpResponseWrapper` at the transport layer, keeping the API response model focused on business data.
 ```
 
 ### ApiError
@@ -119,21 +121,26 @@ public class FilterOptions
 
 ### HttpResponseWrapper\<T>
 
-The `HttpResponseWrapper<T>` class wraps API responses with HTTP-specific information:
+The `HttpResponseWrapper<T>` class wraps API responses with HTTP-specific information, providing separation between transport concerns and business data:
 
 ```csharp
 public class HttpResponseWrapper<T>
 {
     public ApiResponse<T>? Result { get; set; }
     public HttpStatusCode StatusCode { get; set; }
-    public string? Content { get; set; }
     
     // Helper properties
     public bool IsSuccess { get; }
     public bool IsNotFound { get; }
     public bool IsConflict { get; }
-    public bool IsBadRequest { get; }
 }
+```
+
+**Key benefits:**
+- Separates HTTP transport concerns from business data models
+- Provides status code information at the transport layer
+- Offers convenience properties for common status checks
+- Enables clean API response models focused on data
 ```
 
 ## Usage Examples
@@ -142,15 +149,11 @@ public class HttpResponseWrapper<T>
 
 ```csharp
 // Non-data response (e.g., DELETE operation)
-var deleteResponse = new ApiResponse
-{
-    StatusCode = HttpStatusCode.NoContent
-};
+var deleteResponse = new ApiResponse();
 
 // Non-data error response
 var errorResponse = new ApiResponse
 {
-    StatusCode = HttpStatusCode.BadRequest,
     Errors = new[]
     {
         new ApiError("INVALID_REQUEST", "The request is invalid")
@@ -160,14 +163,12 @@ var errorResponse = new ApiResponse
 // Success response with data
 var successResponse = new ApiResponse<User>
 {
-    StatusCode = HttpStatusCode.OK,
     Data = user
 };
 
 // Error response with data context
 var dataErrorResponse = new ApiResponse<User>
 {
-    StatusCode = HttpStatusCode.BadRequest,
     Errors = new[]
     {
         new ApiError("INVALID_USERNAME", "Username is invalid", "username")
@@ -177,7 +178,6 @@ var dataErrorResponse = new ApiResponse<User>
 // Collection response with pagination
 var collectionResponse = new ApiResponse<CollectionModel<User>>
 {
-    StatusCode = HttpStatusCode.OK,
     Data = new CollectionModel<User>
     {
         Items = users
@@ -190,6 +190,13 @@ var collectionResponse = new ApiResponse<CollectionModel<User>>
         Top = 10,
         HasMore = true
     }
+};
+
+// HTTP Response Wrapper with status code
+var httpResponse = new HttpResponseWrapper<User>
+{
+    StatusCode = HttpStatusCode.OK,
+    Result = successResponse
 };
 ```
 

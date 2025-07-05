@@ -6,54 +6,46 @@ namespace MX.Api.Web.Extensions.Tests;
 public class ApiResponseExtensionsTests
 {
     [Fact]
-    public void CreateApiResponse_WithStatusCode_ReturnsApiResponse()
+    public void CreateApiResponse_Generic_ReturnsApiResponse()
     {
-        // Arrange
-        var statusCode = HttpStatusCode.OK;
-
         // Act
-        var result = statusCode.CreateApiResponse<string>();
+        var result = ApiResponseExtensions.CreateApiResponse<string>();
 
         // Assert
         Assert.IsType<ApiResponse<string>>(result);
-        Assert.Equal(statusCode, result.StatusCode);
         Assert.Null(result.Data);
         Assert.Null(result.Errors);
         Assert.Null(result.Pagination);
     }
 
     [Fact]
-    public void CreateApiResponse_WithStatusCodeAndData_ReturnsApiResponse()
+    public void CreateApiResponse_WithData_ReturnsApiResponse()
     {
         // Arrange
-        var statusCode = HttpStatusCode.OK;
         var data = "Test Data";
 
         // Act
-        var result = statusCode.CreateApiResponse(data);
+        var result = ApiResponseExtensions.CreateApiResponse(data);
 
         // Assert
         Assert.IsType<ApiResponse<string>>(result);
-        Assert.Equal(statusCode, result.StatusCode);
         Assert.Equal(data, result.Data);
         Assert.Null(result.Errors);
         Assert.Null(result.Pagination);
     }
 
     [Fact]
-    public void CreateApiResponse_WithStatusCodeDataAndPagination_ReturnsApiResponse()
+    public void CreateApiResponse_WithDataAndPagination_ReturnsApiResponse()
     {
         // Arrange
-        var statusCode = HttpStatusCode.OK;
         var data = "Test Data";
         var pagination = new ApiPagination(100, 50, 0, 10);
 
         // Act
-        var result = statusCode.CreateApiResponse(data, pagination);
+        var result = ApiResponseExtensions.CreateApiResponse(data, pagination);
 
         // Assert
         Assert.IsType<ApiResponse<string>>(result);
-        Assert.Equal(statusCode, result.StatusCode);
         Assert.Equal(data, result.Data);
         Assert.Null(result.Errors);
         Assert.NotNull(result.Pagination);
@@ -61,18 +53,16 @@ public class ApiResponseExtensionsTests
     }
 
     [Fact]
-    public void CreateApiErrorResponse_WithStatusCodeAndError_ReturnsApiResponse()
+    public void CreateApiErrorResponse_WithError_ReturnsApiResponse()
     {
         // Arrange
-        var statusCode = HttpStatusCode.BadRequest;
         var error = new ApiError("ValidationFailed", "Validation failed");
 
         // Act
-        var result = statusCode.CreateApiErrorResponse<string>(error);
+        var result = ApiResponseExtensions.CreateApiErrorResponse<string>(error);
 
         // Assert
         Assert.IsType<ApiResponse<string>>(result);
-        Assert.Equal(statusCode, result.StatusCode);
         Assert.Null(result.Data);
         Assert.NotNull(result.Errors);
         Assert.Single(result.Errors);
@@ -85,26 +75,23 @@ public class ApiResponseExtensionsTests
     public void CreateApiErrorResponse_WithNullError_ThrowsArgumentNullException()
     {
         // Arrange
-        var statusCode = HttpStatusCode.BadRequest;
         ApiError? error = null;
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => statusCode.CreateApiErrorResponse<string>(error!));
+        Assert.Throws<ArgumentNullException>(() => ApiResponseExtensions.CreateApiErrorResponse<string>(error!));
     }
 
     [Fact]
-    public void CreateApiErrorResponse_WithStatusCodeAndMessage_ReturnsApiResponse()
+    public void CreateApiErrorResponse_WithMessage_ReturnsApiResponse()
     {
         // Arrange
-        var statusCode = HttpStatusCode.BadRequest;
         var message = "Validation failed";
 
         // Act
-        var result = statusCode.CreateApiErrorResponse<string>(message);
+        var result = ApiResponseExtensions.CreateApiErrorResponse<string>(message);
 
         // Assert
         Assert.IsType<ApiResponse<string>>(result);
-        Assert.Equal(statusCode, result.StatusCode);
         Assert.Null(result.Data);
         Assert.NotNull(result.Errors);
         Assert.Single(result.Errors);
@@ -117,7 +104,6 @@ public class ApiResponseExtensionsTests
     public void CreateApiCollectionResponse_ReturnsApiResponse()
     {
         // Arrange
-        var statusCode = HttpStatusCode.OK;
         var items = new[] { "Item1", "Item2", "Item3" };
         var totalCount = 100;
         var filteredCount = 50;
@@ -125,11 +111,10 @@ public class ApiResponseExtensionsTests
         var top = 10;
 
         // Act
-        var result = statusCode.CreateApiCollectionResponse(items, totalCount, filteredCount, skip, top);
+        var result = ApiResponseExtensions.CreateApiCollectionResponse(items, totalCount, filteredCount, skip, top);
 
         // Assert
         Assert.IsType<ApiResponse<CollectionModel<string>>>(result);
-        Assert.Equal(statusCode, result.StatusCode);
         Assert.NotNull(result.Data);
         Assert.Equal(items, result.Data.Items);
         Assert.Equal(totalCount, result.Data.TotalCount);
@@ -146,15 +131,13 @@ public class ApiResponseExtensionsTests
     public void CreateApiCountResponse_ReturnsApiResponse()
     {
         // Arrange
-        var statusCode = HttpStatusCode.OK;
         var count = 42;
 
         // Act
-        var result = statusCode.CreateApiCountResponse(count);
+        var result = ApiResponseExtensions.CreateApiCountResponse(count);
 
         // Assert
         Assert.IsType<ApiResponse<int>>(result);
-        Assert.Equal(statusCode, result.StatusCode);
         Assert.Equal(count, result.Data);
         Assert.Null(result.Errors);
         Assert.Null(result.Pagination);

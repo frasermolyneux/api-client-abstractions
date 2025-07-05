@@ -55,11 +55,12 @@ For operations that don't return data (e.g., DELETE operations, status checks):
 ```csharp
 public class ApiResponse
 {
-    public HttpStatusCode StatusCode { get; set; }
     public ApiError[]? Errors { get; set; }
     public Dictionary<string, string>? Metadata { get; set; }
 }
 ```
+
+**Note:** HTTP status codes are handled by the HTTP transport layer (HttpResponseWrapper), keeping the API response model focused on business data.
 
 #### ApiResponse\<T> (Data Responses)
 
@@ -68,13 +69,14 @@ For operations that return data (e.g., GET, POST with created resource):
 ```csharp
 public class ApiResponse<T>
 {
-    public HttpStatusCode StatusCode { get; set; }
     public T? Data { get; set; }
     public ApiError[]? Errors { get; set; }
     public ApiPagination? Pagination { get; set; }
     public Dictionary<string, string>? Metadata { get; set; }
 }
 ```
+
+**Note:** HTTP status codes are handled by the HTTP transport layer (HttpResponseWrapper), keeping the API response model focused on business data.
 
 #### Supporting Models
 
@@ -136,11 +138,10 @@ This allows for more granular control over which related entities are included i
 GET /players?$filter=gameType eq 'CallOfDuty2' and lastSeen gt '2023-01-01'&$top=10&$skip=0&$orderby=username asc
 ```
 
-Response:
+Response (HTTP 200):
 
 ```json
 {
-  "statusCode": 200,
   "data": {
     "items": [
       { "playerId": 123, "username": "Player1", "gameType": "CallOfDuty2", "lastSeen": "2023-05-10" },
@@ -166,11 +167,10 @@ Response:
 GET /players/1234?$expand=aliases,adminActions,ipAddresses
 ```
 
-Response:
+Response (HTTP 200):
 
 ```json
 {
-  "statusCode": 200,
   "data": {
     "playerId": 1234,
     "username": "MainPlayer",
@@ -199,11 +199,10 @@ Response:
 GET /players?$filter=gameType eq 'CallOfDuty4' and username startswith 'John'&$count=true
 ```
 
-Response:
+Response (HTTP 200):
 
 ```json
 {
-  "statusCode": 200,
   "data": 27,
   "metadata": {
     "requestId": "ghi-789-rst"
@@ -217,11 +216,10 @@ Response:
 POST /players
 ```
 
-Response:
+Response (HTTP 400):
 
 ```json
 {
-  "statusCode": 400,
   "errors": [
     {
       "code": "ValidationError",

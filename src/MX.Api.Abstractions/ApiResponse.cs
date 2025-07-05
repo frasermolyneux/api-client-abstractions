@@ -9,12 +9,6 @@ namespace MX.Api.Abstractions;
 public class ApiResponse
 {
     /// <summary>
-    /// Gets or sets the HTTP status code of the response.
-    /// </summary>
-    [JsonProperty(PropertyName = "statusCode")]
-    public HttpStatusCode StatusCode { get; set; }
-
-    /// <summary>
     /// Gets or sets the collection of errors.
     /// </summary>
     [JsonProperty(PropertyName = "errors")]
@@ -35,31 +29,20 @@ public class ApiResponse
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ApiResponse"/> class with the specified status code.
+    /// Initializes a new instance of the <see cref="ApiResponse"/> class with the specified error.
     /// </summary>
-    /// <param name="statusCode">The HTTP status code of the response.</param>
-    public ApiResponse(HttpStatusCode statusCode)
-    {
-        StatusCode = statusCode;
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="ApiResponse"/> class with the specified status code and error.
-    /// </summary>
-    /// <param name="statusCode">The HTTP status code of the response.</param>
     /// <param name="error">An error object.</param>
-    public ApiResponse(HttpStatusCode statusCode, ApiError error) : this(statusCode)
+    public ApiResponse(ApiError error)
     {
         ArgumentNullException.ThrowIfNull(error);
         Errors = new[] { error };
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ApiResponse"/> class with the specified status code and errors.
+    /// Initializes a new instance of the <see cref="ApiResponse"/> class with the specified errors.
     /// </summary>
-    /// <param name="statusCode">The HTTP status code of the response.</param>
     /// <param name="errors">An array of errors.</param>
-    public ApiResponse(HttpStatusCode statusCode, ApiError[] errors) : this(statusCode)
+    public ApiResponse(ApiError[] errors)
     {
         ArgumentNullException.ThrowIfNull(errors);
         Errors = errors;
@@ -72,12 +55,6 @@ public class ApiResponse
 /// <typeparam name="T">The type of the data in the response.</typeparam>
 public class ApiResponse<T>
 {
-    /// <summary>
-    /// Gets or sets the HTTP status code of the response.
-    /// </summary>
-    [JsonProperty(PropertyName = "statusCode")]
-    public HttpStatusCode StatusCode { get; set; }
-
     /// <summary>
     /// Gets or sets the data returned by the API.
     /// </summary>
@@ -111,65 +88,51 @@ public class ApiResponse<T>
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ApiResponse{T}"/> class with the specified status code.
+    /// Initializes a new instance of the <see cref="ApiResponse{T}"/> class with the specified data.
     /// </summary>
-    /// <param name="statusCode">The HTTP status code of the response.</param>
-    public ApiResponse(HttpStatusCode statusCode)
-    {
-        StatusCode = statusCode;
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="ApiResponse{T}"/> class with the specified status code and data.
-    /// </summary>
-    /// <param name="statusCode">The HTTP status code of the response.</param>
     /// <param name="data">The data returned by the API.</param>
-    public ApiResponse(HttpStatusCode statusCode, T? data) : this(statusCode)
+    public ApiResponse(T? data)
     {
         Data = data;
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ApiResponse{T}"/> class with the specified status code and error.
+    /// Initializes a new instance of the <see cref="ApiResponse{T}"/> class with the specified error.
     /// </summary>
-    /// <param name="statusCode">The HTTP status code of the response.</param>
     /// <param name="error">An error object.</param>
-    public ApiResponse(HttpStatusCode statusCode, ApiError error) : this(statusCode)
+    public ApiResponse(ApiError error)
     {
         ArgumentNullException.ThrowIfNull(error);
         Errors = new[] { error };
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ApiResponse{T}"/> class with the specified status code and errors.
+    /// Initializes a new instance of the <see cref="ApiResponse{T}"/> class with the specified errors.
     /// </summary>
-    /// <param name="statusCode">The HTTP status code of the response.</param>
     /// <param name="errors">An array of errors.</param>
-    public ApiResponse(HttpStatusCode statusCode, ApiError[] errors) : this(statusCode)
+    public ApiResponse(ApiError[] errors)
     {
         ArgumentNullException.ThrowIfNull(errors);
         Errors = errors;
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ApiResponse{T}"/> class with the specified status code, data, and error.
+    /// Initializes a new instance of the <see cref="ApiResponse{T}"/> class with the specified data and error.
     /// </summary>
-    /// <param name="statusCode">The HTTP status code of the response.</param>
     /// <param name="data">The data returned by the API.</param>
     /// <param name="error">An error object.</param>
-    public ApiResponse(HttpStatusCode statusCode, T? data, ApiError error) : this(statusCode, data)
+    public ApiResponse(T? data, ApiError error) : this(data)
     {
         ArgumentNullException.ThrowIfNull(error);
         Errors = new[] { error };
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ApiResponse{T}"/> class with the specified status code, data, and errors.
+    /// Initializes a new instance of the <see cref="ApiResponse{T}"/> class with the specified data and errors.
     /// </summary>
-    /// <param name="statusCode">The HTTP status code of the response.</param>
     /// <param name="data">The data returned by the API.</param>
     /// <param name="errors">An array of errors.</param>
-    public ApiResponse(HttpStatusCode statusCode, T? data, ApiError[] errors) : this(statusCode, data)
+    public ApiResponse(T? data, ApiError[] errors) : this(data)
     {
         ArgumentNullException.ThrowIfNull(errors);
         Errors = errors;

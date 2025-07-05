@@ -42,7 +42,7 @@ public static class RestResponseExtensions
 
         if (string.IsNullOrWhiteSpace(response.Content))
         {
-            var apiResponse = new ApiResponse<object>(response.StatusCode);
+            var apiResponse = new ApiResponse<object>();
             apiResponse.Errors = new[] { new ApiError("NullContent", NullContentError) };
             httpResponse.Result = apiResponse;
             return httpResponse;
@@ -59,23 +59,17 @@ public static class RestResponseExtensions
                 if (dynamicObj != null)
                 {
                     // Valid JSON but not in ApiResponse format
-                    var errorResponse = new ApiResponse<object>(response.StatusCode);
+                    var errorResponse = new ApiResponse<object>();
                     errorResponse.Errors = new[] { new ApiError("DeserializationError", DeserializationError) };
                     httpResponse.Result = errorResponse;
                     return httpResponse;
                 }
 
                 // If both attempts failed, create a generic error response
-                var nullResponse = new ApiResponse<object>(response.StatusCode);
+                var nullResponse = new ApiResponse<object>();
                 nullResponse.Errors = new[] { new ApiError("DeserializationError", DeserializationError) };
                 httpResponse.Result = nullResponse;
                 return httpResponse;
-            }
-
-            // If the status code in the API response is the default (0), update it with the response status code
-            if (apiResponse.StatusCode == default)
-            {
-                apiResponse.StatusCode = response.StatusCode;
             }
 
             httpResponse.Result = apiResponse;
@@ -83,14 +77,14 @@ public static class RestResponseExtensions
         }
         catch (JsonException ex)
         {
-            var errorResponse = new ApiResponse<object>(response.StatusCode);
+            var errorResponse = new ApiResponse<object>();
             errorResponse.Errors = new[] { new ApiError("JsonError", $"JSON deserialization error: {ex.Message}") };
             httpResponse.Result = errorResponse;
             return httpResponse;
         }
         catch (Exception ex)
         {
-            var errorResponse = new ApiResponse<object>(response.StatusCode);
+            var errorResponse = new ApiResponse<object>();
             errorResponse.Errors = new[] { new ApiError("UnexpectedError", $"Unexpected error during response processing: {ex.Message}") };
             httpResponse.Result = errorResponse;
             return httpResponse;
@@ -113,7 +107,7 @@ public static class RestResponseExtensions
 
         if (string.IsNullOrWhiteSpace(response.Content))
         {
-            var apiResponse = new ApiResponse<T>(response.StatusCode);
+            var apiResponse = new ApiResponse<T>();
             apiResponse.Errors = new[] { new ApiError("NullContent", NullContentError) };
             httpResponse.Result = apiResponse;
             return httpResponse;
@@ -130,23 +124,17 @@ public static class RestResponseExtensions
                 if (dynamicObj != null)
                 {
                     // Valid JSON but not in ApiResponse format
-                    var errorResponse = new ApiResponse<T>(response.StatusCode);
+                    var errorResponse = new ApiResponse<T>();
                     errorResponse.Errors = new[] { new ApiError("DeserializationError", DeserializationError) };
                     httpResponse.Result = errorResponse;
                     return httpResponse;
                 }
 
                 // If both attempts failed, create a generic error response
-                var nullResponse = new ApiResponse<T>(response.StatusCode);
+                var nullResponse = new ApiResponse<T>();
                 nullResponse.Errors = new[] { new ApiError("DeserializationError", DeserializationError) };
                 httpResponse.Result = nullResponse;
                 return httpResponse;
-            }
-
-            // If the status code in the API response is the default (0), update it with the response status code
-            if (apiResponse.StatusCode == default)
-            {
-                apiResponse.StatusCode = response.StatusCode;
             }
 
             httpResponse.Result = apiResponse;
@@ -154,14 +142,14 @@ public static class RestResponseExtensions
         }
         catch (JsonException ex)
         {
-            var errorResponse = new ApiResponse<T>(response.StatusCode);
+            var errorResponse = new ApiResponse<T>();
             errorResponse.Errors = new[] { new ApiError("JsonError", $"JSON deserialization error: {ex.Message}") };
             httpResponse.Result = errorResponse;
             return httpResponse;
         }
         catch (Exception ex)
         {
-            var errorResponse = new ApiResponse<T>(response.StatusCode);
+            var errorResponse = new ApiResponse<T>();
             errorResponse.Errors = new[] { new ApiError("UnexpectedError", $"Unexpected error during response processing: {ex.Message}") };
             httpResponse.Result = errorResponse;
             return httpResponse;

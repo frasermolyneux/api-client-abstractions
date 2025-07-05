@@ -151,7 +151,8 @@ public class UserApi : BaseApi
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             logger.LogError(ex, "Failed to retrieve user with ID {UserId}", userId);
-            return HttpStatusCode.InternalServerError.CreateResponse<User>("An unexpected error occurred while retrieving the user");
+            var errorResponse = new ApiResponse<User>(new ApiError("InternalError", "An unexpected error occurred while retrieving the user"));
+            return new HttpResponseWrapper<User>(HttpStatusCode.InternalServerError, errorResponse);
         }
     }
 }
@@ -179,7 +180,7 @@ public class UserService
         
         if (response.IsSuccess && response.Result != null)
         {
-            return response.Result;
+            return response.Result.Data;
         }
         
         if (response.IsNotFound)

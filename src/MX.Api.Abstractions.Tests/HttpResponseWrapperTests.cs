@@ -104,7 +104,7 @@ public class HttpResponseWrapperTests
     {
         // Arrange
         var statusCode = HttpStatusCode.OK;
-        var apiResponse = new ApiResponse<string>(statusCode, "Test data");
+        var apiResponse = new ApiResponse<string>("Test data");
 
         // Act
         var wrapper = new HttpResponseWrapper<string>(statusCode, apiResponse);
@@ -126,7 +126,7 @@ public class HttpResponseWrapperTests
     {
         // Arrange
         var wrapperWithNullResult = new HttpResponseWrapper<string>(statusCode);
-        var wrapperWithResult = new HttpResponseWrapper<string>(statusCode, new ApiResponse<string>(statusCode));
+        var wrapperWithResult = new HttpResponseWrapper<string>(statusCode, new ApiResponse<string>());
 
         // Assert
         Assert.False(wrapperWithNullResult.IsSuccess);

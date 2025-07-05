@@ -172,8 +172,8 @@ public class UsersApiClient : BaseApi
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             logger.LogError(ex, "Error retrieving user {UserId}", userId);
-            return HttpStatusCode.InternalServerError.CreateResponse<UserDto>(
-                $"An unexpected error occurred while retrieving user {userId}");
+            var errorResponse = new ApiResponse<UserDto>(new ApiError("InternalError", $"An unexpected error occurred while retrieving user {userId}"));
+            return new HttpResponseWrapper<UserDto>(HttpStatusCode.InternalServerError, errorResponse);
         }
     }
     
@@ -193,8 +193,8 @@ public class UsersApiClient : BaseApi
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             logger.LogError(ex, "Error retrieving users");
-            return HttpStatusCode.InternalServerError.CreateResponse<CollectionModel<UserDto>>(
-                "An unexpected error occurred while retrieving users");
+            var errorResponse = new ApiResponse<CollectionModel<UserDto>>(new ApiError("InternalError", "An unexpected error occurred while retrieving users"));
+            return new HttpResponseWrapper<CollectionModel<UserDto>>(HttpStatusCode.InternalServerError, errorResponse);
         }
     }
     
@@ -213,8 +213,8 @@ public class UsersApiClient : BaseApi
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             logger.LogError(ex, "Error creating user");
-            return HttpStatusCode.InternalServerError.CreateResponse<UserDto>(
-                "An unexpected error occurred while creating user");
+            var errorResponse = new ApiResponse<UserDto>(new ApiError("InternalError", "An unexpected error occurred while creating user"));
+            return new HttpResponseWrapper<UserDto>(HttpStatusCode.InternalServerError, errorResponse);
         }
     }
     
@@ -233,8 +233,8 @@ public class UsersApiClient : BaseApi
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             logger.LogError(ex, "Error deleting user with ID {UserId}", userId);
-            return HttpStatusCode.InternalServerError.CreateResponse(
-                "An unexpected error occurred while deleting user");
+            var errorResponse = new ApiResponse(new ApiError("InternalError", "An unexpected error occurred while deleting user"));
+            return new HttpResponseWrapper(HttpStatusCode.InternalServerError);
         }
     }
 }
@@ -268,51 +268,93 @@ request.AddQueryParameter("includeDeleted", "true");
 try
 {
     var response = await ExecuteAsync(request, rethrowExceptions: true, cancellationToken);
-    // Process successful response
+    // Process successful response and return HttpResponseWrapper
+    return new HttpResponseWrapper<ResourceDto>
+    {
+        StatusCode = HttpStatusCode.OK,
+        Result = response.Result
+    };
 }
 catch (ApiException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
 {
     logger.LogWarning("Resource {Id} not found", id);
-    return HttpStatusCode.NotFound.CreateResponse<ResourceDto>("Resource not found");
+    return new HttpResponseWrapper<ResourceDto>
+    {
+        StatusCode = HttpStatusCode.NotFound,
+        Result = new ApiResponse<ResourceDto>
+        {
+            Errors = new[] { new ApiError("NotFound", "Resource not found") }
+        }
+    };
 }
 catch (ApiException ex) when (ex.StatusCode == HttpStatusCode.Unauthorized)
 {
     logger.LogWarning("Unauthorized access to resource {Id}", id);
-    return HttpStatusCode.Unauthorized.CreateResponse<ResourceDto>("Unauthorized");
+    return new HttpResponseWrapper<ResourceDto>
+    {
+        StatusCode = HttpStatusCode.Unauthorized,
+        Result = new ApiResponse<ResourceDto>
+        {
+            Errors = new[] { new ApiError("Unauthorized", "Unauthorized") }
+        }
+    };
 }
 catch (Exception ex) when (ex is not OperationCanceledException)
 {
     logger.LogError(ex, "An error occurred while retrieving resource {Id}", id);
-    return HttpStatusCode.InternalServerError.CreateResponse<ResourceDto>(
-        "An unexpected error occurred");
+    return new HttpResponseWrapper<ResourceDto>
+    {
+        StatusCode = HttpStatusCode.InternalServerError,
+        Result = new ApiResponse<ResourceDto>
+        {
+            Errors = new[] { new ApiError("InternalError", "An unexpected error occurred") }
+        }
+    };
 }
 ```
 
 ### API Response Creation Helpers
 
 ```csharp
-// Create success response
-return HttpStatusCode.OK.CreateResponse(user);
-
-// Create error response
-return HttpStatusCode.BadRequest.CreateResponse<UserDto>(
-    "Validation failed",
-    new ApiError
+// Create success response wrapped in HttpResponseWrapper
+return new HttpResponseWrapper<UserDto>
+{
+    StatusCode = HttpStatusCode.OK,
+    Result = new ApiResponse<UserDto>
     {
-        Code = "ValidationError",
-        Message = "The provided data is invalid",
-        Target = "email",
-        Details = new[]
+        Data = user
+    }
+};
+
+// Create error response wrapped in HttpResponseWrapper
+return new HttpResponseWrapper<UserDto>
+{
+    StatusCode = HttpStatusCode.BadRequest,
+    Result = new ApiResponse<UserDto>
+    {
+        Errors = new[]
         {
             new ApiError
             {
-                Code = "InvalidFormat",
-                Message = "Email format is invalid",
-                Target = "email"
+                Code = "ValidationError",
+                Message = "The provided data is invalid",
+                Target = "email",
+                Details = new[]
+                {
+                    new ApiError
+                    {
+                        Code = "InvalidFormat",
+                        Message = "Email format is invalid",
+                        Target = "email"
+                    }
+                }
             }
         }
-    });
+    }
+};
 ```
+
+> **Note**: The `HttpResponseWrapper<T>` handles HTTP status codes at the transport layer, while the `ApiResponse<T>` contains the business logic response data and errors.
 
 ## Authentication Methods
 
