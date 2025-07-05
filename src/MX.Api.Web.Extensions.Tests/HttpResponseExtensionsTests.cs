@@ -75,34 +75,4 @@ public class HttpResponseExtensionsTests
         var exception = Assert.Throws<ArgumentNullException>(() => apiResult!.ToHttpResult());
         Assert.Equal("apiResult", exception.ParamName);
     }
-
-    [Fact]
-    public void CreateApiResult_ReturnsApiResult()
-    {
-        // Arrange
-        var statusCode = HttpStatusCode.OK;
-
-        // Act
-        var result = statusCode.CreateApiResult();
-
-        // Assert
-        Assert.IsType<ApiResult>(result);
-        Assert.Equal(statusCode, result.StatusCode);
-    }
-
-    [Fact]
-    public void CreateApiResult_Generic_ReturnsGenericApiResult()
-    {
-        // Arrange
-        var statusCode = HttpStatusCode.OK;
-        var apiResponse = new ApiResponse<string>("Test Data");
-
-        // Act
-        var result = statusCode.CreateApiResult(apiResponse);
-
-        // Assert
-        Assert.IsType<ApiResult<string>>(result);
-        Assert.Equal(statusCode, result.StatusCode);
-        Assert.Equal(apiResponse, result.Result);
-    }
 }

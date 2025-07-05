@@ -1,103 +1,235 @@
+using System.Net;
+
 using MX.Api.Abstractions;
 
 namespace MX.Api.Web.Extensions;
 
 /// <summary>
-/// Extension methods for creating API responses.
+/// Extension methods for converting API responses to API results.
+/// These extensions help transform API client responses into standardized API results for use in controllers.
 /// </summary>
 public static class ApiResponseExtensions
 {
     /// <summary>
-    /// Creates a new API response.
+    /// Converts an API response to an API result with the specified HTTP status code.
     /// </summary>
-    /// <typeparam name="T">The type of the data.</typeparam>
-    /// <returns>A new API response.</returns>
-    public static ApiResponse<T> CreateApiResponse<T>()
+    /// <param name="apiResponse">The API response to convert.</param>
+    /// <param name="statusCode">The HTTP status code to associate with the result.</param>
+    /// <returns>An ApiResult containing the response and status code.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when apiResponse is null.</exception>
+    public static ApiResult ToApiResult(this ApiResponse apiResponse, HttpStatusCode statusCode = HttpStatusCode.OK)
     {
-        return new ApiResponse<T>();
+        ArgumentNullException.ThrowIfNull(apiResponse);
+
+        return new ApiResult(statusCode, apiResponse);
     }
 
     /// <summary>
-    /// Creates a new API response with the specified data.
+    /// Converts a generic API response to a generic API result with the specified HTTP status code.
     /// </summary>
-    /// <typeparam name="T">The type of the data.</typeparam>
-    /// <param name="data">The data object to include.</param>
-    /// <returns>A new API response with the specified data.</returns>
-    public static ApiResponse<T> CreateApiResponse<T>(T? data)
+    /// <typeparam name="T">The type of data in the API response.</typeparam>
+    /// <param name="apiResponse">The API response to convert.</param>
+    /// <param name="statusCode">The HTTP status code to associate with the result.</param>
+    /// <returns>An ApiResult&lt;T&gt; containing the response and status code.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when apiResponse is null.</exception>
+    public static ApiResult<T> ToApiResult<T>(this ApiResponse<T> apiResponse, HttpStatusCode statusCode = HttpStatusCode.OK)
     {
-        return new ApiResponse<T>(data);
+        ArgumentNullException.ThrowIfNull(apiResponse);
+
+        return new ApiResult<T>(statusCode, apiResponse);
     }
 
     /// <summary>
-    /// Creates a new API response with the specified data and pagination.
+    /// Converts an API response to an API result with a status determined by the presence of errors.
+    /// Returns HTTP 200 OK if no errors are present, or HTTP 400 Bad Request if errors exist.
     /// </summary>
-    /// <typeparam name="T">The type of the data.</typeparam>
-    /// <param name="data">The data object to include.</param>
-    /// <param name="pagination">The pagination information.</param>
-    /// <returns>A new API response with the specified data and pagination.</returns>
-    public static ApiResponse<T> CreateApiResponse<T>(T? data, ApiPagination pagination)
+    /// <param name="apiResponse">The API response to convert.</param>
+    /// <returns>An ApiResult with status based on error presence.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when apiResponse is null.</exception>
+    public static ApiResult ToApiResultWithErrorHandling(this ApiResponse apiResponse)
     {
-        var response = new ApiResponse<T>(data);
-        response.Pagination = pagination;
-        return response;
+        ArgumentNullException.ThrowIfNull(apiResponse);
+
+        var statusCode = apiResponse.Errors?.Length > 0
+            ? HttpStatusCode.BadRequest
+            : HttpStatusCode.OK;
+
+        return new ApiResult(statusCode, apiResponse);
     }
 
     /// <summary>
-    /// Creates a new API response with the specified error.
+    /// Converts a generic API response to an API result with a status determined by the presence of errors and data.
+    /// Returns HTTP 200 OK if no errors and data is present, HTTP 404 Not Found if no errors but data is null,
+    /// or HTTP 400 Bad Request if errors exist.
     /// </summary>
-    /// <typeparam name="T">The type of the data.</typeparam>
-    /// <param name="error">The error object to include.</param>
-    /// <returns>A new API response with the specified error.</returns>
-    public static ApiResponse<T> CreateApiErrorResponse<T>(ApiError error)
+    /// <typeparam name="T">The type of data in the API response.</typeparam>
+    /// <param name="apiResponse">The API response to convert.</param>
+    /// <returns>An ApiResult&lt;T&gt; with status based on error presence and data availability.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when apiResponse is null.</exception>
+    public static ApiResult<T> ToApiResultWithErrorHandling<T>(this ApiResponse<T> apiResponse)
     {
-        ArgumentNullException.ThrowIfNull(error);
-        return new ApiResponse<T>(default, new[] { error });
-    }
+        ArgumentNullException.ThrowIfNull(apiResponse);
 
-    /// <summary>
-    /// Creates a new API response with the specified error message.
-    /// </summary>
-    /// <typeparam name="T">The type of the data.</typeparam>
-    /// <param name="message">The error message.</param>
-    /// <returns>A new API response with the specified error message.</returns>
-    public static ApiResponse<T> CreateApiErrorResponse<T>(string message)
-    {
-        return new ApiResponse<T>(default, new ApiError("Error", message));
-    }
+        HttpStatusCode statusCode;
 
-    /// <summary>
-    /// Creates a new API response for a collection of items with pagination information.
-    /// </summary>
-    /// <typeparam name="T">The type of the items in the collection.</typeparam>
-    /// <param name="items">The collection of items.</param>
-    /// <param name="totalCount">The total count of records available.</param>
-    /// <param name="filteredCount">The count of records after filtering.</param>
-    /// <param name="skip">The number of records skipped.</param>
-    /// <param name="top">The number of records to take.</param>
-    /// <returns>A new API response with the specified collection and pagination information.</returns>
-    public static ApiResponse<CollectionModel<T>> CreateApiCollectionResponse<T>(
-        IEnumerable<T>? items,
-        int totalCount,
-        int filteredCount,
-        int skip,
-        int top)
-    {
-        var collection = new CollectionModel<T>(items, totalCount, filteredCount);
-        var response = new ApiResponse<CollectionModel<T>>
+        if (apiResponse.Errors?.Length > 0)
         {
-            Data = collection,
-            Pagination = new ApiPagination(totalCount, filteredCount, skip, top)
-        };
-        return response;
+            statusCode = HttpStatusCode.BadRequest;
+        }
+        else if (apiResponse.Data == null)
+        {
+            statusCode = HttpStatusCode.NotFound;
+        }
+        else
+        {
+            statusCode = HttpStatusCode.OK;
+        }
+
+        return new ApiResult<T>(statusCode, apiResponse);
     }
 
     /// <summary>
-    /// Creates a new API response for a count-only response.
+    /// Converts an API response to an API result for a successful creation operation.
+    /// Returns HTTP 201 Created status code.
     /// </summary>
-    /// <param name="count">The count value.</param>
-    /// <returns>A new API response with the specified count as data.</returns>
-    public static ApiResponse<int> CreateApiCountResponse(int count)
+    /// <param name="apiResponse">The API response to convert.</param>
+    /// <returns>An ApiResult with HTTP 201 Created status.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when apiResponse is null.</exception>
+    public static ApiResult ToCreatedResult(this ApiResponse apiResponse)
     {
-        return new ApiResponse<int>(count);
+        ArgumentNullException.ThrowIfNull(apiResponse);
+
+        return new ApiResult(HttpStatusCode.Created, apiResponse);
+    }
+
+    /// <summary>
+    /// Converts a generic API response to an API result for a successful creation operation.
+    /// Returns HTTP 201 Created status code.
+    /// </summary>
+    /// <typeparam name="T">The type of data in the API response.</typeparam>
+    /// <param name="apiResponse">The API response to convert.</param>
+    /// <returns>An ApiResult&lt;T&gt; with HTTP 201 Created status.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when apiResponse is null.</exception>
+    public static ApiResult<T> ToCreatedResult<T>(this ApiResponse<T> apiResponse)
+    {
+        ArgumentNullException.ThrowIfNull(apiResponse);
+
+        return new ApiResult<T>(HttpStatusCode.Created, apiResponse);
+    }
+
+    /// <summary>
+    /// Converts an API response to an API result for a successful update operation.
+    /// Returns HTTP 202 Accepted status code.
+    /// </summary>
+    /// <param name="apiResponse">The API response to convert.</param>
+    /// <returns>An ApiResult with HTTP 202 Accepted status.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when apiResponse is null.</exception>
+    public static ApiResult ToAcceptedResult(this ApiResponse apiResponse)
+    {
+        ArgumentNullException.ThrowIfNull(apiResponse);
+
+        return new ApiResult(HttpStatusCode.Accepted, apiResponse);
+    }
+
+    /// <summary>
+    /// Converts a generic API response to an API result for a successful update operation.
+    /// Returns HTTP 202 Accepted status code.
+    /// </summary>
+    /// <typeparam name="T">The type of data in the API response.</typeparam>
+    /// <param name="apiResponse">The API response to convert.</param>
+    /// <returns>An ApiResult&lt;T&gt; with HTTP 202 Accepted status.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when apiResponse is null.</exception>
+    public static ApiResult<T> ToAcceptedResult<T>(this ApiResponse<T> apiResponse)
+    {
+        ArgumentNullException.ThrowIfNull(apiResponse);
+
+        return new ApiResult<T>(HttpStatusCode.Accepted, apiResponse);
+    }
+
+    /// <summary>
+    /// Converts an API response to an API result indicating a resource was not found.
+    /// Returns HTTP 404 Not Found status code.
+    /// </summary>
+    /// <param name="apiResponse">The API response to convert.</param>
+    /// <returns>An ApiResult with HTTP 404 Not Found status.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when apiResponse is null.</exception>
+    public static ApiResult ToNotFoundResult(this ApiResponse apiResponse)
+    {
+        ArgumentNullException.ThrowIfNull(apiResponse);
+
+        return new ApiResult(HttpStatusCode.NotFound, apiResponse);
+    }
+
+    /// <summary>
+    /// Converts a generic API response to an API result indicating a resource was not found.
+    /// Returns HTTP 404 Not Found status code.
+    /// </summary>
+    /// <typeparam name="T">The type of data in the API response.</typeparam>
+    /// <param name="apiResponse">The API response to convert.</param>
+    /// <returns>An ApiResult&lt;T&gt; with HTTP 404 Not Found status.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when apiResponse is null.</exception>
+    public static ApiResult<T> ToNotFoundResult<T>(this ApiResponse<T> apiResponse)
+    {
+        ArgumentNullException.ThrowIfNull(apiResponse);
+
+        return new ApiResult<T>(HttpStatusCode.NotFound, apiResponse);
+    }
+
+    /// <summary>
+    /// Converts an API response to an API result indicating a validation error or bad request.
+    /// Returns HTTP 400 Bad Request status code.
+    /// </summary>
+    /// <param name="apiResponse">The API response to convert.</param>
+    /// <returns>An ApiResult with HTTP 400 Bad Request status.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when apiResponse is null.</exception>
+    public static ApiResult ToBadRequestResult(this ApiResponse apiResponse)
+    {
+        ArgumentNullException.ThrowIfNull(apiResponse);
+
+        return new ApiResult(HttpStatusCode.BadRequest, apiResponse);
+    }
+
+    /// <summary>
+    /// Converts a generic API response to an API result indicating a validation error or bad request.
+    /// Returns HTTP 400 Bad Request status code.
+    /// </summary>
+    /// <typeparam name="T">The type of data in the API response.</typeparam>
+    /// <param name="apiResponse">The API response to convert.</param>
+    /// <returns>An ApiResult&lt;T&gt; with HTTP 400 Bad Request status.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when apiResponse is null.</exception>
+    public static ApiResult<T> ToBadRequestResult<T>(this ApiResponse<T> apiResponse)
+    {
+        ArgumentNullException.ThrowIfNull(apiResponse);
+
+        return new ApiResult<T>(HttpStatusCode.BadRequest, apiResponse);
+    }
+
+    /// <summary>
+    /// Converts an API response to an API result indicating a conflict occurred.
+    /// Returns HTTP 409 Conflict status code.
+    /// </summary>
+    /// <param name="apiResponse">The API response to convert.</param>
+    /// <returns>An ApiResult with HTTP 409 Conflict status.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when apiResponse is null.</exception>
+    public static ApiResult ToConflictResult(this ApiResponse apiResponse)
+    {
+        ArgumentNullException.ThrowIfNull(apiResponse);
+
+        return new ApiResult(HttpStatusCode.Conflict, apiResponse);
+    }
+
+    /// <summary>
+    /// Converts a generic API response to an API result indicating a conflict occurred.
+    /// Returns HTTP 409 Conflict status code.
+    /// </summary>
+    /// <typeparam name="T">The type of data in the API response.</typeparam>
+    /// <param name="apiResponse">The API response to convert.</param>
+    /// <returns>An ApiResult&lt;T&gt; with HTTP 409 Conflict status.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when apiResponse is null.</exception>
+    public static ApiResult<T> ToConflictResult<T>(this ApiResponse<T> apiResponse)
+    {
+        ArgumentNullException.ThrowIfNull(apiResponse);
+
+        return new ApiResult<T>(HttpStatusCode.Conflict, apiResponse);
     }
 }
