@@ -1,6 +1,6 @@
 # MX.Api.Abstractions
 
-This library provides common models and interfaces for standardized API response handling, including pagination, filtering, and error management.
+This library provides the core abstractions and common models for standardized API handling in .NET applications. This package serves as the foundation for the MX API Abstractions approach, providing fundamental data structures and interfaces for building API clients and web applications that conform to the API design pattern.
 
 ## Installation
 
@@ -10,11 +10,12 @@ dotnet add package MX.Api.Abstractions
 
 ## Features
 
-- Standardized API response models
-- Common collection models for result sets
-- Consistent error model structure
-- Pagination support with metadata
-- OData-like filtering options
+- Standardized API response models following the API design pattern
+- Common collection models for result sets with consistent structure
+- HTTP response wrappers to separate HTTP concerns from API response models
+- Filter options for OData-like query parameters
+- Pagination support with comprehensive metadata
+- Standardized error models with detailed information
 
 ## Core Models
 

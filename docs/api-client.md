@@ -1,6 +1,6 @@
 # MX.Api.Client
 
-A comprehensive library for building resilient, authenticated REST API clients in .NET applications. This package provides base classes, interfaces, and utilities for creating API clients with features such as authentication, token management, request execution, and response processing.
+A comprehensive implementation for building resilient, authenticated REST API clients as part of the MX API Abstractions approach. This package provides base classes, interfaces, and utilities for creating API clients with features such as authentication, token management, request execution, and response processing. Built on top of MX.Api.Abstractions, it ensures consistent API interaction patterns across your applications.
 
 ## Features
 

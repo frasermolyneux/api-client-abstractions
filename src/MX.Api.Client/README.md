@@ -1,15 +1,16 @@
 # MX.Api.Client
 
-This library provides a base implementation for creating strongly typed API clients with standardized error handling, authentication, and resilience features.
+This library provides a comprehensive implementation for creating resilient, authenticated REST API clients as part of the MX API Abstractions approach. Built on top of MX.Api.Abstractions, it offers base classes, interfaces, and utilities for creating API clients with features such as authentication, token management, request execution, and standardized response processing.
 
 ## Features
 
 - Support for multiple authentication methods (API Key and Entra ID authentication)
-- Automatic token acquisition and caching
-- Built-in retry policies with exponential backoff
+- Automatic token acquisition and caching with thread-safe operations
+- Built-in retry policies with exponential backoff and circuit breaker patterns
 - Thread-safe REST client management
-- Standardized error handling and response processing
-- Support for primary/secondary API key failover
+- Standardized error handling and response processing using ApiResponse<T> model
+- Support for primary/secondary API key failover for high availability
+- Integration with Microsoft.Extensions.Logging for comprehensive diagnostics
 
 ## Installation
 

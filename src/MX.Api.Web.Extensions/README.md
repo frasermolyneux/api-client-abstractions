@@ -1,6 +1,6 @@
 # MX.Api.Web.Extensions
 
-This library provides extension methods for integrating API client responses with ASP.NET Core web applications, simplifying the process of converting API responses to appropriate HTTP responses.
+This library provides ASP.NET Core integration as part of the MX API Abstractions approach. It offers extension methods for seamlessly integrating API client responses with ASP.NET Core web applications, simplifying the process of converting API responses to appropriate HTTP responses while maintaining consistency with the API design pattern.
 
 ## Installation
 
@@ -10,11 +10,12 @@ dotnet add package MX.Api.Web.Extensions
 
 ## Features
 
-- Extension methods to convert ApiResponse objects to IActionResult
-- Extension methods to convert HttpResponseWrapper objects to IActionResult
+- Extension methods to convert ApiResponse<T> objects to IActionResult with proper status codes
+- Extension methods to convert HttpResponseWrapper<T> objects to IActionResult
 - Automatic HTTP status code mapping based on API response status
-- Preservation of error details in responses
-- Support for proper pagination headers
+- Preservation of error details and metadata in HTTP responses
+- Support for proper pagination headers following API design standards
+- Seamless integration between MX.Api.Client and ASP.NET Core applications
 
 ## Usage
 

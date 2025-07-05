@@ -9,9 +9,9 @@
     <PackageId>MX.Api.Abstractions</PackageId>
     <Authors>Fraser Molyneux</Authors>
     <Company>Molyneux.IO</Company>
-    <Product>Molyneux.IO ApiClient</Product>
-    <Title>Generic API Client Abstractions Library</Title>
-    <Description>An abstractions library containing common API client functionality for .NET 7. Contains common interfaces, extensions and models for API clients.</Description>
+    <Product>Molyneux.IO API Abstractions</Product>
+    <Title>API Abstractions - Core Models and Interfaces</Title>
+    <Description>Core abstractions library providing common models and interfaces for standardized API handling in .NET 9 applications. Contains ApiResponse models, collection wrappers, error handling, and pagination support following the API design pattern.</Description>
     <PackageProjectUrl>https://github.com/frasermolyneux/api-client-abstractions</PackageProjectUrl>
     <RepositoryUrl>https://github.com/frasermolyneux/api-client-abstractions</RepositoryUrl>
     <RepositoryType>git</RepositoryType>

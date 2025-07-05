@@ -1,4 +1,4 @@
-# API Client Abstractions
+# MX API Abstractions
 
 [![Code Quality](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/codequality.yml/badge.svg)](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/codequality.yml)
 [![Feature Development](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/feature-development.yml/badge.svg)](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/feature-development.yml)
@@ -7,27 +7,17 @@
 
 ## Overview
 
-This repository provides a comprehensive toolkit for building robust .NET API clients. The library offers standardized approaches for handling authentication, token management, request execution, and response processing when interacting with REST APIs.
+This repository provides a comprehensive API Abstractions approach for building robust .NET applications that interact with APIs. The libraries offer standardized approaches for API interactions from both client and web perspectives, including common abstractions, API client implementations, and web application integration.
 
-The implementation follows the API design pattern, which provides a consistent approach to API interactions with standardized response formats, error handling, filtering, and pagination.
+The implementation follows the API design pattern, which provides a consistent approach to API interactions with standardized response formats, error handling, filtering, and pagination across all API touchpoints in your applications.
 
 ## Libraries
 
-The solution consists of three main packages:
-
-### MX.Api.Client
-
-Core library providing resilient, authenticated REST API client implementation with:
-- Automatic token acquisition and caching
-- Request authentication with API keys or Entra ID (formerly Azure AD)
-- Primary/secondary API key failover
-- Resilient HTTP requests with configurable retry policies
-- Thread-safe REST client management
-- Support for common query parameters and filtering options
+The solution consists of three main packages that work together to provide a complete API abstractions approach:
 
 ### MX.Api.Abstractions
 
-Common models and interfaces for standardized API response handling:
+Core abstractions library providing common models and interfaces for standardized API handling:
 - `ApiResponse<T>` - Standard API response model following API design
 - `HttpResponseWrapper<T>` - HTTP response wrapper containing API responses
 - `CollectionModel<T>` - Collection wrapper for API result sets
@@ -35,21 +25,62 @@ Common models and interfaces for standardized API response handling:
 - `ApiPagination` - Pagination information
 - `FilterOptions` - OData-like filtering options
 
+### MX.Api.Client
+
+API client library providing resilient, authenticated REST API client implementation:
+- Automatic token acquisition and caching
+- Request authentication with API keys or Entra ID (formerly Azure AD)
+- Primary/secondary API key failover
+- Resilient HTTP requests with configurable retry policies
+- Thread-safe REST client management
+- Support for common query parameters and filtering options
+
 ### MX.Api.Web.Extensions
 
-Extension methods for integrating with ASP.NET Core web applications:
+ASP.NET Core integration library providing extension methods for web applications:
 - Converting API responses to ActionResults with appropriate status codes
 - Simplified controller implementations for API endpoints
+- Seamless integration between API clients and web applications
+
+## Architecture
+
+The MX API Abstractions approach is designed as a layered architecture:
+
+1. **MX.Api.Abstractions** - Foundation layer providing core models and interfaces
+2. **MX.Api.Client** - Implementation layer for API client functionality (depends on Abstractions)
+3. **MX.Api.Web.Extensions** - Integration layer for ASP.NET Core applications (depends on Abstractions)
+
+This layered approach ensures that:
+- Core abstractions remain stable and reusable across different implementations
+- API clients can be built with consistent patterns and standards
+- Web applications can seamlessly integrate with API clients
+- All components follow the same API design principles
 
 ## Installation
 
-Install the packages via NuGet:
+Install the packages via NuGet based on your needs:
 
 ```bash
-dotnet add package MX.Api.Client
+# For core abstractions (required by other packages)
 dotnet add package MX.Api.Abstractions
+
+# For building API clients
+dotnet add package MX.Api.Client
+
+# For ASP.NET Core web application integration
 dotnet add package MX.Api.Web.Extensions
 ```
+
+### Package Dependencies
+
+- **MX.Api.Abstractions** - Standalone core abstractions (no dependencies on other MX packages)
+- **MX.Api.Client** - Depends on MX.Api.Abstractions
+- **MX.Api.Web.Extensions** - Depends on MX.Api.Abstractions (independent of MX.Api.Client)
+
+You can use any combination of these packages based on your application's needs. For example:
+- Use only MX.Api.Abstractions if you're building your own API client implementation
+- Use MX.Api.Abstractions + MX.Api.Client for consuming APIs in console/service applications
+- Use all three packages for full-stack web applications that both consume and expose APIs
 
 ## Getting Started
 
@@ -186,16 +217,17 @@ The `BaseApi` class implements automatic retries with exponential backoff for tr
 
 This library implements the API design pattern, which provides:
 
-- Standardized response formats with consistent error handling
-- OData-like filtering with `$filter`, `$select`, `$expand`, etc.
-- Pagination support with skip/take and metadata
-- Consistent URL structure and query parameters
+- Standardized response formats with consistent error handling across all API interactions
+- OData-like filtering with `$filter`, `$select`, `$expand`, etc. for flexible data queries
+- Pagination support with skip/take and comprehensive metadata
+- Consistent URL structure and query parameters following RESTful principles
+- Unified approach to API interactions whether consuming or exposing APIs
 
-For more details on the API design pattern, see the [API Design Documentation](docs/api-design.md).
+For more details on the API design pattern, see the [API Design Documentation](docs/api-design-v2.md).
 
 ## Contributing
 
-Please read the [contributing](CONTRIBUTING.md) guidance; this is a learning and development project.
+Please read the [contributing](CONTRIBUTING.md) guidance; this is a learning and development project focused on building robust API abstraction patterns for .NET applications.
 
 ## Security
 
