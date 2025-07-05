@@ -53,7 +53,6 @@ public class ServiceCollectionExtensionsTests
         var options = new ApiClientOptions
         {
             BaseUrl = "https://api.example.com",
-            ApiPathPrefix = "v2",
             MaxRetryCount = 5
         };
 
@@ -67,7 +66,6 @@ public class ServiceCollectionExtensionsTests
         var configuredOptions = serviceProvider.GetRequiredService<IOptions<ApiClientOptions>>().Value;
 
         Assert.Equal(options.BaseUrl, configuredOptions.BaseUrl);
-        Assert.Equal(options.ApiPathPrefix, configuredOptions.ApiPathPrefix);
         Assert.Equal(options.MaxRetryCount, configuredOptions.MaxRetryCount);
     }
 
@@ -164,7 +162,6 @@ public class ServiceCollectionExtensionsTests
         Action<ApiClientOptions> configureAction = opt =>
         {
             opt.BaseUrl = "https://api.example.com";
-            opt.ApiPathPrefix = "v2";
             opt.MaxRetryCount = 5;
         };
 
@@ -178,7 +175,6 @@ public class ServiceCollectionExtensionsTests
         var configuredOptions = serviceProvider.GetRequiredService<IOptions<ApiClientOptions>>().Value;
 
         Assert.Equal("https://api.example.com", configuredOptions.BaseUrl);
-        Assert.Equal("v2", configuredOptions.ApiPathPrefix);
         Assert.Equal(5, configuredOptions.MaxRetryCount);
     }
 
@@ -255,7 +251,6 @@ public class ServiceCollectionExtensionsTests
         var baseUrl = "https://api.example.com";
         Action<ApiClientOptions> configureOptions = opt =>
         {
-            opt.ApiPathPrefix = "v2";
             opt.MaxRetryCount = 5;
         };
 
@@ -267,7 +262,6 @@ public class ServiceCollectionExtensionsTests
         var options = serviceProvider.GetRequiredService<IOptions<ApiClientOptions>>().Value;
 
         Assert.Equal(baseUrl, options.BaseUrl);
-        Assert.Equal("v2", options.ApiPathPrefix);
         Assert.Equal(5, options.MaxRetryCount);
     }
 

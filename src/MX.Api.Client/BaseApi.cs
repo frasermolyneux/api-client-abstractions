@@ -215,12 +215,9 @@ public class BaseApi
 
         try
         {
-            // Build the base URL with optional path prefix
-            string baseUrl = BuildBaseUrl();
-
             // Execute the request with retry policy
             var response = await retryPolicy.ExecuteAsync(
-                async (token) => await restClientService.ExecuteAsync(baseUrl, request, token),
+                async (token) => await restClientService.ExecuteAsync(options.BaseUrl, request, token),
                 cancellationToken);
 
             // Ensure response is not null to prevent NullReferenceException
@@ -253,17 +250,6 @@ public class BaseApi
                 request.Method, request.Resource);
             throw;
         }
-    }
-
-    /// <summary>
-    /// Builds the base URL incorporating the API path prefix if specified.
-    /// </summary>
-    /// <returns>The complete base URL.</returns>
-    private string BuildBaseUrl()
-    {
-        return string.IsNullOrWhiteSpace(options.ApiPathPrefix)
-            ? options.BaseUrl
-            : $"{options.BaseUrl.TrimEnd('/')}/{options.ApiPathPrefix.TrimStart('/')}";
     }
 
     /// <summary>

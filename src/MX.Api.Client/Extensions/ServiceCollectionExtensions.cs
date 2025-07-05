@@ -60,7 +60,6 @@ public static class ServiceCollectionExtensions
             {
                 o.BaseUrl = options.BaseUrl;
                 o.AuthenticationOptions = options.AuthenticationOptions;
-                o.ApiPathPrefix = options.ApiPathPrefix;
                 o.MaxRetryCount = options.MaxRetryCount;
             });
 

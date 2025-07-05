@@ -5,7 +5,7 @@
 /// </summary>
 /// <remarks>
 /// This class provides configuration options for API clients to connect to REST APIs.
-/// It includes settings for base URLs, path prefixes, and retry policies.
+/// It includes settings for base URLs and retry policies.
 /// Authentication settings are configured using the fluent API in ServiceCollectionExtensions.
 /// </remarks>
 public class ApiClientOptions
@@ -23,16 +23,7 @@ public class ApiClientOptions
     /// </summary>
     public AuthenticationOptions? AuthenticationOptions { get; set; }
 
-    /// <summary>
-    /// Gets or sets an optional path prefix to append to the base URL.
-    /// </summary>
-    /// <remarks>
-    /// When provided, this value will be appended to the BaseUrl with appropriate
-    /// handling of slashes to form the complete endpoint URL.
-    /// For example, if BaseUrl is "https://api.example.com" and ApiPathPrefix is "v1",
-    /// the resulting URL used for requests will be "https://api.example.com/v1".
-    /// </remarks>
-    public string? ApiPathPrefix { get; set; }
+
 
     /// <summary>
     /// Gets or sets the maximum number of retry attempts for failed API calls.
@@ -72,16 +63,7 @@ public class ApiClientOptions
         return this;
     }
 
-    /// <summary>
-    /// Sets the API path prefix for this API client instance.
-    /// </summary>
-    /// <param name="apiPathPrefix">The API path prefix to append to the base URL.</param>
-    /// <returns>The current instance for method chaining.</returns>
-    public ApiClientOptions WithApiPathPrefix(string apiPathPrefix)
-    {
-        ApiPathPrefix = apiPathPrefix;
-        return this;
-    }
+
 
     /// <summary>
     /// Sets the maximum retry count for failed API calls.

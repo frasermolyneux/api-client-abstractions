@@ -97,7 +97,6 @@ Configuration options for API clients:
 public class ApiClientOptions
 {
     public string BaseUrl { get; set; } = string.Empty;
-    public string? ApiPathPrefix { get; set; }
     public AuthenticationOptions? AuthenticationOptions { get; set; }
     public int MaxRetryCount { get; set; } = 3;
     

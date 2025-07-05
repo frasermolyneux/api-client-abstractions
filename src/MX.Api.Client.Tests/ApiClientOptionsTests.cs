@@ -14,7 +14,6 @@ public class ApiClientOptionsTests
         // Assert
         Assert.Equal(string.Empty, options.BaseUrl);
         Assert.Null(options.AuthenticationOptions);
-        Assert.Null(options.ApiPathPrefix);
         Assert.Equal(3, options.MaxRetryCount); // Default retry count is 3
     }
 
@@ -30,7 +29,6 @@ public class ApiClientOptionsTests
         // Assert
         Assert.Equal(baseUrl, options.BaseUrl);
         Assert.Null(options.AuthenticationOptions);
-        Assert.Null(options.ApiPathPrefix);
         Assert.Equal(3, options.MaxRetryCount); // Default retry count is 3
     }
 
@@ -40,20 +38,17 @@ public class ApiClientOptionsTests
         // Arrange
         var options = new ApiClientOptions();
         var baseUrl = "https://api.example.com";
-        var apiPathPrefix = "v1";
         var maxRetryCount = 5;
         var authOptions = new ApiKeyAuthenticationOptions();
         authOptions.SetApiKey("test-key");
 
         // Act
         options.BaseUrl = baseUrl;
-        options.ApiPathPrefix = apiPathPrefix;
         options.MaxRetryCount = maxRetryCount;
         options.AuthenticationOptions = authOptions;
 
         // Assert
         Assert.Equal(baseUrl, options.BaseUrl);
-        Assert.Equal(apiPathPrefix, options.ApiPathPrefix);
         Assert.Equal(maxRetryCount, options.MaxRetryCount);
         Assert.Same(authOptions, options.AuthenticationOptions);
     }
@@ -70,21 +65,6 @@ public class ApiClientOptionsTests
 
         // Assert
         Assert.Equal(baseUrl, options.BaseUrl);
-        Assert.Same(options, result); // Returns the same instance for fluent chaining
-    }
-
-    [Fact]
-    public void WithApiPathPrefix_SetsApiPathPrefix_AndReturnsInstance()
-    {
-        // Arrange
-        var options = new ApiClientOptions();
-        var apiPathPrefix = "v1";
-
-        // Act
-        var result = options.WithApiPathPrefix(apiPathPrefix);
-
-        // Assert
-        Assert.Equal(apiPathPrefix, options.ApiPathPrefix);
         Assert.Same(options, result); // Returns the same instance for fluent chaining
     }
 
@@ -147,20 +127,17 @@ public class ApiClientOptionsTests
     {
         // Arrange
         var baseUrl = "https://api.example.com";
-        var apiPathPrefix = "v1";
         var maxRetryCount = 5;
         var apiKey = "test-key";
 
         // Act
         var options = new ApiClientOptions()
             .WithBaseUrl(baseUrl)
-            .WithApiPathPrefix(apiPathPrefix)
             .WithMaxRetryCount(maxRetryCount)
             .WithApiKeyAuthentication(apiKey);
 
         // Assert
         Assert.Equal(baseUrl, options.BaseUrl);
-        Assert.Equal(apiPathPrefix, options.ApiPathPrefix);
         Assert.Equal(maxRetryCount, options.MaxRetryCount);
         Assert.IsType<ApiKeyAuthenticationOptions>(options.AuthenticationOptions);
         var apiKeyOptions = options.AuthenticationOptions as ApiKeyAuthenticationOptions;
