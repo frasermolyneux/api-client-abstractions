@@ -19,12 +19,28 @@ dotnet add package MX.Api.Abstractions
 
 ## Core Components
 
-### API Response Model
+### API Response Models
 
-The library implements a clear separation between HTTP-level concerns and the API response model:
+The library implements a clear separation between HTTP-level concerns and the API response model. There are two response models depending on whether data is expected:
+
+#### Non-Data Response Model
+
+For operations that don't return data (e.g., DELETE operations, status checks):
 
 ```csharp
-// The standard API response model
+public class ApiResponse
+{
+    public HttpStatusCode StatusCode { get; set; }
+    public ApiError[]? Errors { get; set; }
+    public Dictionary<string, string>? Metadata { get; set; }
+}
+```
+
+#### Data Response Model
+
+For operations that return data (e.g., GET, POST with created resource):
+
+```csharp
 public class ApiResponse<T>
 {
     public HttpStatusCode StatusCode { get; set; }
@@ -32,15 +48,6 @@ public class ApiResponse<T>
     public ApiError[]? Errors { get; set; }
     public ApiPagination? Pagination { get; set; }
     public Dictionary<string, string>? Metadata { get; set; }
-    
-    // Helper properties
-    public bool IsSuccess => (int)StatusCode >= 200 && (int)StatusCode < 300;
-    public bool IsNotFound => StatusCode == HttpStatusCode.NotFound;
-    public bool IsConflict => StatusCode == HttpStatusCode.Conflict;
-    public bool IsBadRequest => StatusCode == HttpStatusCode.BadRequest;
-    public bool IsUnauthorized => StatusCode == HttpStatusCode.Unauthorized;
-    public bool IsForbidden => StatusCode == HttpStatusCode.Forbidden;
-    public bool IsInternalServerError => StatusCode == HttpStatusCode.InternalServerError;
 }
 ```
 
@@ -179,15 +186,31 @@ if (collectionWrapper.IsSuccess && collectionWrapper.Result?.Data != null)
 ### Creating API Responses
 
 ```csharp
-// Creating a successful response
+// Creating a non-data response (e.g., for DELETE operation)
+ApiResponse deleteResponse = new ApiResponse
+{
+    StatusCode = HttpStatusCode.NoContent
+};
+
+// Creating a non-data error response
+ApiResponse errorResponse = new ApiResponse
+{
+    StatusCode = HttpStatusCode.BadRequest,
+    Errors = new[]
+    {
+        new ApiError("INVALID_REQUEST", "The request is invalid")
+    }
+};
+
+// Creating a successful data response
 ApiResponse<UserDto> successResponse = new ApiResponse<UserDto>
 {
     StatusCode = HttpStatusCode.OK,
     Data = new UserDto { Id = "123", Name = "John Doe" }
 };
 
-// Creating an error response
-ApiResponse<UserDto> errorResponse = new ApiResponse<UserDto>
+// Creating a data error response
+ApiResponse<UserDto> dataErrorResponse = new ApiResponse<UserDto>
 {
     StatusCode = HttpStatusCode.BadRequest,
     Errors = new[]

@@ -19,9 +19,28 @@ dotnet add package MX.Api.Abstractions
 
 ## Core Models
 
+### ApiResponse
+
+The `ApiResponse` class is a wrapper for API responses that don't return data (e.g., DELETE operations, status checks):
+
+```csharp
+public class ApiResponse
+{
+    public HttpStatusCode StatusCode { get; set; }
+    public ApiError[]? Errors { get; set; }
+    public Dictionary<string, string>? Metadata { get; set; }
+}
+```
+
+**Use this when:**
+- DELETE operations that return no content
+- Status check endpoints
+- Validation endpoints that only return success/failure
+- Any operation where no data payload is expected
+
 ### ApiResponse\<T>
 
-The `ApiResponse<T>` class is a wrapper for API responses that includes:
+The `ApiResponse<T>` class is a wrapper for API responses that include data:
 
 ```csharp
 public class ApiResponse<T>
@@ -31,13 +50,14 @@ public class ApiResponse<T>
     public ApiError[]? Errors { get; set; }
     public ApiPagination? Pagination { get; set; }
     public Dictionary<string, string>? Metadata { get; set; }
-    
-    // Helper properties
-    public bool IsSuccess => (int)StatusCode >= 200 && (int)StatusCode < 300;
-    public bool IsNotFound => StatusCode == HttpStatusCode.NotFound;
-    public bool IsConflict => StatusCode == HttpStatusCode.Conflict;
-    public bool IsBadRequest => StatusCode == HttpStatusCode.BadRequest;
 }
+```
+
+**Use this when:**
+- GET operations that return resources
+- POST operations that return created resources
+- PUT/PATCH operations that return updated resources
+- Any operation where a data payload is expected
 ```
 
 ### ApiError
@@ -121,6 +141,22 @@ public class HttpResponseWrapper<T>
 ### Creating API Responses
 
 ```csharp
+// Non-data response (e.g., DELETE operation)
+var deleteResponse = new ApiResponse
+{
+    StatusCode = HttpStatusCode.NoContent
+};
+
+// Non-data error response
+var errorResponse = new ApiResponse
+{
+    StatusCode = HttpStatusCode.BadRequest,
+    Errors = new[]
+    {
+        new ApiError("INVALID_REQUEST", "The request is invalid")
+    }
+};
+
 // Success response with data
 var successResponse = new ApiResponse<User>
 {
@@ -128,18 +164,13 @@ var successResponse = new ApiResponse<User>
     Data = user
 };
 
-// Error response
-var errorResponse = new ApiResponse<User>
+// Error response with data context
+var dataErrorResponse = new ApiResponse<User>
 {
     StatusCode = HttpStatusCode.BadRequest,
     Errors = new[]
     {
-        new ApiError
-        {
-            Code = "InvalidUsername",
-            Message = "Username is invalid",
-            Target = "username"
-        }
+        new ApiError("INVALID_USERNAME", "Username is invalid", "username")
     }
 };
 

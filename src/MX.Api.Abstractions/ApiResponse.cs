@@ -1,8 +1,70 @@
 ﻿using System.Net;
-
 using Newtonsoft.Json;
 
 namespace MX.Api.Abstractions;
+
+/// <summary>
+/// Represents a response from an API without data.
+/// </summary>
+public class ApiResponse
+{
+    /// <summary>
+    /// Gets or sets the HTTP status code of the response.
+    /// </summary>
+    [JsonProperty(PropertyName = "statusCode")]
+    public HttpStatusCode StatusCode { get; set; }
+
+    /// <summary>
+    /// Gets or sets the collection of errors.
+    /// </summary>
+    [JsonProperty(PropertyName = "errors")]
+    public ApiError[]? Errors { get; set; }
+
+    /// <summary>
+    /// Gets or sets the metadata dictionary.
+    /// </summary>
+    [JsonProperty(PropertyName = "metadata")]
+    public Dictionary<string, string>? Metadata { get; set; }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ApiResponse"/> class.
+    /// </summary>
+    [JsonConstructor]
+    public ApiResponse()
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ApiResponse"/> class with the specified status code.
+    /// </summary>
+    /// <param name="statusCode">The HTTP status code of the response.</param>
+    public ApiResponse(HttpStatusCode statusCode)
+    {
+        StatusCode = statusCode;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ApiResponse"/> class with the specified status code and error.
+    /// </summary>
+    /// <param name="statusCode">The HTTP status code of the response.</param>
+    /// <param name="error">An error object.</param>
+    public ApiResponse(HttpStatusCode statusCode, ApiError error) : this(statusCode)
+    {
+        ArgumentNullException.ThrowIfNull(error);
+        Errors = new[] { error };
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ApiResponse"/> class with the specified status code and errors.
+    /// </summary>
+    /// <param name="statusCode">The HTTP status code of the response.</param>
+    /// <param name="errors">An array of errors.</param>
+    public ApiResponse(HttpStatusCode statusCode, ApiError[] errors) : this(statusCode)
+    {
+        ArgumentNullException.ThrowIfNull(errors);
+        Errors = errors;
+    }
+}
 
 /// <summary>
 /// Represents a response from an API.

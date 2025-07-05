@@ -217,6 +217,26 @@ public class UsersApiClient : BaseApi
                 "An unexpected error occurred while creating user");
         }
     }
+    
+    // Delete a user (non-data response)
+    public async Task<ApiResponse> DeleteUserAsync(
+        string userId, 
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var request = await CreateRequestAsync($"users/{userId}", Method.Delete, cancellationToken);
+            var response = await ExecuteAsync(request, false, cancellationToken);
+            
+            return response.ToApiResponse();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogError(ex, "Error deleting user with ID {UserId}", userId);
+            return HttpStatusCode.InternalServerError.CreateResponse(
+                "An unexpected error occurred while deleting user");
+        }
+    }
 }
 ```
 

@@ -44,9 +44,26 @@ All collection endpoints support the following standardized query parameters:
 
 ## Response Models
 
-### Standard Response Model
+### Standard Response Models
 
-All API endpoints use a consistent response format:
+All API endpoints use consistent response formats. There are two response model types:
+
+#### ApiResponse (Non-Data Responses)
+
+For operations that don't return data (e.g., DELETE operations, status checks):
+
+```csharp
+public class ApiResponse
+{
+    public HttpStatusCode StatusCode { get; set; }
+    public ApiError[]? Errors { get; set; }
+    public Dictionary<string, string>? Metadata { get; set; }
+}
+```
+
+#### ApiResponse\<T> (Data Responses)
+
+For operations that return data (e.g., GET, POST with created resource):
 
 ```csharp
 public class ApiResponse<T>
@@ -57,7 +74,11 @@ public class ApiResponse<T>
     public ApiPagination? Pagination { get; set; }
     public Dictionary<string, string>? Metadata { get; set; }
 }
+```
 
+#### Supporting Models
+
+```csharp
 public class ApiError
 {
     public string Code { get; set; }
@@ -232,7 +253,9 @@ Response:
 For implementing API clients that work with the API design:
 
 1. **Use Standardized Models**:
-   - Use the `ApiResponse<T>`, `ApiError`, and `ApiPagination` classes
+   - Use the `ApiResponse` class for operations without data (e.g., DELETE operations)
+   - Use the `ApiResponse<T>` class for operations with data
+   - Use `ApiError` and `ApiPagination` classes for consistent error handling and pagination
    - Use `CollectionModel<T>` for collection endpoints
    - Use `FilterOptions` for query parameters
 

@@ -18,7 +18,8 @@ The solution consists of three main packages that work together to provide a com
 ### MX.Api.Abstractions
 
 Core abstractions library providing common models and interfaces for standardized API handling:
-- `ApiResponse<T>` - Standard API response model following API design
+- `ApiResponse` - Standard API response model for operations without data (e.g., DELETE operations)
+- `ApiResponse<T>` - Standard API response model for operations with data following API design
 - `HttpResponseWrapper<T>` - HTTP response wrapper containing API responses
 - `CollectionModel<T>` - Collection wrapper for API result sets
 - `ApiError` - Standardized error model

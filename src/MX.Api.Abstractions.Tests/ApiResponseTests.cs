@@ -1,4 +1,5 @@
 using System.Net;
+using System.Collections.Generic;
 
 namespace MX.Api.Abstractions.Tests;
 
@@ -165,5 +166,144 @@ public class ApiResponseTests
         Assert.Equal(errors, response.Errors);
         Assert.Null(response.Pagination);
         Assert.Null(response.Metadata);
+    }
+}
+
+public class ApiResponseNonGenericTests
+{
+    [Fact]
+    public void DefaultConstructor_SetsPropertiesToDefaults()
+    {
+        // Act
+        var response = new ApiResponse();
+
+        // Assert
+        Assert.Equal(default(HttpStatusCode), response.StatusCode);
+        Assert.Null(response.Errors);
+        Assert.Null(response.Metadata);
+    }
+
+    [Fact]
+    public void Constructor_WithStatusCode_SetsStatusCode()
+    {
+        // Arrange
+        var statusCode = HttpStatusCode.OK;
+
+        // Act
+        var response = new ApiResponse(statusCode);
+
+        // Assert
+        Assert.Equal(statusCode, response.StatusCode);
+        Assert.Null(response.Errors);
+        Assert.Null(response.Metadata);
+    }
+
+    [Fact]
+    public void Constructor_WithStatusCodeAndError_SetsStatusCodeAndError()
+    {
+        // Arrange
+        var statusCode = HttpStatusCode.BadRequest;
+        var error = new ApiError("TEST_ERROR", "Test error");
+
+        // Act
+        var response = new ApiResponse(statusCode, error);
+
+        // Assert
+        Assert.Equal(statusCode, response.StatusCode);
+        Assert.NotNull(response.Errors);
+        Assert.Single(response.Errors);
+        Assert.Equal(error, response.Errors[0]);
+        Assert.Null(response.Metadata);
+    }
+
+    [Fact]
+    public void Constructor_WithStatusCodeAndErrors_SetsStatusCodeAndErrors()
+    {
+        // Arrange
+        var statusCode = HttpStatusCode.BadRequest;
+        var errors = new[]
+        {
+            new ApiError("ERROR_1", "Error 1"),
+            new ApiError("ERROR_2", "Error 2")
+        };
+
+        // Act
+        var response = new ApiResponse(statusCode, errors);
+
+        // Assert
+        Assert.Equal(statusCode, response.StatusCode);
+        Assert.NotNull(response.Errors);
+        Assert.Equal(2, response.Errors.Length);
+        Assert.Equal(errors, response.Errors);
+        Assert.Null(response.Metadata);
+    }
+
+    [Fact]
+    public void Constructor_WithNullError_ThrowsArgumentNullException()
+    {
+        // Arrange
+        var statusCode = HttpStatusCode.BadRequest;
+
+        // Act & Assert
+        Assert.Throws<ArgumentNullException>(() => new ApiResponse(statusCode, (ApiError)null!));
+    }
+
+    [Fact]
+    public void Constructor_WithNullErrors_ThrowsArgumentNullException()
+    {
+        // Arrange
+        var statusCode = HttpStatusCode.BadRequest;
+
+        // Act & Assert
+        Assert.Throws<ArgumentNullException>(() => new ApiResponse(statusCode, (ApiError[])null!));
+    }
+
+    [Fact]
+    public void StatusCode_CanBeSetAndRetrieved()
+    {
+        // Arrange
+        var response = new ApiResponse();
+        var statusCode = HttpStatusCode.Created;
+
+        // Act
+        response.StatusCode = statusCode;
+
+        // Assert
+        Assert.Equal(statusCode, response.StatusCode);
+    }
+
+    [Fact]
+    public void Errors_CanBeSetAndRetrieved()
+    {
+        // Arrange
+        var response = new ApiResponse();
+        var errors = new[]
+        {
+            new ApiError("TEST_ERROR", "Test error")
+        };
+
+        // Act
+        response.Errors = errors;
+
+        // Assert
+        Assert.Equal(errors, response.Errors);
+    }
+
+    [Fact]
+    public void Metadata_CanBeSetAndRetrieved()
+    {
+        // Arrange
+        var response = new ApiResponse();
+        var metadata = new Dictionary<string, string>
+        {
+            { "key1", "value1" },
+            { "key2", "value2" }
+        };
+
+        // Act
+        response.Metadata = metadata;
+
+        // Assert
+        Assert.Equal(metadata, response.Metadata);
     }
 }
