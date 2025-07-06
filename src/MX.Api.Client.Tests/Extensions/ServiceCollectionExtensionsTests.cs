@@ -31,7 +31,7 @@ public class ServiceCollectionExtensionsTests
 
         // Verify IRestClientService is registered with correct lifetime
         var restClientDescriptor = Assert.Single(services, s => s.ServiceType == typeof(IRestClientService));
-        Assert.Equal(ServiceLifetime.Singleton, restClientDescriptor.Lifetime);
+        Assert.Equal(ServiceLifetime.Scoped, restClientDescriptor.Lifetime);
         Assert.NotNull(restClientDescriptor.ImplementationFactory); // Should be using a factory for DI
     }
 
@@ -647,7 +647,7 @@ public class ServiceCollectionExtensionsTests
 
         Assert.Single(namedOptions.AuthenticationOptions);
         Assert.IsType<ApiKeyAuthenticationOptions>(namedOptions.AuthenticationOptions.First());
-        
+
         var authOptions = (ApiKeyAuthenticationOptions)namedOptions.AuthenticationOptions.First();
         Assert.Equal(apiKey, authOptions.GetApiKeyAsString());
         Assert.Equal("Ocp-Apim-Subscription-Key", authOptions.HeaderName); // Default header name
@@ -723,7 +723,7 @@ public class ServiceCollectionExtensionsTests
         Assert.Same(services, result); // Returns the same instance for method chaining
 
         var serviceProvider = services.BuildServiceProvider();
-        
+
         // Verify services are registered
         Assert.NotNull(serviceProvider.GetService<IMemoryCache>());
         Assert.NotNull(serviceProvider.GetService<ITokenCredentialProvider>());
@@ -735,7 +735,7 @@ public class ServiceCollectionExtensionsTests
 
         Assert.Single(namedOptions.AuthenticationOptions);
         Assert.IsType<AzureCredentialAuthenticationOptions>(namedOptions.AuthenticationOptions.First());
-        
+
         var authOptions = (AzureCredentialAuthenticationOptions)namedOptions.AuthenticationOptions.First();
         Assert.Equal(apiAudience, authOptions.ApiAudience);
     }
@@ -804,7 +804,7 @@ public class ServiceCollectionExtensionsTests
 
         Assert.Single(namedOptions.AuthenticationOptions);
         Assert.IsType<ClientCredentialAuthenticationOptions>(namedOptions.AuthenticationOptions.First());
-        
+
         var authOptions = (ClientCredentialAuthenticationOptions)namedOptions.AuthenticationOptions.First();
         Assert.Equal(apiAudience, authOptions.ApiAudience);
         Assert.Equal(tenantId, authOptions.TenantId);
@@ -850,7 +850,7 @@ public class ServiceCollectionExtensionsTests
 
         // Verify they are completely isolated
         Assert.NotEqual(geoOptions.BaseUrl, repoOptions.BaseUrl);
-        Assert.NotEqual(geoOptions.AuthenticationOptions.First().GetType(), 
+        Assert.NotEqual(geoOptions.AuthenticationOptions.First().GetType(),
                        repoOptions.AuthenticationOptions.First().GetType());
     }
 
@@ -886,7 +886,7 @@ public class ServiceCollectionExtensionsTests
 
         // Verify they are completely separate
         Assert.NotEqual(defaultOptions.BaseUrl, namedOptions.BaseUrl);
-        Assert.NotEqual(defaultOptions.AuthenticationOptions.First().GetType(), 
+        Assert.NotEqual(defaultOptions.AuthenticationOptions.First().GetType(),
                        namedOptions.AuthenticationOptions.First().GetType());
     }
 }

@@ -14,20 +14,20 @@ namespace MX.Api.Client.Extensions;
 /// </summary>
 public static class ServiceCollectionExtensions
 {    /// <summary>
-    /// Registers the required API client services with the service collection.
-    /// </summary>
-    /// <remarks>
-    /// This method registers the following core services:
-    /// <list type="bullet">
-    ///   <item><description><see cref="IRestClientService"/> as a singleton</description></item>
-    ///   <item><description><see cref="IMemoryCache"/> if not already registered</description></item>
-    ///   <item><description>HttpClientFactory for connection pooling</description></item>
-    ///   <item><description><see cref="IOptionsSnapshot{ApiClientOptions}"/> for named options support</description></item>
-    /// </list>
-    /// </remarks>
-    /// <param name="serviceCollection">The service collection to add the services to.</param>
-    /// <returns>The same service collection for method chaining.</returns>
-    /// <exception cref="ArgumentNullException">Thrown if serviceCollection is null.</exception>
+     /// Registers the required API client services with the service collection.
+     /// </summary>
+     /// <remarks>
+     /// This method registers the following core services:
+     /// <list type="bullet">
+     ///   <item><description><see cref="IRestClientService"/> as a singleton</description></item>
+     ///   <item><description><see cref="IMemoryCache"/> if not already registered</description></item>
+     ///   <item><description>HttpClientFactory for connection pooling</description></item>
+     ///   <item><description><see cref="IOptionsSnapshot{ApiClientOptions}"/> for named options support</description></item>
+     /// </list>
+     /// </remarks>
+     /// <param name="serviceCollection">The service collection to add the services to.</param>
+     /// <returns>The same service collection for method chaining.</returns>
+     /// <exception cref="ArgumentNullException">Thrown if serviceCollection is null.</exception>
     public static IServiceCollection AddApiClient(this IServiceCollection serviceCollection)
     {
         ArgumentNullException.ThrowIfNull(serviceCollection);
@@ -35,10 +35,10 @@ public static class ServiceCollectionExtensions
         // Ensure that IMemoryCache is registered
         serviceCollection.AddMemoryCache();
 
-        // Register the REST client service with IOptionsSnapshot dependency
-        serviceCollection.AddSingleton<IRestClientService>(sp =>
+        // Register the REST client service with IOptionsSnapshot dependency as scoped
+        serviceCollection.AddScoped<IRestClientService>(sp =>
         {
-            var optionsSnapshot = sp.GetService<IOptionsSnapshot<ApiClientOptions>>();
+            var optionsSnapshot = sp.GetRequiredService<IOptionsSnapshot<ApiClientOptions>>();
             return new RestClientService(optionsSnapshot);
         });
 
