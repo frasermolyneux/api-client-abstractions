@@ -137,6 +137,61 @@ public void ConfigureServices(IServiceCollection services)
 }
 ```
 
+### Named Options Configuration
+
+The API client supports named options for configuring multiple, isolated API client configurations:
+
+```csharp
+public void ConfigureServices(IServiceCollection services)
+{
+    // Register the API client service once
+    services.AddApiClient();
+    
+    // Configure multiple named API clients
+    services.WithBaseUrl("UsersApi", "https://users.example.com")
+            .WithApiKeyAuthentication("UsersApi", "users-api-key");
+            
+    services.WithBaseUrl("OrdersApi", "https://orders.example.com")
+            .WithClientCredentials("OrdersApi", "api://orders.example.com", 
+                "tenant-id", "client-id", "client-secret");
+                
+    services.WithBaseUrl("ReportsApi", "https://reports.example.com")
+            .WithAzureCredentials("ReportsApi", "api://reports.example.com");
+}
+```
+
+### Using Named Options in Custom API Clients
+
+```csharp
+public class UsersApiClient : BaseApi
+{
+    public UsersApiClient(
+        ILogger<UsersApiClient> logger,
+        IApiTokenProvider apiTokenProvider,
+        IRestClientService restClientService,
+        IOptionsSnapshot<ApiClientOptions> optionsSnapshot)
+        : base(logger, apiTokenProvider, restClientService, optionsSnapshot, "UsersApi")
+    {
+    }
+    
+    // API methods...
+}
+
+public class OrdersApiClient : BaseApi
+{
+    public OrdersApiClient(
+        ILogger<OrdersApiClient> logger,
+        IApiTokenProvider apiTokenProvider,
+        IRestClientService restClientService,
+        IOptionsSnapshot<ApiClientOptions> optionsSnapshot)
+        : base(logger, apiTokenProvider, restClientService, optionsSnapshot, "OrdersApi")
+    {
+    }
+    
+    // API methods...
+}
+```
+
 ### Creating a Custom API Client
 
 ```csharp

@@ -16,4 +16,13 @@ public interface IRestClientService : IDisposable
     /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
     /// <returns>A task representing the asynchronous operation, containing the REST response.</returns>
     Task<RestResponse> ExecuteAsync(string baseUrl, RestRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Executes the specified REST request asynchronously using named options.
+    /// </summary>
+    /// <param name="optionsName">The name of the API client options to use.</param>
+    /// <param name="request">The REST request to execute.</param>
+    /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
+    /// <returns>A task representing the asynchronous operation, containing the REST response.</returns>
+    Task<RestResponse> ExecuteWithNamedOptionsAsync(string optionsName, RestRequest request, CancellationToken cancellationToken = default);
 }

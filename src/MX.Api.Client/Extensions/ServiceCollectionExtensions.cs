@@ -1,6 +1,7 @@
 ﻿using Azure.Identity;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MX.Api.Client.Auth;
@@ -13,19 +14,20 @@ namespace MX.Api.Client.Extensions;
 /// </summary>
 public static class ServiceCollectionExtensions
 {    /// <summary>
-     /// Registers the required API client services with the service collection.
-     /// </summary>
-     /// <remarks>
-     /// This method registers the following core services:
-     /// <list type="bullet">
-     ///   <item><description><see cref="IRestClientService"/> as a singleton</description></item>
-     ///   <item><description><see cref="IMemoryCache"/> if not already registered</description></item>
-     ///   <item><description>HttpClientFactory for connection pooling</description></item>
-     /// </list>
-     /// </remarks>
-     /// <param name="serviceCollection">The service collection to add the services to.</param>
-     /// <returns>The same service collection for method chaining.</returns>
-     /// <exception cref="ArgumentNullException">Thrown if serviceCollection is null.</exception>
+    /// Registers the required API client services with the service collection.
+    /// </summary>
+    /// <remarks>
+    /// This method registers the following core services:
+    /// <list type="bullet">
+    ///   <item><description><see cref="IRestClientService"/> as a singleton</description></item>
+    ///   <item><description><see cref="IMemoryCache"/> if not already registered</description></item>
+    ///   <item><description>HttpClientFactory for connection pooling</description></item>
+    ///   <item><description><see cref="IOptionsSnapshot{ApiClientOptions}"/> for named options support</description></item>
+    /// </list>
+    /// </remarks>
+    /// <param name="serviceCollection">The service collection to add the services to.</param>
+    /// <returns>The same service collection for method chaining.</returns>
+    /// <exception cref="ArgumentNullException">Thrown if serviceCollection is null.</exception>
     public static IServiceCollection AddApiClient(this IServiceCollection serviceCollection)
     {
         ArgumentNullException.ThrowIfNull(serviceCollection);
@@ -33,8 +35,12 @@ public static class ServiceCollectionExtensions
         // Ensure that IMemoryCache is registered
         serviceCollection.AddMemoryCache();
 
-        // Register the REST client service
-        serviceCollection.AddSingleton<IRestClientService, RestClientService>();
+        // Register the REST client service with IOptionsSnapshot dependency
+        serviceCollection.AddSingleton<IRestClientService>(sp =>
+        {
+            var optionsSnapshot = sp.GetService<IOptionsSnapshot<ApiClientOptions>>();
+            return new RestClientService(optionsSnapshot);
+        });
 
         return serviceCollection;
     }
@@ -143,6 +149,45 @@ public static class ServiceCollectionExtensions
     }
 
     /// <summary>
+    /// Configures the base URL for a named API client.
+    /// </summary>
+    /// <param name="serviceCollection">The service collection to configure.</param>
+    /// <param name="name">The name of the API client configuration.</param>
+    /// <param name="baseUrl">The base URL of the API.</param>
+    /// <param name="configureOptions">Optional action to configure additional options.</param>
+    /// <returns>The same service collection for method chaining.</returns>
+    /// <exception cref="ArgumentNullException">Thrown if serviceCollection is null.</exception>
+    /// <exception cref="ArgumentException">Thrown if name or baseUrl is null or empty.</exception>
+    public static IServiceCollection WithBaseUrl(
+        this IServiceCollection serviceCollection,
+        string name,
+        string baseUrl,
+        Action<ApiClientOptions>? configureOptions = null)
+    {
+        ArgumentNullException.ThrowIfNull(serviceCollection);
+
+        if (string.IsNullOrEmpty(name))
+        {
+            throw new ArgumentException("Name cannot be null or empty", nameof(name));
+        }
+
+        if (string.IsNullOrEmpty(baseUrl))
+        {
+            throw new ArgumentException("Base URL cannot be null or empty", nameof(baseUrl));
+        }
+
+        serviceCollection.Configure<ApiClientOptions>(name, options =>
+        {
+            options.BaseUrl = baseUrl;
+
+            // Apply any additional configuration
+            configureOptions?.Invoke(options);
+        });
+
+        return serviceCollection;
+    }
+
+    /// <summary>
     /// Configures the API client to use API key authentication.
     /// </summary>
     /// <param name="serviceCollection">The service collection to configure.</param>
@@ -158,6 +203,42 @@ public static class ServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(serviceCollection);
 
         serviceCollection.Configure<ApiClientOptions>(options =>
+        {
+            var apiKeyOptions = new ApiKeyAuthenticationOptions
+            {
+                HeaderName = headerName
+            };
+            apiKeyOptions.SetApiKey(apiKey);
+            options.AuthenticationOptions.Add(apiKeyOptions);
+        });
+
+        return serviceCollection;
+    }
+
+    /// <summary>
+    /// Configures a named API client to use API key authentication.
+    /// </summary>
+    /// <param name="serviceCollection">The service collection to configure.</param>
+    /// <param name="name">The name of the API client configuration.</param>
+    /// <param name="apiKey">The API key to use for authentication.</param>
+    /// <param name="headerName">The header name to use for the API key. Defaults to "Ocp-Apim-Subscription-Key".</param>
+    /// <returns>The same service collection for method chaining.</returns>
+    /// <exception cref="ArgumentNullException">Thrown if serviceCollection is null.</exception>
+    /// <exception cref="ArgumentException">Thrown if name is null or empty.</exception>
+    public static IServiceCollection WithApiKeyAuthentication(
+        this IServiceCollection serviceCollection,
+        string name,
+        string apiKey,
+        string headerName = "Ocp-Apim-Subscription-Key")
+    {
+        ArgumentNullException.ThrowIfNull(serviceCollection);
+
+        if (string.IsNullOrEmpty(name))
+        {
+            throw new ArgumentException("Name cannot be null or empty", nameof(name));
+        }
+
+        serviceCollection.Configure<ApiClientOptions>(name, options =>
         {
             var apiKeyOptions = new ApiKeyAuthenticationOptions
             {
@@ -208,6 +289,51 @@ public static class ServiceCollectionExtensions
     }
 
     /// <summary>
+    /// Configures a named API client to use Azure credentials for authentication.
+    /// </summary>
+    /// <remarks>
+    /// This method uses the DefaultAzureCredential to authenticate with Azure services.
+    /// It automatically registers the necessary services for token acquisition and caching.
+    /// </remarks>
+    /// <param name="serviceCollection">The service collection to configure.</param>
+    /// <param name="name">The name of the API client configuration.</param>
+    /// <param name="apiAudience">The API audience (resource) to request tokens for.</param>
+    /// <returns>The same service collection for method chaining.</returns>
+    /// <exception cref="ArgumentNullException">Thrown if serviceCollection is null.</exception>
+    /// <exception cref="ArgumentException">Thrown if name is null or empty.</exception>
+    public static IServiceCollection WithAzureCredentials(
+        this IServiceCollection serviceCollection,
+        string name,
+        string apiAudience)
+    {
+        ArgumentNullException.ThrowIfNull(serviceCollection);
+
+        if (string.IsNullOrEmpty(name))
+        {
+            throw new ArgumentException("Name cannot be null or empty", nameof(name));
+        }
+
+        // Ensure that IMemoryCache is registered
+        serviceCollection.AddMemoryCache();
+
+        // Register the token credential provider if not already registered
+        serviceCollection.TryAddSingleton<ITokenCredentialProvider, DefaultTokenCredentialProvider>();
+
+        // Register the API token provider if not already registered
+        serviceCollection.TryAddSingleton<IApiTokenProvider, ApiTokenProvider>();
+
+        serviceCollection.Configure<ApiClientOptions>(name, options =>
+        {
+            options.AuthenticationOptions.Add(new AzureCredentialAuthenticationOptions
+            {
+                ApiAudience = apiAudience
+            });
+        });
+
+        return serviceCollection;
+    }
+
+    /// <summary>
     /// Configures the API client to use Azure credentials for authentication with custom credential options.
     /// </summary>
     /// <remarks>
@@ -233,18 +359,74 @@ public static class ServiceCollectionExtensions
         // Ensure that IMemoryCache is registered
         serviceCollection.AddMemoryCache();
 
-        // Register the token credential provider with configured options
-        serviceCollection.AddSingleton<ITokenCredentialProvider>(sp =>
+        // Register the token credential provider with configured options if not already registered
+        serviceCollection.TryAddSingleton<ITokenCredentialProvider>(sp =>
         {
             var options = sp.GetRequiredService<IOptions<DefaultAzureCredentialOptions>>();
             var logger = sp.GetService<ILogger<DefaultTokenCredentialProvider>>();
             return new DefaultTokenCredentialProvider(logger, options);
         });
 
-        // Register the API token provider
-        serviceCollection.AddSingleton<IApiTokenProvider, ApiTokenProvider>();
+        // Register the API token provider if not already registered
+        serviceCollection.TryAddSingleton<IApiTokenProvider, ApiTokenProvider>();
 
         serviceCollection.Configure<ApiClientOptions>(options =>
+        {
+            options.AuthenticationOptions.Add(new AzureCredentialAuthenticationOptions
+            {
+                ApiAudience = apiAudience
+            });
+        });
+
+        return serviceCollection;
+    }
+
+    /// <summary>
+    /// Configures a named API client to use Azure credentials for authentication with custom credential options.
+    /// </summary>
+    /// <remarks>
+    /// This method allows customization of the DefaultAzureCredential options while 
+    /// automatically registering the necessary services for token acquisition and caching.
+    /// </remarks>
+    /// <param name="serviceCollection">The service collection to configure.</param>
+    /// <param name="name">The name of the API client configuration.</param>
+    /// <param name="apiAudience">The API audience (resource) to request tokens for.</param>
+    /// <param name="configureCredentialOptions">An action to configure the DefaultAzureCredentialOptions.</param>
+    /// <returns>The same service collection for method chaining.</returns>
+    /// <exception cref="ArgumentNullException">Thrown if serviceCollection or configureCredentialOptions is null.</exception>
+    /// <exception cref="ArgumentException">Thrown if name is null or empty.</exception>
+    public static IServiceCollection WithAzureCredentials(
+        this IServiceCollection serviceCollection,
+        string name,
+        string apiAudience,
+        Action<DefaultAzureCredentialOptions> configureCredentialOptions)
+    {
+        ArgumentNullException.ThrowIfNull(serviceCollection);
+        ArgumentNullException.ThrowIfNull(configureCredentialOptions);
+
+        if (string.IsNullOrEmpty(name))
+        {
+            throw new ArgumentException("Name cannot be null or empty", nameof(name));
+        }
+
+        // Configure Azure credential options
+        serviceCollection.Configure(configureCredentialOptions);
+
+        // Ensure that IMemoryCache is registered
+        serviceCollection.AddMemoryCache();
+
+        // Register the token credential provider with configured options if not already registered
+        serviceCollection.TryAddSingleton<ITokenCredentialProvider>(sp =>
+        {
+            var options = sp.GetRequiredService<IOptions<DefaultAzureCredentialOptions>>();
+            var logger = sp.GetService<ILogger<DefaultTokenCredentialProvider>>();
+            return new DefaultTokenCredentialProvider(logger, options);
+        });
+
+        // Register the API token provider if not already registered
+        serviceCollection.TryAddSingleton<IApiTokenProvider, ApiTokenProvider>();
+
+        serviceCollection.Configure<ApiClientOptions>(name, options =>
         {
             options.AuthenticationOptions.Add(new AzureCredentialAuthenticationOptions
             {
@@ -295,8 +477,8 @@ public static class ServiceCollectionExtensions
         // Ensure that IMemoryCache is registered
         serviceCollection.AddMemoryCache();
 
-        // Register the token credential provider
-        serviceCollection.AddSingleton<ITokenCredentialProvider>(sp =>
+        // Register the token credential provider if not already registered
+        serviceCollection.TryAddSingleton<ITokenCredentialProvider>(sp =>
         {
             var logger = sp.GetService<ILogger<ClientCredentialProvider>>();
 
@@ -312,10 +494,90 @@ public static class ServiceCollectionExtensions
             return new ClientCredentialProvider(logger, clientCredOptions);
         });
 
-        // Register the API token provider
-        serviceCollection.AddSingleton<IApiTokenProvider, ApiTokenProvider>();
+        // Register the API token provider if not already registered
+        serviceCollection.TryAddSingleton<IApiTokenProvider, ApiTokenProvider>();
 
         serviceCollection.Configure<ApiClientOptions>(options =>
+        {
+            var clientCredOptions = new ClientCredentialAuthenticationOptions
+            {
+                ApiAudience = apiAudience,
+                TenantId = tenantId,
+                ClientId = clientId
+            };
+            clientCredOptions.SetClientSecret(clientSecret);
+            options.AuthenticationOptions.Add(clientCredOptions);
+        });
+
+        return serviceCollection;
+    }
+
+    /// <summary>
+    /// Configures a named API client to use client credentials flow for authentication.
+    /// </summary>
+    /// <remarks>
+    /// This method registers the necessary services for client credentials authentication
+    /// using a tenant ID, client ID, and client secret. It automatically handles token acquisition
+    /// and caching for improved performance.
+    /// </remarks>
+    /// <param name="serviceCollection">The service collection to configure.</param>
+    /// <param name="name">The name of the API client configuration.</param>
+    /// <param name="apiAudience">The API audience (resource) to request tokens for.</param>
+    /// <param name="tenantId">The Azure AD tenant ID.</param>
+    /// <param name="clientId">The client (application) ID.</param>
+    /// <param name="clientSecret">The client secret.</param>
+    /// <returns>The same service collection for method chaining.</returns>
+    /// <exception cref="ArgumentNullException">Thrown if serviceCollection is null.</exception>
+    /// <exception cref="ArgumentException">Thrown if name, apiAudience, tenantId, clientId, or clientSecret is null or empty.</exception>
+    public static IServiceCollection WithClientCredentials(
+        this IServiceCollection serviceCollection,
+        string name,
+        string apiAudience,
+        string tenantId,
+        string clientId,
+        string clientSecret)
+    {
+        ArgumentNullException.ThrowIfNull(serviceCollection);
+
+        if (string.IsNullOrEmpty(name))
+            throw new ArgumentException("Name cannot be null or empty", nameof(name));
+
+        if (string.IsNullOrEmpty(apiAudience))
+            throw new ArgumentException("API audience cannot be null or empty", nameof(apiAudience));
+
+        if (string.IsNullOrEmpty(tenantId))
+            throw new ArgumentException("Tenant ID cannot be null or empty", nameof(tenantId));
+
+        if (string.IsNullOrEmpty(clientId))
+            throw new ArgumentException("Client ID cannot be null or empty", nameof(clientId));
+
+        if (string.IsNullOrEmpty(clientSecret))
+            throw new ArgumentException("Client secret cannot be null or empty", nameof(clientSecret));
+
+        // Ensure that IMemoryCache is registered
+        serviceCollection.AddMemoryCache();
+
+        // Register the token credential provider if not already registered
+        serviceCollection.TryAddSingleton<ITokenCredentialProvider>(sp =>
+        {
+            var logger = sp.GetService<ILogger<ClientCredentialProvider>>();
+
+            // Create secure options object
+            var clientCredOptions = new ClientCredentialAuthenticationOptions
+            {
+                ApiAudience = apiAudience,
+                TenantId = tenantId,
+                ClientId = clientId
+            };
+            clientCredOptions.SetClientSecret(clientSecret);
+
+            return new ClientCredentialProvider(logger, clientCredOptions);
+        });
+
+        // Register the API token provider if not already registered
+        serviceCollection.TryAddSingleton<IApiTokenProvider, ApiTokenProvider>();
+
+        serviceCollection.Configure<ApiClientOptions>(name, options =>
         {
             var clientCredOptions = new ClientCredentialAuthenticationOptions
             {

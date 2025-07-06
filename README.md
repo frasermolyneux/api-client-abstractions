@@ -92,17 +92,39 @@ Register the API client services in your application's startup:
 ```csharp
 // Add API client with API key authentication
 services.AddApiClient()
+    .WithBaseUrl("https://api.example.com")
     .WithApiKeyAuthentication("your-api-key");
 
 // Or with Entra ID authentication
 services.AddApiClient()
-    .WithEntraIdAuthentication("api://your-api-audience");
+    .WithBaseUrl("https://api.example.com")
+    .WithAzureCredentials("api://your-api-audience");
 
 // Multiple authentication methods (e.g., for Azure API Management)
 services.Configure<ApiClientOptions>(options => options
     .WithBaseUrl("https://your-api-via-apim.azure-api.net")
     .WithSubscriptionKey("your-apim-subscription-key")      // For API Management
     .WithEntraIdAuthentication("api://your-api-audience")); // For underlying API
+```
+
+### Named Options for Multiple API Clients
+
+Configure multiple isolated API client configurations using named options:
+
+```csharp
+// Register the API client service once
+services.AddApiClient();
+
+// Configure multiple named API clients
+services.WithBaseUrl("UsersApi", "https://users.example.com")
+        .WithApiKeyAuthentication("UsersApi", "users-api-key");
+        
+services.WithBaseUrl("OrdersApi", "https://orders.example.com")
+        .WithClientCredentials("OrdersApi", "api://orders.example.com", 
+            "tenant-id", "client-id", "client-secret");
+            
+services.WithBaseUrl("ReportsApi", "https://reports.example.com")
+        .WithAzureCredentials("ReportsApi", "api://reports.example.com");
 ```
 
 ### Custom Credential Provider
@@ -129,6 +151,7 @@ public class YourCustomCredentialProvider : ITokenCredentialProvider
 Create your API client by inheriting from `BaseApi`:
 
 ```csharp
+// Default options usage
 public class UserApi : BaseApi
 {
     private readonly ILogger<UserApi> logger;
@@ -141,6 +164,21 @@ public class UserApi : BaseApi
         : base(logger, apiTokenProvider, restClientService, options)
     {
         this.logger = logger;
+    }
+
+    // API methods...
+}
+
+// Named options usage
+public class UsersApiClient : BaseApi
+{
+    public UsersApiClient(
+        ILogger<UsersApiClient> logger,
+        IApiTokenProvider apiTokenProvider,
+        IRestClientService restClientService,
+        IOptionsSnapshot<ApiClientOptions> optionsSnapshot)
+        : base(logger, apiTokenProvider, restClientService, optionsSnapshot, "UsersApi")
+    {
     }
 
     public async Task<ApiResponse<User>> GetUserAsync(string userId, CancellationToken cancellationToken = default)
