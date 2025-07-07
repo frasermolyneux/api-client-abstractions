@@ -19,7 +19,7 @@ public static class ServiceCollectionExtensions
      /// <remarks>
      /// This method registers the following core services:
      /// <list type="bullet">
-     ///   <item><description><see cref="IRestClientService"/> as a singleton</description></item>
+     ///   <item><description><see cref="IRestClientService"/> as a scoped service</description></item>
      ///   <item><description><see cref="IMemoryCache"/> if not already registered</description></item>
      ///   <item><description>HttpClientFactory for connection pooling</description></item>
      ///   <item><description><see cref="IOptionsSnapshot{ApiClientOptions}"/> for named options support</description></item>
