@@ -1,6 +1,6 @@
 # MX.Api.Abstractions
 
-This library provides the core abstractions and common models for standardized API handling in .NET applications. This package serves as the foundation for the MX API Abstractions approach, providing fundamental data structures and interfaces for building API clients and web applications that conform to the API design pattern.
+Core abstractions library providing standardized models and interfaces for API handling in .NET applications. This package serves as the foundation for building consistent APIs and API clients that follow proven design patterns.
 
 ## Installation
 
@@ -8,46 +8,174 @@ This library provides the core abstractions and common models for standardized A
 dotnet add package MX.Api.Abstractions
 ```
 
-## Features
+## Key Features
 
-- Standardized API response models following the API design pattern
-- Common collection models for result sets with consistent structure
-- HTTP response wrappers to separate HTTP concerns from API response models
-- Filter options for OData-like query parameters
-- Pagination support with comprehensive metadata
-- Standardized error models with detailed information
+- **Standardized API Response Models** - Consistent response structures across all API operations
+- **Collection Models** - Uniform handling of result sets with pagination support
+- **HTTP Response Wrappers** - Separation of HTTP concerns from business logic
+- **Error Handling Models** - Structured error reporting with detailed information
+- **Filtering Support** - OData-like query parameters for flexible data retrieval
 
 ## Core Models
 
 ### ApiResponse
 
-The `ApiResponse` class is a wrapper for API responses that don't return data (e.g., DELETE operations, status checks):
+For operations that don't return data (DELETE, status checks, validation):
 
 ```csharp
-public class ApiResponse
-{
-    public ApiError[]? Errors { get; set; }
-    public Dictionary<string, string>? Metadata { get; set; }
-}
+var response = new ApiResponse(); // Success
+var errorResponse = new ApiResponse(new ApiError("VALIDATION_FAILED", "Invalid data provided"));
 ```
-
-**Use this when:**
-- DELETE operations that return no content
-- Status check endpoints  
-- Validation endpoints that only return success/failure
-- Any operation where no data payload is expected
-
-**Note:** The HTTP status code is handled by the `ApiResult` at the transport layer, keeping the API response model focused on business data.
 
 ### ApiResponse\<T>
 
-The `ApiResponse<T>` class is a wrapper for API responses that include data:
+For operations that return data:
 
 ```csharp
-public class ApiResponse<T>
+var user = new User { Id = 1, Name = "John Doe" };
+var response = new ApiResponse<User>(user);
+
+// With errors
+var errorResponse = new ApiResponse<User>(
+    new ApiError("USER_NOT_FOUND", "User not found"));
+```
+
+### CollectionModel\<T>
+
+For paginated collections:
+
+```csharp
+var collection = new CollectionModel<Product>
 {
-    public T? Data { get; set; }
-    public ApiError[]? Errors { get; set; }
+    Items = products,
+    TotalCount = 100,
+    FilteredCount = 10,
+    Pagination = new ApiPagination
+    {
+        Page = 1,
+        PageSize = 10,
+        TotalPages = 10
+    }
+};
+
+var response = new ApiResponse<CollectionModel<Product>>(collection);
+```
+
+### ApiResult\<T>
+
+HTTP response wrapper (used by client libraries):
+
+```csharp
+var apiResult = new ApiResult<User>(HttpStatusCode.OK, apiResponse);
+
+// Check response status
+if (apiResult.IsSuccess)
+{
+    var user = apiResult.Result?.Data;
+}
+
+if (apiResult.IsNotFound) 
+{
+    // Handle not found
+}
+```
+
+## Error Handling
+
+### ApiError Model
+
+```csharp
+var error = new ApiError(
+    code: "VALIDATION_ERROR",
+    message: "The request data is invalid",
+    detail: "Name field is required and cannot be empty");
+```
+
+### Multiple Errors
+
+```csharp
+var errors = new[]
+{
+    new ApiError("REQUIRED_FIELD", "Name is required"),
+    new ApiError("INVALID_FORMAT", "Email format is invalid")
+};
+
+var response = new ApiResponse<User>(errors);
+```
+
+## Filtering and Pagination
+
+### FilterOptions
+
+```csharp
+var filters = new FilterOptions
+{
+    Filter = "category eq 'Electronics'",
+    Select = "id,name,price",
+    OrderBy = "name asc",
+    Skip = 0,
+    Take = 10
+};
+```
+
+### ApiPagination
+
+```csharp
+var pagination = new ApiPagination
+{
+    Page = 2,
+    PageSize = 25,
+    TotalPages = 8
+};
+```
+
+## Integration with Other Libraries
+
+This package is designed to work with:
+
+- **MX.Api.Client** - For building resilient API clients
+- **MX.Api.Web.Extensions** - For ASP.NET Core integration
+
+## Usage Patterns
+
+### In API Controllers
+
+```csharp
+[HttpGet("{id}")]
+public IActionResult GetUser(int id)
+{
+    var user = _userService.GetUser(id);
+    
+    if (user == null)
+    {
+        var errorResponse = new ApiResponse<User>(
+            new ApiError("USER_NOT_FOUND", $"User {id} not found"));
+        return NotFound(errorResponse);
+    }
+    
+    var response = new ApiResponse<User>(user);
+    return Ok(response);
+}
+```
+
+### In API Clients
+
+```csharp
+public async Task<ApiResult<User>> GetUserAsync(int id)
+{
+    var httpResponse = await _httpClient.GetAsync($"users/{id}");
+    var content = await httpResponse.Content.ReadAsStringAsync();
+    var apiResponse = JsonConvert.DeserializeObject<ApiResponse<User>>(content);
+    
+    return new ApiResult<User>(httpResponse.StatusCode, apiResponse);
+}
+```
+
+## Documentation
+
+- **[📖 API Design Patterns](../../docs/api-design-v2.md)** - Understanding the design principles
+- **[📖 Implementation Guide - API Providers](../../docs/implementing-api-provider.md)** - Building APIs with these models
+- **[📖 Implementation Guide - API Consumers](../../docs/implementing-api-consumer.md)** - Consuming APIs using these models
     public ApiPagination? Pagination { get; set; }
     public Dictionary<string, string>? Metadata { get; set; }
 }

@@ -1,104 +1,96 @@
-using Azure.Identity;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Moq;
 using MX.Api.Client.Auth;
 using MX.Api.Client.Configuration;
 using MX.Api.Client.Extensions;
+using MX.Api.Client.Tests.TestClients;
 using Xunit;
 
 namespace MX.Api.Client.Tests.Extensions;
 
-public class ServiceCollectionExtensionsTests
+public class ApiClientExtensionsTests
 {
     [Fact]
-    public void AddApiClient_RegistersRequiredServices()
+    public void AddTypedApiClient_RegistersRequiredServices()
     {
         // Arrange
         var services = new ServiceCollection();
 
+        // Add required logging services for DI resolution
+        services.AddLogging();
+
         // Act
-        var result = services.AddApiClient();
+        var result = services.AddTypedApiClient<ITestApiClient, TestApiClient, TestApiOptions, TestApiOptionsBuilder>(options => options
+            .WithBaseUrl("https://api.example.com"));
 
         // Assert
         Assert.Same(services, result); // Returns the same instance for method chaining
+
+        // Build service provider
+        var serviceProvider = services.BuildServiceProvider();
 
         // Verify IMemoryCache is registered
-        var memoryCacheDescriptor = Assert.Single(services, s => s.ServiceType == typeof(IMemoryCache));
-        Assert.Equal(ServiceLifetime.Singleton, memoryCacheDescriptor.Lifetime);
+        Assert.NotNull(serviceProvider.GetService<IMemoryCache>());
 
-        // Verify IRestClientService is registered with correct lifetime
-        var restClientDescriptor = Assert.Single(services, s => s.ServiceType == typeof(IRestClientService));
-        Assert.Equal(ServiceLifetime.Scoped, restClientDescriptor.Lifetime);
-        Assert.NotNull(restClientDescriptor.ImplementationFactory); // Should be using a factory for DI
+        // Verify IRestClientService is registered
+        Assert.NotNull(serviceProvider.GetService<IRestClientService>());
+
+        // Verify the options are registered
+        Assert.NotNull(serviceProvider.GetService<TestApiOptions>());
+
+        // Verify the client is registered
+        Assert.NotNull(serviceProvider.GetService<ITestApiClient>());
+        Assert.IsType<TestApiClient>(serviceProvider.GetService<ITestApiClient>());
     }
 
     [Fact]
-    public void AddApiClient_ThrowsArgumentNullException_WhenServiceCollectionIsNull()
-    {
-        // Arrange
-        IServiceCollection? services = null;
-
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => services!.AddApiClient());
-    }
-
-    [Fact]
-    public void WithOptions_ConfiguresOptions_WhenOptionsInstanceProvided()
+    public void AddTypedApiClient_ConfiguresOptionsCorrectly()
     {
         // Arrange
         var services = new ServiceCollection();
-        var options = new ApiClientOptions
-        {
-            BaseUrl = "https://api.example.com",
-            MaxRetryCount = 5
-        };
+        services.AddLogging(); // Add required logging services
+
+        var baseUrl = "https://api.example.com";
+        var apiKey = "test-api-key";
 
         // Act
-        var result = services.WithOptions(options);
+        services.AddTypedApiClient<ITestApiClient, TestApiClient, TestApiOptions, TestApiOptionsBuilder>(options => options
+            .WithBaseUrl(baseUrl)
+            .WithApiKeyAuthentication(apiKey)
+            .WithTestFeature());
 
         // Assert
-        Assert.Same(services, result); // Returns the same instance for method chaining
-
         var serviceProvider = services.BuildServiceProvider();
-        var configuredOptions = serviceProvider.GetRequiredService<IOptions<ApiClientOptions>>().Value;
+        var configuredOptions = serviceProvider.GetRequiredService<TestApiOptions>();
 
-        Assert.Equal(options.BaseUrl, configuredOptions.BaseUrl);
-        Assert.Equal(options.MaxRetryCount, configuredOptions.MaxRetryCount);
+        Assert.Equal(baseUrl, configuredOptions.BaseUrl);
+        Assert.True(configuredOptions.EnableTestFeature);
+        Assert.Single(configuredOptions.AuthenticationOptions);
+        Assert.IsType<ApiKeyAuthenticationOptions>(configuredOptions.AuthenticationOptions.First());
     }
 
     [Fact]
-    public void WithOptions_RegistersTokenProviders_WhenUsingEntraIdAuth()
+    public void AddTypedApiClient_WithEntraIdAuthentication_RegistersTokenProviders()
     {
         // Arrange
         var services = new ServiceCollection();
 
-        // Add required services
+        // Add required services for logging
         var loggerFactoryMock = new Mock<ILoggerFactory>();
         loggerFactoryMock.Setup(x => x.CreateLogger(It.IsAny<string>()))
             .Returns(Mock.Of<ILogger>());
         services.AddSingleton(loggerFactoryMock.Object);
         services.AddLogging();
 
-        var options = new ApiClientOptions
-        {
-            BaseUrl = "https://api.example.com"
-        };
-        options.AuthenticationOptions.Add(new AzureCredentialAuthenticationOptions
-        {
-            ApiAudience = "api://resource"
-        });
-
         // Act
-        services.WithOptions(options);
+        services.AddTypedApiClient<ITestApiClient, TestApiClient, TestApiOptions, TestApiOptionsBuilder>(options => options
+            .WithBaseUrl("https://api.example.com")
+            .WithEntraIdAuthentication("api://resource"));
 
         // Assert
         var serviceProvider = services.BuildServiceProvider();
-
-        // Verify IMemoryCache is registered
-        Assert.NotNull(serviceProvider.GetService<IMemoryCache>());
 
         // Verify token providers are registered
         Assert.NotNull(serviceProvider.GetService<ITokenCredentialProvider>());
@@ -110,22 +102,17 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void WithOptions_RegistersClientCredentialProvider_WhenUsingClientCredentialAuthentication()
+    public void AddTypedApiClient_WithClientCredentialAuthentication_RegistersClientCredentialProvider()
     {
         // Arrange
         var services = new ServiceCollection();
 
-        // Add required services
+        // Add required services for logging
         var loggerFactoryMock = new Mock<ILoggerFactory>();
         loggerFactoryMock.Setup(x => x.CreateLogger(It.IsAny<string>()))
             .Returns(Mock.Of<ILogger>());
         services.AddSingleton(loggerFactoryMock.Object);
         services.AddLogging();
-
-        var options = new ApiClientOptions
-        {
-            BaseUrl = "https://api.example.com"
-        };
 
         var clientCredOptions = new ClientCredentialAuthenticationOptions
         {
@@ -134,16 +121,14 @@ public class ServiceCollectionExtensionsTests
             ClientId = "client-id"
         };
         clientCredOptions.SetClientSecret("client-secret");
-        options.AuthenticationOptions.Add(clientCredOptions);
 
         // Act
-        services.WithOptions(options);
+        services.AddTypedApiClient<ITestApiClient, TestApiClient, TestApiOptions, TestApiOptionsBuilder>(options => options
+            .WithBaseUrl("https://api.example.com")
+            .WithAuthentication(clientCredOptions));
 
         // Assert
         var serviceProvider = services.BuildServiceProvider();
-
-        // Verify IMemoryCache is registered
-        Assert.NotNull(serviceProvider.GetService<IMemoryCache>());
 
         // Verify token providers are registered
         Assert.NotNull(serviceProvider.GetService<ITokenCredentialProvider>());
@@ -155,738 +140,334 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public void WithOptions_ConfiguresOptions_WhenActionProvided()
+    public void AddTypedApiClient_WithMultipleClients_RegistersEachClientSeparately()
     {
         // Arrange
         var services = new ServiceCollection();
-        Action<ApiClientOptions> configureAction = opt =>
-        {
-            opt.BaseUrl = "https://api.example.com";
-            opt.MaxRetryCount = 5;
-        };
+        services.AddLogging(); // Add required logging services
+
+        // Act - Register two different API clients
+        services.AddTypedApiClient<ITestApiClient, TestApiClient, TestApiOptions, TestApiOptionsBuilder>(options => options
+            .WithBaseUrl("https://api1.example.com")
+            .WithTestFeature());
+
+        services.AddTypedApiClient<ITestApiClient, TestApiClient, TestApiOptions, TestApiOptionsBuilder>(options => options
+            .WithBaseUrl("https://api2.example.com"));
+
+        // Assert
+        var serviceProvider = services.BuildServiceProvider();
+
+        // Should be able to get instances of both clients
+        var clients = serviceProvider.GetServices<ITestApiClient>().ToList();
+        Assert.Equal(2, clients.Count);
+    }
+
+    [Fact]
+    public void AddTypedApiClient_ConfiguresHttpClientWithRetryPolicy()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        services.AddLogging(); // Add required logging services
 
         // Act
-        var result = services.WithOptions(configureAction);
+        services.AddTypedApiClient<ITestApiClient, TestApiClient, TestApiOptions, TestApiOptionsBuilder>(options => options
+            .WithBaseUrl("https://api.example.com")
+            .WithMaxRetryCount(5));
+
+        // Assert
+        var serviceProvider = services.BuildServiceProvider();
+        var httpClientFactory = serviceProvider.GetService<IHttpClientFactory>();
+
+        Assert.NotNull(httpClientFactory);
+
+        // Verify we can create an HttpClient for our typed client
+        var httpClient = httpClientFactory?.CreateClient(typeof(TestApiClient).Name);
+        Assert.NotNull(httpClient);
+    }
+
+    [Fact]
+    public void AddTypedApiClient_WithStandardApiClientOptions_Works()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        services.AddLogging(); // Add required logging services
+
+        // Act
+        services.AddTypedApiClient<IStandardTestApiClient, StandardTestApiClient, ApiClientOptions, ApiClientOptionsBuilder>(options => options
+            .WithBaseUrl("https://api.example.com")
+            .WithApiKeyAuthentication("test-key"));
+
+        // Assert
+        var serviceProvider = services.BuildServiceProvider();
+        var client = serviceProvider.GetService<IStandardTestApiClient>();
+        var options = serviceProvider.GetService<ApiClientOptions>();
+
+        Assert.NotNull(client);
+        Assert.NotNull(options);
+        Assert.Equal("https://api.example.com", options.BaseUrl);
+    }
+
+    [Fact]
+    public void AddTypedApiClient_ThrowsArgumentNullException_WhenBaseUrlIsNull()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        services.AddLogging(); // Add required logging services
+
+        // Act & Assert
+        var ex = Assert.Throws<ArgumentNullException>(() =>
+            services.AddTypedApiClient<ITestApiClient, TestApiClient, TestApiOptions, TestApiOptionsBuilder>(
+                options => options.WithBaseUrl(null!)));
+
+        Assert.Contains("baseUrl", ex.Message);
+    }
+
+    [Fact]
+    public void AddTypedApiClient_ThrowsArgumentException_WhenBaseUrlIsEmpty()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        services.AddLogging(); // Add required logging services
+
+        // Act & Assert
+        var ex = Assert.Throws<ArgumentException>(() =>
+            services.AddTypedApiClient<ITestApiClient, TestApiClient, TestApiOptions, TestApiOptionsBuilder>(
+                options => options.WithBaseUrl("")));
+
+        Assert.Contains("baseUrl", ex.Message);
+    }
+
+    [Fact]
+    public void AddTypedApiClient_ThrowsArgumentNullException_WhenConfigureOptionsIsNull()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+
+        // Act & Assert
+        Assert.Throws<ArgumentNullException>(() =>
+            services.AddTypedApiClient<ITestApiClient, TestApiClient, TestApiOptions, TestApiOptionsBuilder>(null!));
+    }
+
+    [Fact]
+    public void AddTypedApiClient_CanRegisterMultipleDifferentClients()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        services.AddLogging(); // Add required logging services
+
+        // Act
+        services.AddTypedApiClient<ITestApiClient, TestApiClient, TestApiOptions, TestApiOptionsBuilder>(options => options
+            .WithBaseUrl("https://api1.example.com"));
+
+        services.AddTypedApiClient<IStandardTestApiClient, StandardTestApiClient, ApiClientOptions, ApiClientOptionsBuilder>(options => options
+            .WithBaseUrl("https://api2.example.com"));
+
+        // Assert
+        var serviceProvider = services.BuildServiceProvider();
+
+        var testClient = serviceProvider.GetService<ITestApiClient>();
+        var standardClient = serviceProvider.GetService<IStandardTestApiClient>();
+
+        Assert.NotNull(testClient);
+        Assert.NotNull(standardClient);
+        Assert.NotSame(testClient, standardClient);
+    }
+
+    #region AddApiClient (Simplified Registration) Tests
+
+    [Fact]
+    public void AddApiClient_RegistersRequiredServices()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        services.AddLogging(); // Add required logging services
+
+        // Act
+        var result = services.AddApiClient<IStandardTestApiClient, StandardTestApiClient>(options => options
+            .WithBaseUrl("https://api.example.com"));
 
         // Assert
         Assert.Same(services, result); // Returns the same instance for method chaining
 
+        // Build service provider
         var serviceProvider = services.BuildServiceProvider();
-        var configuredOptions = serviceProvider.GetRequiredService<IOptions<ApiClientOptions>>().Value;
 
-        Assert.Equal("https://api.example.com", configuredOptions.BaseUrl);
-        Assert.Equal(5, configuredOptions.MaxRetryCount);
+        // Verify IMemoryCache is registered
+        Assert.NotNull(serviceProvider.GetService<IMemoryCache>());
+
+        // Verify IRestClientService is registered
+        Assert.NotNull(serviceProvider.GetService<IRestClientService>());
+
+        // Verify the default options are registered
+        Assert.NotNull(serviceProvider.GetService<ApiClientOptions>());
+
+        // Verify the client is registered
+        Assert.NotNull(serviceProvider.GetService<IStandardTestApiClient>());
+        Assert.IsType<StandardTestApiClient>(serviceProvider.GetService<IStandardTestApiClient>());
     }
 
     [Fact]
-    public void WithOptions_ThrowsArgumentException_WhenInvalidParameterType()
+    public void AddApiClient_ConfiguresOptionsCorrectly()
     {
         // Arrange
         var services = new ServiceCollection();
-        var invalidParameter = "invalid parameter type";        // Act & Assert
-        var ex = Assert.Throws<ArgumentException>(() => services.WithOptions(invalidParameter));
-        Assert.Contains("must be either an ApiClientOptions instance or an Action<ApiClientOptions>", ex.Message);
-    }
+        services.AddLogging(); // Add required logging services
 
-    [Theory]
-    [InlineData(true, false)]  // services is null
-    [InlineData(false, true)]  // optionsOrConfigureAction is null
-    public void WithOptions_ThrowsArgumentNullException_WhenParametersAreNull(
-        bool nullServices, bool nullOptions)
-    {
-        // Arrange
-        IServiceCollection? services = nullServices ? null : new ServiceCollection();
-        object? options = nullOptions ? null : new ApiClientOptions();
-
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => services!.WithOptions(options!));
-    }
-
-    [Fact]
-    public void WithBaseUrl_ConfiguresBaseUrl()
-    {
-        // Arrange
-        var services = new ServiceCollection();
         var baseUrl = "https://api.example.com";
-
-        // Act
-        var result = services.WithBaseUrl(baseUrl);
-
-        // Assert
-        Assert.Same(services, result); // Returns the same instance for method chaining
-
-        var serviceProvider = services.BuildServiceProvider();
-        var options = serviceProvider.GetRequiredService<IOptions<ApiClientOptions>>().Value;
-
-        Assert.Equal(baseUrl, options.BaseUrl);
-    }
-
-    [Fact]
-    public void WithBaseUrl_ThrowsArgumentNullException_WhenServiceCollectionIsNull()
-    {
-        // Arrange
-        IServiceCollection? services = null;
-        var baseUrl = "https://api.example.com";
-
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => services!.WithBaseUrl(baseUrl));
-    }
-
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    public void WithBaseUrl_ThrowsArgumentException_WhenBaseUrlIsNullOrEmpty(string? baseUrl)
-    {
-        // Arrange
-        var services = new ServiceCollection();        // Act & Assert
-        var ex = Assert.Throws<ArgumentException>(() => services.WithBaseUrl(baseUrl!));
-        Assert.Contains("cannot be null or empty", ex.Message);
-    }
-
-    [Fact]
-    public void WithBaseUrl_AppliesAdditionalConfiguration_WhenConfigureOptionsProvided()
-    {
-        // Arrange
-        var services = new ServiceCollection();
-        var baseUrl = "https://api.example.com";
-        Action<ApiClientOptions> configureOptions = opt =>
-        {
-            opt.MaxRetryCount = 5;
-        };
-
-        // Act
-        services.WithBaseUrl(baseUrl, configureOptions);
-
-        // Assert
-        var serviceProvider = services.BuildServiceProvider();
-        var options = serviceProvider.GetRequiredService<IOptions<ApiClientOptions>>().Value;
-
-        Assert.Equal(baseUrl, options.BaseUrl);
-        Assert.Equal(5, options.MaxRetryCount);
-    }
-
-    [Fact]
-    public void WithApiKeyAuthentication_ConfiguresApiKeyAuthentication()
-    {
-        // Arrange
-        var services = new ServiceCollection();
         var apiKey = "test-api-key";
 
         // Act
-        var result = services.WithApiKeyAuthentication(apiKey);
-
-        // Assert
-        Assert.Same(services, result); // Returns the same instance for method chaining
-
-        var serviceProvider = services.BuildServiceProvider();
-        var options = serviceProvider.GetRequiredService<IOptions<ApiClientOptions>>().Value;
-
-        Assert.Single(options.AuthenticationOptions);
-        Assert.IsType<ApiKeyAuthenticationOptions>(options.AuthenticationOptions.First());
-        var authOptions = (ApiKeyAuthenticationOptions)options.AuthenticationOptions.First();
-        Assert.Equal(apiKey, authOptions.GetApiKeyAsString());
-        Assert.Equal("Ocp-Apim-Subscription-Key", authOptions.HeaderName); // Default header name
-    }
-
-    [Fact]
-    public void WithApiKeyAuthentication_ConfiguresCustomHeaderName()
-    {
-        // Arrange
-        var services = new ServiceCollection();
-        var apiKey = "test-api-key";
-        var headerName = "X-API-Key";
-
-        // Act
-        services.WithApiKeyAuthentication(apiKey, headerName);
+        services.AddApiClient<IStandardTestApiClient, StandardTestApiClient>(options => options
+            .WithBaseUrl(baseUrl)
+            .WithApiKeyAuthentication(apiKey));
 
         // Assert
         var serviceProvider = services.BuildServiceProvider();
-        var options = serviceProvider.GetRequiredService<IOptions<ApiClientOptions>>().Value;
+        var configuredOptions = serviceProvider.GetRequiredService<ApiClientOptions>();
 
-        Assert.Single(options.AuthenticationOptions);
-        Assert.IsType<ApiKeyAuthenticationOptions>(options.AuthenticationOptions.First());
-        var authOptions = (ApiKeyAuthenticationOptions)options.AuthenticationOptions.First();
-        Assert.Equal(apiKey, authOptions.GetApiKeyAsString());
-        Assert.Equal(headerName, authOptions.HeaderName);
+        Assert.Equal(baseUrl, configuredOptions.BaseUrl);
+        Assert.Single(configuredOptions.AuthenticationOptions);
+        Assert.IsType<ApiKeyAuthenticationOptions>(configuredOptions.AuthenticationOptions.First());
     }
 
     [Fact]
-    public void WithApiKeyAuthentication_ThrowsArgumentNullException_WhenServiceCollectionIsNull()
-    {
-        // Arrange
-        IServiceCollection? services = null;
-        var apiKey = "test-api-key";
-
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => services!.WithApiKeyAuthentication(apiKey));
-    }
-
-    [Fact]
-    public void WithAzureCredentials_ConfiguresAzureCredentialAuthentication()
+    public void AddApiClient_WithEntraIdAuthentication_RegistersTokenProviders()
     {
         // Arrange
         var services = new ServiceCollection();
 
-        // Add required services
+        // Add required services for logging
         var loggerFactoryMock = new Mock<ILoggerFactory>();
         loggerFactoryMock.Setup(x => x.CreateLogger(It.IsAny<string>()))
             .Returns(Mock.Of<ILogger>());
         services.AddSingleton(loggerFactoryMock.Object);
         services.AddLogging();
 
-        var apiAudience = "api://resource";
-
         // Act
-        var result = services.WithAzureCredentials(apiAudience);
+        services.AddApiClient<IStandardTestApiClient, StandardTestApiClient>(options => options
+            .WithBaseUrl("https://api.example.com")
+            .WithEntraIdAuthentication("api://resource"));
 
         // Assert
-        Assert.Same(services, result); // Returns the same instance for method chaining
-
-        // Verify services are registered
         var serviceProvider = services.BuildServiceProvider();
-        Assert.NotNull(serviceProvider.GetService<IMemoryCache>());
-        Assert.NotNull(serviceProvider.GetService<ITokenCredentialProvider>());
-        Assert.NotNull(serviceProvider.GetService<IApiTokenProvider>());
 
-        // Verify correct authentication options
-        var options = serviceProvider.GetRequiredService<IOptions<ApiClientOptions>>().Value;
-        Assert.Single(options.AuthenticationOptions);
-        Assert.IsType<AzureCredentialAuthenticationOptions>(options.AuthenticationOptions.First());
-        var authOptions = (AzureCredentialAuthenticationOptions)options.AuthenticationOptions.First();
-        Assert.Equal(apiAudience, authOptions.ApiAudience);
-    }
-
-    [Fact]
-    public void WithAzureCredentials_ThrowsArgumentNullException_WhenServiceCollectionIsNull()
-    {
-        // Arrange
-        IServiceCollection? services = null;
-        var apiAudience = "api://resource";
-
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => services!.WithAzureCredentials(apiAudience));
-    }
-
-    [Fact]
-    public void WithAzureCredentials_WithOptions_ConfiguresAzureCredentialAuthentication()
-    {
-        // Arrange
-        var services = new ServiceCollection();
-
-        // Add required services
-        var loggerFactoryMock = new Mock<ILoggerFactory>();
-        loggerFactoryMock.Setup(x => x.CreateLogger(It.IsAny<string>()))
-            .Returns(Mock.Of<ILogger>());
-        services.AddSingleton(loggerFactoryMock.Object);
-        services.AddLogging();
-
-        var apiAudience = "api://resource";
-        Action<DefaultAzureCredentialOptions> configureOptions = opt =>
-        {
-            opt.ExcludeEnvironmentCredential = true;
-            opt.ExcludeSharedTokenCacheCredential = true;
-        };
-
-        // Act
-        var result = services.WithAzureCredentials(apiAudience, configureOptions);
-
-        // Assert
-        Assert.Same(services, result); // Returns the same instance for method chaining
-
-        // Verify services are registered
-        var serviceProvider = services.BuildServiceProvider();
-        Assert.NotNull(serviceProvider.GetService<IMemoryCache>());
-        Assert.NotNull(serviceProvider.GetService<ITokenCredentialProvider>());
-        Assert.NotNull(serviceProvider.GetService<IApiTokenProvider>());
-
-        // Verify correct authentication options
-        var options = serviceProvider.GetRequiredService<IOptions<ApiClientOptions>>().Value;
-        Assert.Single(options.AuthenticationOptions);
-        Assert.IsType<AzureCredentialAuthenticationOptions>(options.AuthenticationOptions.First());
-        var authOptions = (AzureCredentialAuthenticationOptions)options.AuthenticationOptions.First();
-        Assert.Equal(apiAudience, authOptions.ApiAudience);
-
-        // Verify DefaultAzureCredentialOptions are configured
-        var credentialOptions = serviceProvider.GetRequiredService<IOptions<DefaultAzureCredentialOptions>>().Value;
-        Assert.True(credentialOptions.ExcludeEnvironmentCredential);
-        Assert.True(credentialOptions.ExcludeSharedTokenCacheCredential);
-    }
-
-    [Theory]
-    [InlineData(true, false)]  // services is null
-    [InlineData(false, true)]  // configureCredentialOptions is null
-    public void WithAzureCredentials_WithOptions_ThrowsArgumentNullException_WhenParametersAreNull(
-        bool nullServices, bool nullConfigureOptions)
-    {
-        // Arrange
-        IServiceCollection? services = nullServices ? null : new ServiceCollection();
-        var apiAudience = "api://resource";
-        Action<DefaultAzureCredentialOptions>? configureOptions = nullConfigureOptions ? null : opt => { };
-
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => services!.WithAzureCredentials(apiAudience, configureOptions!));
-    }
-
-    [Fact]
-    public void WithClientCredentials_ConfiguresClientCredentialAuthentication()
-    {
-        // Arrange
-        var services = new ServiceCollection();
-
-        // Add required services
-        var loggerFactoryMock = new Mock<ILoggerFactory>();
-        loggerFactoryMock.Setup(x => x.CreateLogger(It.IsAny<string>()))
-            .Returns(Mock.Of<ILogger>());
-        services.AddSingleton(loggerFactoryMock.Object);
-        services.AddLogging();
-
-        var apiAudience = "api://resource";
-        var tenantId = "tenant-id";
-        var clientId = "client-id";
-        var clientSecret = "client-secret";
-
-        // Act
-        var result = services.WithClientCredentials(apiAudience, tenantId, clientId, clientSecret);
-
-        // Assert
-        Assert.Same(services, result); // Returns the same instance for method chaining
-
-        // Verify services are registered
-        var serviceProvider = services.BuildServiceProvider();
-        Assert.NotNull(serviceProvider.GetService<IMemoryCache>());
+        // Verify token providers are registered
         Assert.NotNull(serviceProvider.GetService<ITokenCredentialProvider>());
         Assert.NotNull(serviceProvider.GetService<IApiTokenProvider>());
 
         // Verify correct implementation types
-        Assert.IsType<ClientCredentialProvider>(serviceProvider.GetService<ITokenCredentialProvider>());
+        Assert.IsType<DefaultTokenCredentialProvider>(serviceProvider.GetService<ITokenCredentialProvider>());
         Assert.IsType<ApiTokenProvider>(serviceProvider.GetService<IApiTokenProvider>());
-
-        // Verify correct authentication options
-        var options = serviceProvider.GetRequiredService<IOptions<ApiClientOptions>>().Value;
-        Assert.Single(options.AuthenticationOptions);
-        Assert.IsType<ClientCredentialAuthenticationOptions>(options.AuthenticationOptions.First());
-        var authOptions = (ClientCredentialAuthenticationOptions)options.AuthenticationOptions.First();
-        Assert.Equal(apiAudience, authOptions.ApiAudience);
-        Assert.Equal(tenantId, authOptions.TenantId);
-        Assert.Equal(clientId, authOptions.ClientId);
-        Assert.Equal(clientSecret, authOptions.GetClientSecretAsString());
     }
 
     [Fact]
-    public void WithClientCredentials_ThrowsArgumentNullException_WhenServiceCollectionIsNull()
+    public void AddApiClient_ThrowsArgumentNullException_WhenServicesIsNull()
     {
         // Arrange
-        IServiceCollection? services = null;
-        var apiAudience = "api://resource";
-        var tenantId = "tenant-id";
-        var clientId = "client-id";
-        var clientSecret = "client-secret";
+        IServiceCollection services = null!;
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => services!.WithClientCredentials(apiAudience, tenantId, clientId, clientSecret));
+        Assert.Throws<ArgumentNullException>(() =>
+            services.AddApiClient<IStandardTestApiClient, StandardTestApiClient>(options => options
+                .WithBaseUrl("https://api.example.com")));
     }
 
-    [Theory]
-    [InlineData(null, "tenant-id", "client-id", "client-secret")]  // apiAudience is null
-    [InlineData("", "tenant-id", "client-id", "client-secret")]    // apiAudience is empty
-    [InlineData("api://resource", null, "client-id", "client-secret")]  // tenantId is null
-    [InlineData("api://resource", "", "client-id", "client-secret")]    // tenantId is empty
-    [InlineData("api://resource", "tenant-id", null, "client-secret")]  // clientId is null
-    [InlineData("api://resource", "tenant-id", "", "client-secret")]    // clientId is empty
-    [InlineData("api://resource", "tenant-id", "client-id", null)]  // clientSecret is null
-    [InlineData("api://resource", "tenant-id", "client-id", "")]    // clientSecret is empty
-    public void WithClientCredentials_ThrowsArgumentException_WhenRequiredParametersAreNullOrEmpty(
-        string? apiAudience, string? tenantId, string? clientId, string? clientSecret)
+    [Fact]
+    public void AddApiClient_ThrowsArgumentNullException_WhenConfigureOptionsIsNull()
     {
         // Arrange
         var services = new ServiceCollection();
 
         // Act & Assert
-        Assert.Throws<ArgumentException>(() =>
-            services.WithClientCredentials(apiAudience!, tenantId!, clientId!, clientSecret!));
+        Assert.Throws<ArgumentNullException>(() =>
+            services.AddApiClient<IStandardTestApiClient, StandardTestApiClient>(null!));
     }
 
     [Fact]
-    public void MultipleAuthenticationMethods_CanBeConfiguredTogether()
+    public void AddApiClient_CanRegisterMultipleClients()
     {
         // Arrange
         var services = new ServiceCollection();
+        services.AddLogging(); // Add required logging services
 
-        // Add required services
-        var loggerFactoryMock = new Mock<ILoggerFactory>();
-        loggerFactoryMock.Setup(x => x.CreateLogger(It.IsAny<string>()))
-            .Returns(Mock.Of<ILogger>());
-        services.AddSingleton(loggerFactoryMock.Object);
-        services.AddLogging();
+        // Act - Register multiple clients with simplified method
+        services.AddApiClient<IStandardTestApiClient, StandardTestApiClient>(options => options
+            .WithBaseUrl("https://api1.example.com"));
 
-        var subscriptionKey = "subscription-key-123";
-        var apiAudience = "api://resource";
-
-        var options = new ApiClientOptions
-        {
-            BaseUrl = "https://api.example.com"
-        };
-        options.WithSubscriptionKey(subscriptionKey)
-               .WithEntraIdAuthentication(apiAudience);
-
-        // Act
-        services.WithOptions(options);
+        services.AddApiClient<IStandardTestApiClient, StandardTestApiClient>(options => options
+            .WithBaseUrl("https://api2.example.com"));
 
         // Assert
         var serviceProvider = services.BuildServiceProvider();
 
-        // Verify authentication services are registered for Entra ID
-        Assert.NotNull(serviceProvider.GetService<IMemoryCache>());
-        Assert.NotNull(serviceProvider.GetService<ITokenCredentialProvider>());
-        Assert.NotNull(serviceProvider.GetService<IApiTokenProvider>());
-
-        // Verify multiple authentication options are configured
-        var configuredOptions = serviceProvider.GetRequiredService<IOptions<ApiClientOptions>>().Value;
-        Assert.Equal(2, configuredOptions.AuthenticationOptions.Count);
-
-        var apiKeyAuth = configuredOptions.AuthenticationOptions.OfType<ApiKeyAuthenticationOptions>().First();
-        Assert.Equal(subscriptionKey, apiKeyAuth.GetApiKeyAsString());
-        Assert.Equal("Ocp-Apim-Subscription-Key", apiKeyAuth.HeaderName);
-
-        var entraIdAuth = configuredOptions.AuthenticationOptions.OfType<AzureCredentialAuthenticationOptions>().First();
-        Assert.Equal(apiAudience, entraIdAuth.ApiAudience);
-
-        // Clean up
-        apiKeyAuth.Dispose();
+        // Should be able to get instances of both clients
+        var clients = serviceProvider.GetServices<IStandardTestApiClient>().ToList();
+        Assert.Equal(2, clients.Count);
     }
 
     [Fact]
-    public void WithBaseUrl_NamedOptions_ConfiguresNamedBaseUrl()
+    public void AddApiClient_ConfiguresHttpClientWithRetryPolicy()
     {
         // Arrange
         var services = new ServiceCollection();
+        services.AddLogging(); // Add required logging services
+
+        // Act
+        services.AddApiClient<IStandardTestApiClient, StandardTestApiClient>(options => options
+            .WithBaseUrl("https://api.example.com")
+            .WithMaxRetryCount(5));
+
+        // Assert
+        var serviceProvider = services.BuildServiceProvider();
+        var httpClientFactory = serviceProvider.GetService<IHttpClientFactory>();
+
+        Assert.NotNull(httpClientFactory);
+
+        // Verify we can create an HttpClient for our typed client
+        var httpClient = httpClientFactory?.CreateClient(typeof(StandardTestApiClient).Name);
+        Assert.NotNull(httpClient);
+    }
+
+    [Fact]
+    public void AddApiClient_IsEquivalentToAddTypedApiClientWithDefaultOptions()
+    {
+        // Arrange
+        var services1 = new ServiceCollection();
+        var services2 = new ServiceCollection();
+        services1.AddLogging();
+        services2.AddLogging();
+
         var baseUrl = "https://api.example.com";
-        var optionsName = "TestApi";
-
-        // Act
-        var result = services.WithBaseUrl(optionsName, baseUrl);
-
-        // Assert
-        Assert.Same(services, result); // Returns the same instance for method chaining
-
-        var serviceProvider = services.BuildServiceProvider();
-        var optionsSnapshot = serviceProvider.GetRequiredService<IOptionsSnapshot<ApiClientOptions>>();
-        var namedOptions = optionsSnapshot.Get(optionsName);
-
-        Assert.Equal(baseUrl, namedOptions.BaseUrl);
-    }
-
-    [Theory]
-    [InlineData(false, true)]  // optionsName is null
-    [InlineData(false, false, null)]  // baseUrl is null
-    [InlineData(false, false, "")]     // baseUrl is empty
-    public void WithBaseUrl_NamedOptions_ThrowsArgumentException_WhenParametersAreInvalid(
-        bool nullServices, bool nullOptionsName, string? baseUrl = "https://api.example.com")
-    {
-        // Arrange
-        IServiceCollection services = new ServiceCollection();
-        string? optionsName = nullOptionsName ? null : "TestApi";
-
-        // Act & Assert
-        Assert.Throws<ArgumentException>(() => services.WithBaseUrl(optionsName!, baseUrl!));
-    }
-
-    [Fact]
-    public void WithBaseUrl_NamedOptions_ThrowsArgumentNullException_WhenServiceCollectionIsNull()
-    {
-        // Arrange
-        IServiceCollection? services = null;
-        var optionsName = "TestApi";
-        var baseUrl = "https://api.example.com";
-
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => services!.WithBaseUrl(optionsName, baseUrl));
-    }
-
-    [Fact]
-    public void WithBaseUrl_NamedOptions_AppliesAdditionalConfiguration()
-    {
-        // Arrange
-        var services = new ServiceCollection();
-        var baseUrl = "https://api.example.com";
-        var optionsName = "TestApi";
-        Action<ApiClientOptions> configureOptions = opt =>
-        {
-            opt.MaxRetryCount = 5;
-        };
-
-        // Act
-        services.WithBaseUrl(optionsName, baseUrl, configureOptions);
-
-        // Assert
-        var serviceProvider = services.BuildServiceProvider();
-        var optionsSnapshot = serviceProvider.GetRequiredService<IOptionsSnapshot<ApiClientOptions>>();
-        var namedOptions = optionsSnapshot.Get(optionsName);
-
-        Assert.Equal(baseUrl, namedOptions.BaseUrl);
-        Assert.Equal(5, namedOptions.MaxRetryCount);
-    }
-
-    [Fact]
-    public void WithApiKeyAuthentication_NamedOptions_ConfiguresNamedApiKeyAuthentication()
-    {
-        // Arrange
-        var services = new ServiceCollection();
-        var apiKey = "test-api-key";
-        var optionsName = "TestApi";
-
-        // Act
-        var result = services.WithApiKeyAuthentication(name: optionsName, apiKey: apiKey);
-
-        // Assert
-        Assert.Same(services, result); // Returns the same instance for method chaining
-
-        var serviceProvider = services.BuildServiceProvider();
-        var optionsSnapshot = serviceProvider.GetRequiredService<IOptionsSnapshot<ApiClientOptions>>();
-        var namedOptions = optionsSnapshot.Get(optionsName);
-
-        Assert.Single(namedOptions.AuthenticationOptions);
-        Assert.IsType<ApiKeyAuthenticationOptions>(namedOptions.AuthenticationOptions.First());
-
-        var authOptions = (ApiKeyAuthenticationOptions)namedOptions.AuthenticationOptions.First();
-        Assert.Equal(apiKey, authOptions.GetApiKeyAsString());
-        Assert.Equal("Ocp-Apim-Subscription-Key", authOptions.HeaderName); // Default header name
-    }
-
-    [Fact]
-    public void WithApiKeyAuthentication_NamedOptions_ConfiguresCustomHeaderName()
-    {
-        // Arrange
-        var services = new ServiceCollection();
-        var apiKey = "test-api-key";
-        var headerName = "X-API-Key";
-        var optionsName = "TestApi";
-
-        // Act
-        services.WithApiKeyAuthentication(name: optionsName, apiKey: apiKey, headerName: headerName);
-
-        // Assert
-        var serviceProvider = services.BuildServiceProvider();
-        var optionsSnapshot = serviceProvider.GetRequiredService<IOptionsSnapshot<ApiClientOptions>>();
-        var namedOptions = optionsSnapshot.Get(optionsName);
-
-        var authOptions = (ApiKeyAuthenticationOptions)namedOptions.AuthenticationOptions.First();
-        Assert.Equal(headerName, authOptions.HeaderName);
-    }
-
-    [Theory]
-    [InlineData(false, true)]  // optionsName is null
-    public void WithApiKeyAuthentication_NamedOptions_ThrowsArgumentException_WhenParametersAreInvalid(
-        bool nullServices, bool nullOptionsName)
-    {
-        // Arrange
-        IServiceCollection services = new ServiceCollection();
-        string? optionsName = nullOptionsName ? null : "TestApi";
         var apiKey = "test-api-key";
 
-        // Act & Assert
-        Assert.Throws<ArgumentException>(() => services.WithApiKeyAuthentication(name: optionsName!, apiKey: apiKey));
+        // Act - Register using simplified method
+        services1.AddApiClient<IStandardTestApiClient, StandardTestApiClient>(options => options
+            .WithBaseUrl(baseUrl)
+            .WithApiKeyAuthentication(apiKey));
+
+        // Act - Register using full method with default options
+        services2.AddTypedApiClient<IStandardTestApiClient, StandardTestApiClient, ApiClientOptions, ApiClientOptionsBuilder>(options => options
+            .WithBaseUrl(baseUrl)
+            .WithApiKeyAuthentication(apiKey));
+
+        // Assert - Both should produce equivalent configurations
+        var serviceProvider1 = services1.BuildServiceProvider();
+        var serviceProvider2 = services2.BuildServiceProvider();
+
+        var options1 = serviceProvider1.GetRequiredService<ApiClientOptions>();
+        var options2 = serviceProvider2.GetRequiredService<ApiClientOptions>();
+
+        Assert.Equal(options1.BaseUrl, options2.BaseUrl);
+        Assert.Equal(options1.AuthenticationOptions.Count, options2.AuthenticationOptions.Count);
+
+        var client1 = serviceProvider1.GetService<IStandardTestApiClient>();
+        var client2 = serviceProvider2.GetService<IStandardTestApiClient>();
+
+        Assert.NotNull(client1);
+        Assert.NotNull(client2);
+        Assert.Equal(client1.GetType(), client2.GetType());
     }
 
-    [Fact]
-    public void WithApiKeyAuthentication_NamedOptions_ThrowsArgumentNullException_WhenServiceCollectionIsNull()
-    {
-        // Arrange
-        IServiceCollection? services = null;
-        var optionsName = "TestApi";
-        var apiKey = "test-api-key";
+    #endregion
 
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => services!.WithApiKeyAuthentication(name: optionsName, apiKey: apiKey));
-    }
-
-    [Fact]
-    public void WithAzureCredentials_NamedOptions_ConfiguresNamedAzureCredentials()
-    {
-        // Arrange
-        var services = new ServiceCollection();
-
-        // Add required services for logging
-        var loggerFactoryMock = new Mock<ILoggerFactory>();
-        loggerFactoryMock.Setup(x => x.CreateLogger(It.IsAny<string>()))
-            .Returns(Mock.Of<ILogger>());
-        services.AddSingleton(loggerFactoryMock.Object);
-        services.AddLogging();
-
-        var apiAudience = "api://resource";
-        var optionsName = "TestApi";
-
-        // Act
-        var result = services.WithAzureCredentials(name: optionsName, apiAudience: apiAudience);
-
-        // Assert
-        Assert.Same(services, result); // Returns the same instance for method chaining
-
-        var serviceProvider = services.BuildServiceProvider();
-
-        // Verify services are registered
-        Assert.NotNull(serviceProvider.GetService<IMemoryCache>());
-        Assert.NotNull(serviceProvider.GetService<ITokenCredentialProvider>());
-        Assert.NotNull(serviceProvider.GetService<IApiTokenProvider>());
-
-        // Verify named options are configured
-        var optionsSnapshot = serviceProvider.GetRequiredService<IOptionsSnapshot<ApiClientOptions>>();
-        var namedOptions = optionsSnapshot.Get(optionsName);
-
-        Assert.Single(namedOptions.AuthenticationOptions);
-        Assert.IsType<AzureCredentialAuthenticationOptions>(namedOptions.AuthenticationOptions.First());
-
-        var authOptions = (AzureCredentialAuthenticationOptions)namedOptions.AuthenticationOptions.First();
-        Assert.Equal(apiAudience, authOptions.ApiAudience);
-    }
-
-    [Theory]
-    [InlineData(false, true)]  // optionsName is null
-    public void WithAzureCredentials_NamedOptions_ThrowsArgumentException_WhenParametersAreInvalid(
-        bool nullServices, bool nullOptionsName)
-    {
-        // Arrange
-        IServiceCollection services = new ServiceCollection();
-        string? optionsName = nullOptionsName ? null : "TestApi";
-        var apiAudience = "api://resource";
-
-        // Act & Assert
-        Assert.Throws<ArgumentException>(() => services.WithAzureCredentials(name: optionsName!, apiAudience: apiAudience));
-    }
-
-    [Fact]
-    public void WithAzureCredentials_NamedOptions_ThrowsArgumentNullException_WhenServiceCollectionIsNull()
-    {
-        // Arrange
-        IServiceCollection? services = null;
-        var optionsName = "TestApi";
-        var apiAudience = "api://resource";
-
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => services!.WithAzureCredentials(name: optionsName, apiAudience: apiAudience));
-    }
-
-    [Fact]
-    public void WithClientCredentials_NamedOptions_ConfiguresNamedClientCredentials()
-    {
-        // Arrange
-        var services = new ServiceCollection();
-
-        // Add required services for logging
-        var loggerFactoryMock = new Mock<ILoggerFactory>();
-        loggerFactoryMock.Setup(x => x.CreateLogger(It.IsAny<string>()))
-            .Returns(Mock.Of<ILogger>());
-        services.AddSingleton(loggerFactoryMock.Object);
-        services.AddLogging();
-
-        var apiAudience = "api://resource";
-        var tenantId = "tenant-id";
-        var clientId = "client-id";
-        var clientSecret = "client-secret";
-        var optionsName = "TestApi";
-
-        // Act
-        var result = services.WithClientCredentials(name: optionsName, apiAudience: apiAudience, tenantId: tenantId, clientId: clientId, clientSecret: clientSecret);
-
-        // Assert
-        Assert.Same(services, result); // Returns the same instance for method chaining
-
-        var serviceProvider = services.BuildServiceProvider();
-
-        // Verify services are registered
-        Assert.NotNull(serviceProvider.GetService<IMemoryCache>());
-        Assert.NotNull(serviceProvider.GetService<ITokenCredentialProvider>());
-        Assert.NotNull(serviceProvider.GetService<IApiTokenProvider>());
-
-        // Verify named options are configured
-        var optionsSnapshot = serviceProvider.GetRequiredService<IOptionsSnapshot<ApiClientOptions>>();
-        var namedOptions = optionsSnapshot.Get(optionsName);
-
-        Assert.Single(namedOptions.AuthenticationOptions);
-        Assert.IsType<ClientCredentialAuthenticationOptions>(namedOptions.AuthenticationOptions.First());
-
-        var authOptions = (ClientCredentialAuthenticationOptions)namedOptions.AuthenticationOptions.First();
-        Assert.Equal(apiAudience, authOptions.ApiAudience);
-        Assert.Equal(tenantId, authOptions.TenantId);
-        Assert.Equal(clientId, authOptions.ClientId);
-        Assert.Equal(clientSecret, authOptions.GetClientSecretAsString());
-    }
-
-    [Fact]
-    public void MultipleNamedOptions_CanBeConfiguredIndependently()
-    {
-        // Arrange
-        var services = new ServiceCollection();
-
-        // Add required services for logging
-        var loggerFactoryMock = new Mock<ILoggerFactory>();
-        loggerFactoryMock.Setup(x => x.CreateLogger(It.IsAny<string>()))
-            .Returns(Mock.Of<ILogger>());
-        services.AddSingleton(loggerFactoryMock.Object);
-        services.AddLogging();
-
-        // Act - Configure two different API clients
-        services.WithBaseUrl(name: "GeoLocationApi", baseUrl: "https://geo.api.com")
-               .WithApiKeyAuthentication(name: "GeoLocationApi", apiKey: "geo-api-key");
-
-        services.WithBaseUrl(name: "RepositoryApi", baseUrl: "https://repo.api.com")
-               .WithAzureCredentials(name: "RepositoryApi", apiAudience: "api://repo-resource");
-
-        // Assert
-        var serviceProvider = services.BuildServiceProvider();
-        var optionsSnapshot = serviceProvider.GetRequiredService<IOptionsSnapshot<ApiClientOptions>>();
-
-        // Verify first API client configuration
-        var geoOptions = optionsSnapshot.Get("GeoLocationApi");
-        Assert.Equal("https://geo.api.com", geoOptions.BaseUrl);
-        Assert.Single(geoOptions.AuthenticationOptions);
-        Assert.IsType<ApiKeyAuthenticationOptions>(geoOptions.AuthenticationOptions.First());
-
-        // Verify second API client configuration
-        var repoOptions = optionsSnapshot.Get("RepositoryApi");
-        Assert.Equal("https://repo.api.com", repoOptions.BaseUrl);
-        Assert.Single(repoOptions.AuthenticationOptions);
-        Assert.IsType<AzureCredentialAuthenticationOptions>(repoOptions.AuthenticationOptions.First());
-
-        // Verify they are completely isolated
-        Assert.NotEqual(geoOptions.BaseUrl, repoOptions.BaseUrl);
-        Assert.NotEqual(geoOptions.AuthenticationOptions.First().GetType(),
-                       repoOptions.AuthenticationOptions.First().GetType());
-    }
-
-    [Fact]
-    public void NamedOptions_DoNotAffectDefaultOptions()
-    {
-        // Arrange
-        var services = new ServiceCollection();
-
-        // Act - Configure both default and named options
-        services.WithBaseUrl("https://default.api.com")
-               .WithApiKeyAuthentication("default-api-key");
-
-        services.WithBaseUrl(name: "NamedApi", baseUrl: "https://named.api.com")
-               .WithAzureCredentials(name: "NamedApi", apiAudience: "api://named-resource");
-
-        // Assert
-        var serviceProvider = services.BuildServiceProvider();
-        var options = serviceProvider.GetRequiredService<IOptions<ApiClientOptions>>();
-        var optionsSnapshot = serviceProvider.GetRequiredService<IOptionsSnapshot<ApiClientOptions>>();
-
-        // Verify default options
-        var defaultOptions = options.Value;
-        Assert.Equal("https://default.api.com", defaultOptions.BaseUrl);
-        Assert.Single(defaultOptions.AuthenticationOptions);
-        Assert.IsType<ApiKeyAuthenticationOptions>(defaultOptions.AuthenticationOptions.First());
-
-        // Verify named options
-        var namedOptions = optionsSnapshot.Get("NamedApi");
-        Assert.Equal("https://named.api.com", namedOptions.BaseUrl);
-        Assert.Single(namedOptions.AuthenticationOptions);
-        Assert.IsType<AzureCredentialAuthenticationOptions>(namedOptions.AuthenticationOptions.First());
-
-        // Verify they are completely separate
-        Assert.NotEqual(defaultOptions.BaseUrl, namedOptions.BaseUrl);
-        Assert.NotEqual(defaultOptions.AuthenticationOptions.First().GetType(),
-                       namedOptions.AuthenticationOptions.First().GetType());
-    }
 }

@@ -1,16 +1,6 @@
 # MX.Api.Client
 
-This library provides a comprehensive implementation for creating resilient, authenticated REST API clients as part of the MX API Abstractions approach. Built on top of MX.Api.Abstractions, it offers base classes, interfaces, and utilities for creating API clients with features such as authentication, token management, request execution, and standardized response processing.
-
-## Features
-
-- Support for multiple authentication methods that can be combined (API Key and Entra ID authentication)
-- Automatic token acquisition and caching with thread-safe operations
-- Built-in retry policies with exponential backoff and circuit breaker patterns
-- Thread-safe REST client management
-- Standardized error handling and response processing using ApiResponse<T> model
-- Support for API key authentication with resilient handling
-- Integration with Microsoft.Extensions.Logging for comprehensive diagnostics
+Resilient REST API client library for building robust .NET applications that consume APIs. Provides authentication, retry policies, token management, and standardized response processing built on top of MX.Api.Abstractions.
 
 ## Installation
 
@@ -18,36 +8,428 @@ This library provides a comprehensive implementation for creating resilient, aut
 dotnet add package MX.Api.Client
 ```
 
-## Usage
+## Key Features
 
-### Basic Setup
+- **🔐 Multi-Authentication Support** - API keys, Bearer tokens, and Entra ID with automatic token management  
+- **🛡️ Built-in Resilience** - Retry policies, circuit breakers, and exponential backoff
+- **⚡ High Performance** - Thread-safe operations with efficient caching and connection pooling
+- **🔄 Standardized Responses** - Uses `ApiResponse<T>` models for consistent error handling
+- **📊 Comprehensive Logging** - Integration with Microsoft.Extensions.Logging for diagnostics
+
+## Quick Start
+
+### 1. Basic Setup
 
 ```csharp
-// Register the API client services with single authentication
-services.AddApiClient()
+// Program.cs
+builder.Services.AddApiClient()
+    .WithBaseUrl("https://api.example.com")
     .WithApiKeyAuthentication("your-api-key");
 
-// Or with Entra ID authentication
-services.AddApiClient()
-    .WithEntraIdAuthentication("api://your-api-audience");
-
-// Configure client options with fluent API
-services.Configure<ApiClientOptions>(options => options
-    .WithBaseUrl("https://api.example.com")
-    .WithMaxRetryCount(3));
-
-// Multiple authentication methods (e.g., for Azure API Management + Identity)
-services.Configure<ApiClientOptions>(options => options
-    .WithBaseUrl("https://your-api-via-apim.azure-api.net")
-    .WithSubscriptionKey("your-apim-subscription-key")      // Adds Ocp-Apim-Subscription-Key header
-    .WithEntraIdAuthentication("api://your-api-audience")); // Adds Authorization: Bearer token
+// Register your client
+builder.Services.AddTransient<MyApiClient>();
 ```
 
-### Creating a Custom API Client
+### 2. Create Your Client
 
 ```csharp
-// Inherit from BaseApi
 public class MyApiClient : BaseApi
+{
+    private readonly ILogger<MyApiClient> _logger;
+
+    public MyApiClient(
+        ILogger<MyApiClient> logger,
+        IApiTokenProvider apiTokenProvider,
+        IRestClientService restClientService,
+        IOptions<ApiClientOptions> options)
+        : base(logger, apiTokenProvider, restClientService, options)
+    {
+        _logger = logger;
+    }
+
+    public async Task<ApiResult<User>> GetUserAsync(string userId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var request = await CreateRequestAsync($"users/{userId}", Method.Get, cancellationToken);
+            var response = await ExecuteAsync(request, false, cancellationToken);
+            return response.ToApiResponse<User>();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogError(ex, "Failed to get user {UserId}", userId);
+            var errorResponse = new ApiResponse<User>(new ApiError("CLIENT_ERROR", "Failed to retrieve user"));
+            return new ApiResult<User>(HttpStatusCode.InternalServerError, errorResponse);
+        }
+    }
+}
+```
+
+### 3. Use Your Client
+
+```csharp
+public class UserService
+{
+    private readonly MyApiClient _apiClient;
+
+    public UserService(MyApiClient apiClient)
+    {
+        _apiClient = apiClient;
+    }
+
+    public async Task<User?> GetUserAsync(string userId)
+    {
+        var result = await _apiClient.GetUserAsync(userId);
+        
+        if (result.IsSuccess)
+            return result.Result?.Data;
+            
+        if (result.IsNotFound)
+            return null;
+            
+        throw new ApplicationException($"API error: {result.StatusCode}");
+    }
+}
+```
+
+## Registration Patterns
+
+### Simple Registration with AddApiClient
+
+The `AddApiClient<TInterface, TImplementation>` method provides a simplified registration pattern for basic scenarios:
+
+```csharp
+// Simple registration with interface and implementation
+builder.Services.AddApiClient<IUsersApiClient, UsersApiClient>(options =>
+{
+    options.WithBaseUrl("https://users.example.com")
+           .WithApiKeyAuthentication("your-api-key");
+});
+
+// The client interface
+public interface IUsersApiClient
+{
+    Task<ApiResult<User>> GetUserAsync(string userId, CancellationToken cancellationToken = default);
+    Task<ApiResult<CollectionModel<User>>> GetUsersAsync(FilterOptions? filter = null, CancellationToken cancellationToken = default);
+}
+
+// The client implementation
+public class UsersApiClient : BaseApi, IUsersApiClient
+{
+    public UsersApiClient(
+        ILogger<BaseApi<ApiClientOptions>> logger,
+        IApiTokenProvider apiTokenProvider,
+        IRestClientService restClientService,
+        ApiClientOptions options)
+        : base(logger, apiTokenProvider, restClientService, options)
+    {
+    }
+
+    public async Task<ApiResult<User>> GetUserAsync(string userId, CancellationToken cancellationToken = default)
+    {
+        var request = await CreateRequestAsync($"users/{userId}", Method.Get, cancellationToken);
+        var response = await ExecuteAsync(request, false, cancellationToken);
+        return response.ToApiResponse<User>();
+    }
+
+    // Other API methods...
+}
+```
+
+### Advanced Registration with AddTypedApiClient
+
+The `AddTypedApiClient<TInterface, TImplementation, TOptions, TBuilder>` method provides full control over options types for complex scenarios:
+
+```csharp
+// Define custom options class
+public class UsersApiClientOptions : ApiClientOptionsBase
+{
+    public string? ApiVersion { get; set; }
+    public int CacheTimeoutMinutes { get; set; } = 5;
+    
+    // Custom validation
+    public override void Validate()
+    {
+        base.Validate();
+        if (string.IsNullOrEmpty(ApiVersion))
+            throw new InvalidOperationException("ApiVersion is required for UsersApiClient");
+    }
+}
+
+// Define custom builder
+public class UsersApiClientOptionsBuilder : ApiClientOptionsBuilder<UsersApiClientOptions, UsersApiClientOptionsBuilder>
+{
+    public UsersApiClientOptionsBuilder WithApiVersion(string version)
+    {
+        Options.ApiVersion = version;
+        return this;
+    }
+    
+    public UsersApiClientOptionsBuilder WithCacheTimeout(int minutes)
+    {
+        Options.CacheTimeoutMinutes = minutes;
+        return this;
+    }
+}
+
+// Register with strongly-typed options
+builder.Services.AddTypedApiClient<IUsersApiClient, UsersApiClient, UsersApiClientOptions, UsersApiClientOptionsBuilder>(options =>
+{
+    options.WithBaseUrl("https://users.example.com")
+           .WithApiKeyAuthentication("your-api-key")
+           .WithApiVersion("v2")
+           .WithCacheTimeout(10);
+});
+
+// The client implementation using strongly-typed options
+public class UsersApiClient : BaseApi<UsersApiClientOptions>, IUsersApiClient
+{
+    public UsersApiClient(
+        ILogger<BaseApi<UsersApiClientOptions>> logger,
+        IApiTokenProvider apiTokenProvider,
+        IRestClientService restClientService,
+        UsersApiClientOptions options)
+        : base(logger, apiTokenProvider, restClientService, options)
+    {
+    }
+
+    public async Task<ApiResult<User>> GetUserAsync(string userId, CancellationToken cancellationToken = default)
+    {
+        var request = await CreateRequestAsync($"users/{userId}", Method.Get, cancellationToken);
+        
+        // Access strongly-typed options
+        if (!string.IsNullOrEmpty(Options.ApiVersion))
+        {
+            request.AddQueryParameter("version", Options.ApiVersion);
+        }
+        
+        var response = await ExecuteAsync(request, false, cancellationToken);
+        return response.ToApiResponse<User>();
+    }
+
+    // Other API methods...
+}
+```
+
+### When to Use Each Pattern
+
+**Use `AddApiClient<TInterface, TImplementation>`** when:
+- You have simple configuration needs
+- Default `ApiClientOptions` are sufficient
+- You want minimal setup overhead
+- You're building straightforward API clients
+
+**Use `AddTypedApiClient<TInterface, TImplementation, TOptions, TBuilder>`** when:
+- You need custom configuration properties
+- You want strongly-typed options validation
+- You're building reusable API client libraries
+- You need complex configuration scenarios
+- You want to enforce specific configuration patterns
+
+## Authentication Methods
+
+### API Key Authentication
+
+```csharp
+// Default header (X-API-Key)
+builder.Services.AddApiClient()
+    .WithApiKeyAuthentication("your-api-key");
+
+// Custom header
+builder.Services.Configure<ApiClientOptions>(options => options
+    .WithApiKey("your-api-key", "X-Custom-Api-Key"));
+```
+
+### Bearer Token Authentication
+
+```csharp
+builder.Services.Configure<ApiClientOptions>(options => options
+    .WithBearerToken("your-bearer-token"));
+```
+
+### Entra ID (Azure AD) Authentication
+
+```csharp
+// Using DefaultAzureCredential
+builder.Services.AddApiClient()
+    .WithEntraIdAuthentication("api://your-api-audience");
+
+// With specific tenant
+builder.Services.Configure<ApiClientOptions>(options => options
+    .WithEntraIdAuthentication("api://your-api-audience", "your-tenant-id"));
+```
+
+### Client Credentials Flow
+
+```csharp
+builder.Services.Configure<ApiClientOptions>(options => options
+    .WithClientCredentials(
+        audience: "api://your-api",
+        tenantId: "tenant-id",
+        clientId: "client-id", 
+        clientSecret: "client-secret"));
+```
+
+### Multiple Authentication Methods
+
+```csharp
+// Azure API Management + Backend API
+builder.Services.Configure<ApiClientOptions>(options => options
+    .WithBaseUrl("https://your-api.azure-api.net")
+    .WithSubscriptionKey("apim-subscription-key")     // For APIM
+    .WithEntraIdAuthentication("api://backend-api")); // For backend
+```
+
+## Multiple API Clients
+
+### Named Configurations
+
+```csharp
+// Register base service
+builder.Services.AddApiClient();
+
+// Configure multiple named clients
+builder.Services.Configure<ApiClientOptions>("UsersApi", options => options
+    .WithBaseUrl("https://users.example.com")
+    .WithApiKeyAuthentication("users-api-key"));
+
+builder.Services.Configure<ApiClientOptions>("OrdersApi", options => options
+    .WithBaseUrl("https://orders.example.com")
+    .WithEntraIdAuthentication("api://orders-api"));
+
+// Register typed clients
+builder.Services.AddTransient<UsersApiClient>();
+builder.Services.AddTransient<OrdersApiClient>();
+```
+
+### Named Client Implementation
+
+```csharp
+public class UsersApiClient : BaseApi
+{
+    public UsersApiClient(
+        ILogger<UsersApiClient> logger,
+        IApiTokenProvider apiTokenProvider,
+        IRestClientService restClientService,
+        IOptionsSnapshot<ApiClientOptions> optionsSnapshot)
+        : base(logger, apiTokenProvider, restClientService, optionsSnapshot, "UsersApi")
+    {
+    }
+
+    // API methods...
+}
+```
+
+## Advanced Features
+
+### Custom Request Configuration
+
+```csharp
+public async Task<ApiResult<T>> CustomRequestAsync<T>(CancellationToken cancellationToken = default)
+{
+    var request = await CreateRequestAsync("endpoint", Method.Get, cancellationToken);
+    
+    // Add custom headers
+    request.AddHeader("X-Correlation-ID", Guid.NewGuid().ToString());
+    request.AddHeader("X-Client-Version", "1.0.0");
+    
+    // Custom timeout
+    request.Timeout = TimeSpan.FromMinutes(5);
+    
+    var response = await ExecuteAsync(request, false, cancellationToken);
+    return response.ToApiResponse<T>();
+}
+```
+
+### File Upload/Download
+
+```csharp
+// File upload
+public async Task<ApiResult<UploadResponse>> UploadFileAsync(
+    Stream fileStream, 
+    string fileName, 
+    CancellationToken cancellationToken = default)
+{
+    var request = await CreateRequestAsync("files/upload", Method.Post, cancellationToken);
+    request.AddFile("file", fileStream.ToArray(), fileName, "application/octet-stream");
+    
+    var response = await ExecuteAsync(request, false, cancellationToken);
+    return response.ToApiResponse<UploadResponse>();
+}
+
+// File download  
+public async Task<Stream> DownloadFileAsync(string fileId, CancellationToken cancellationToken = default)
+{
+    var request = await CreateRequestAsync($"files/{fileId}", Method.Get, cancellationToken);
+    var response = await ExecuteAsync(request, false, cancellationToken);
+    
+    if (response.IsSuccessful && response.RawBytes != null)
+        return new MemoryStream(response.RawBytes);
+        
+    throw new ApplicationException($"Download failed: {response.StatusCode}");
+}
+```
+
+### Error Handling
+
+```csharp
+public async Task<User?> GetUserSafelyAsync(string userId)
+{
+    var result = await GetUserAsync(userId);
+
+    if (result.IsSuccess)
+        return result.Result?.Data;
+
+    if (result.IsNotFound)
+        return null;
+
+    if (result.IsUnauthorized)
+        throw new UnauthorizedAccessException("API access denied");
+
+    if (result.IsBadRequest)
+        throw new ArgumentException($"Invalid user ID: {userId}");
+
+    throw new ApplicationException($"API call failed: {result.StatusCode}");
+}
+```
+
+## Configuration
+
+### appsettings.json
+
+```json
+{
+  "ApiClient": {
+    "BaseUrl": "https://api.example.com",
+    "MaxRetryCount": 3,
+    "TimeoutSeconds": 30,
+    "ApiKey": "your-api-key"
+  }
+}
+```
+
+### Programmatic Configuration
+
+```csharp
+builder.Services.Configure<ApiClientOptions>(options => options
+    .WithBaseUrl("https://api.example.com")
+    .WithMaxRetryCount(5)
+    .WithApiKeyAuthentication("your-api-key"));
+```
+
+## Dependencies
+
+This package depends on:
+- **MX.Api.Abstractions** - Core response models and interfaces
+- **Azure.Identity** - For Entra ID authentication
+- **RestSharp** - HTTP client functionality
+- **Polly** - Resilience patterns and retry policies
+- **Microsoft.Extensions.*** - Logging, configuration, and dependency injection
+
+## Documentation
+
+- **[📖 Implementation Guide - API Consumers](../../docs/implementing-api-consumer.md)** - Complete guide for consuming APIs
+- **[📖 API Design Patterns](../../docs/api-design-v2.md)** - Understanding the underlying patterns
 {
     private readonly ILogger<MyApiClient> logger;
 

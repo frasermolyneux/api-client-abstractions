@@ -1,13 +1,11 @@
 using System.Net;
 using System.Security.Authentication;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using MX.Api.Client.Auth;
 using MX.Api.Client.Configuration;
 using Polly;
 using Polly.Retry;
-
 using RestSharp;
 
 namespace MX.Api.Client;
@@ -16,105 +14,82 @@ namespace MX.Api.Client;
 /// Base class for API clients providing common functionality for REST API calls.
 /// This class handles authentication, retries, and error management for REST API operations.
 /// </summary>
-public class BaseApi
+/// <typeparam name="TOptions">The type of options for this client</typeparam>
+public class BaseApi<TOptions>
+    where TOptions : ApiClientOptionsBase
 {
     private const string AuthorizationHeaderName = "Authorization";
     private const string BearerTokenPrefix = "Bearer ";
 
-    private readonly ILogger<BaseApi> logger;
+    private readonly ILogger<BaseApi<TOptions>> logger;
     private readonly IApiTokenProvider? apiTokenProvider;
     private readonly IRestClientService restClientService;
-    private readonly ApiClientOptions options;
+    private readonly TOptions options;
     private readonly AsyncRetryPolicy<RestResponse> retryPolicy;
-    private readonly string? optionsName; // For named options support
 
     private static readonly HttpStatusCode[] SuccessStatusCodes = { HttpStatusCode.OK, HttpStatusCode.Created, HttpStatusCode.NoContent, HttpStatusCode.NotFound };
     private static readonly HttpStatusCode[] NoRetryStatusCodes = { HttpStatusCode.OK, HttpStatusCode.Created, HttpStatusCode.NoContent, HttpStatusCode.NotFound, HttpStatusCode.Unauthorized, HttpStatusCode.BadRequest, HttpStatusCode.UnprocessableEntity };
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="BaseApi"/> class.
+    /// The strongly-typed options for this client
+    /// </summary>
+    protected TOptions Options => options;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="BaseApi{TOptions}"/> class.
     /// </summary>
     /// <param name="logger">The logger instance.</param>
     /// <param name="apiTokenProvider">The optional API token provider (required for Entra ID authentication).</param>
     /// <param name="restClientService">The REST client service.</param>
-    /// <param name="options">The API client options.</param>
+    /// <param name="options">The strongly-typed API client options.</param>
     /// <exception cref="ArgumentNullException">Thrown when any required dependency is null.</exception>
     /// <exception cref="ArgumentException">Thrown when required options are missing.</exception>
     public BaseApi(
-        ILogger<BaseApi> logger,
+        ILogger<BaseApi<TOptions>> logger,
         IApiTokenProvider? apiTokenProvider,
         IRestClientService restClientService,
-        IOptions<ApiClientOptions> options)
+        TOptions options)
     {
-        this.logger = logger ?? new NullLogger<BaseApi>();
+        this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
         this.apiTokenProvider = apiTokenProvider;
         this.restClientService = restClientService ?? throw new ArgumentNullException(nameof(restClientService));
 
         ArgumentNullException.ThrowIfNull(options);
-        ArgumentNullException.ThrowIfNull(options.Value);
 
-        if (string.IsNullOrEmpty(options.Value.BaseUrl))
-        {
-            throw new ArgumentException("BaseUrl must be specified in ApiClientOptions", nameof(options));
-        }
+        // Validate the options
+        options.Validate();
 
-        if (options.Value.AuthenticationOptions.OfType<EntraIdAuthenticationOptions>().Any() && apiTokenProvider == null)
+        if (options.AuthenticationOptions.OfType<EntraIdAuthenticationOptions>().Any() && apiTokenProvider == null)
         {
             throw new ArgumentException("IApiTokenProvider must be provided when using Entra ID authentication", nameof(apiTokenProvider));
         }
 
-        this.options = options.Value;
-        this.optionsName = null; // Not using named options
+        this.options = options;
 
-        // Configure retry policy - simplified configuration
+        // Configure retry policy
         retryPolicy = CreateRetryPolicy(this.options.MaxRetryCount > 0 ? this.options.MaxRetryCount : 3);
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="BaseApi"/> class using named options.
+    /// Initializes a new instance of the <see cref="BaseApi{TOptions}"/> class using IOptions.
     /// </summary>
     /// <param name="logger">The logger instance.</param>
     /// <param name="apiTokenProvider">The optional API token provider (required for Entra ID authentication).</param>
     /// <param name="restClientService">The REST client service.</param>
-    /// <param name="optionsSnapshot">The options snapshot for named configurations.</param>
-    /// <param name="optionsName">The name of the options configuration to use.</param>
+    /// <param name="options">The strongly-typed API client options.</param>
     /// <exception cref="ArgumentNullException">Thrown when any required dependency is null.</exception>
-    /// <exception cref="ArgumentException">Thrown when required options are missing or optionsName is null/empty.</exception>
+    /// <exception cref="ArgumentException">Thrown when required options are missing.</exception>
     public BaseApi(
-        ILogger<BaseApi> logger,
+        ILogger<BaseApi<TOptions>> logger,
         IApiTokenProvider? apiTokenProvider,
         IRestClientService restClientService,
-        IOptionsSnapshot<ApiClientOptions> optionsSnapshot,
-        string optionsName)
+        IOptions<TOptions> options)
+        : this(logger, apiTokenProvider, restClientService, options?.Value ??
+            throw new ArgumentNullException(nameof(options)))
     {
-        this.logger = logger ?? new NullLogger<BaseApi>();
-        this.apiTokenProvider = apiTokenProvider;
-        this.restClientService = restClientService ?? throw new ArgumentNullException(nameof(restClientService));
-
-        ArgumentNullException.ThrowIfNull(optionsSnapshot);
-
-        if (string.IsNullOrEmpty(optionsName))
-        {
-            throw new ArgumentException("Options name cannot be null or empty", nameof(optionsName));
-        }
-
-        var namedOptions = optionsSnapshot.Get(optionsName);
-        if (string.IsNullOrEmpty(namedOptions.BaseUrl))
-        {
-            throw new ArgumentException($"BaseUrl must be specified in ApiClientOptions for configuration '{optionsName}'", nameof(optionsName));
-        }
-
-        if (namedOptions.AuthenticationOptions.OfType<EntraIdAuthenticationOptions>().Any() && apiTokenProvider == null)
-        {
-            throw new ArgumentException("IApiTokenProvider must be provided when using Entra ID authentication", nameof(apiTokenProvider));
-        }
-
-        this.options = namedOptions;
-        this.optionsName = optionsName;
-
-        // Configure retry policy - simplified configuration
-        retryPolicy = CreateRetryPolicy(this.options.MaxRetryCount > 0 ? this.options.MaxRetryCount : 3);
     }
+
+
 
     /// <summary>
     /// Creates a retry policy with exponential backoff for handling transient failures.
@@ -278,9 +253,7 @@ public class BaseApi
         {
             // Execute the request with retry policy
             var response = await retryPolicy.ExecuteAsync(
-                async (token) => optionsName != null 
-                    ? await restClientService.ExecuteWithNamedOptionsAsync(optionsName, request, token)
-                    : await restClientService.ExecuteAsync(options.BaseUrl, request, token),
+                async (token) => await restClientService.ExecuteAsync(options.BaseUrl, request, token),
                 cancellationToken);
 
             // Ensure response is not null to prevent NullReferenceException
@@ -336,4 +309,6 @@ public class BaseApi
                 $"Failed {request.Method} to '{request.Resource}' with status code {response.StatusCode}: {response.Content}");
         }
     }
+
+
 }

@@ -5,276 +5,188 @@
 [![Pull Request Validation](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/pull-request-validation.yml/badge.svg)](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/pull-request-validation.yml)
 [![Release to Production](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/release-to-production.yml/badge.svg)](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/release-to-production.yml)
 
-## Overview
+A comprehensive set of .NET libraries providing standardized API abstractions, resilient API clients, and ASP.NET Core integration for building robust applications that consume or expose APIs.
 
-This repository provides a comprehensive API Abstractions approach for building robust .NET applications that interact with APIs. The libraries offer standardized approaches for API interactions from both client and web perspectives, including common abstractions, API client implementations, and web application integration.
+## Quick Start
 
-The implementation follows the API design pattern, which provides a consistent approach to API interactions with standardized response formats, error handling, filtering, and pagination across all API touchpoints in your applications.
+### Installation
 
-## Libraries
-
-The solution consists of three main packages that work together to provide a complete API abstractions approach:
-
-### MX.Api.Abstractions
-
-Core abstractions library providing common models and interfaces for standardized API handling:
-- `ApiResponse` - Standard API response model for operations without data (e.g., DELETE operations)
-- `ApiResponse<T>` - Standard API response model for operations with data following API design
-- `ApiResult<T>` - HTTP response wrapper containing API responses
-- `CollectionModel<T>` - Collection wrapper for API result sets
-- `ApiError` - Standardized error model
-- `ApiPagination` - Pagination information
-- `FilterOptions` - OData-like filtering options
-
-### MX.Api.Client
-
-API client library providing resilient, authenticated REST API client implementation:
-- Automatic token acquisition and caching
-- Multiple authentication methods that can be combined (API keys, Entra ID)
-- API key authentication with resilient handling
-- Resilient HTTP requests with configurable retry policies
-- Thread-safe REST client management
-- Support for common query parameters and filtering options
-
-### MX.Api.Web.Extensions
-
-ASP.NET Core integration library providing extension methods for web applications:
-- Converting API responses to ActionResults with appropriate status codes
-- Simplified controller implementations for API endpoints
-- Seamless integration between API clients and web applications
-
-## Architecture
-
-The MX API Abstractions approach is designed as a layered architecture:
-
-1. **MX.Api.Abstractions** - Foundation layer providing core models and interfaces
-2. **MX.Api.Client** - Implementation layer for API client functionality (depends on Abstractions)
-3. **MX.Api.Web.Extensions** - Integration layer for ASP.NET Core applications (depends on Abstractions)
-
-This layered approach ensures that:
-- Core abstractions remain stable and reusable across different implementations
-- API clients can be built with consistent patterns and standards
-- Web applications can seamlessly integrate with API clients
-- All components follow the same API design principles
-
-## Installation
-
-Install the packages via NuGet based on your needs:
+Install the packages you need via NuGet:
 
 ```bash
-# For core abstractions (required by other packages)
+# Core abstractions (required by other packages)
 dotnet add package MX.Api.Abstractions
 
 # For building API clients
 dotnet add package MX.Api.Client
 
-# For ASP.NET Core web application integration
+# For ASP.NET Core web application integration  
 dotnet add package MX.Api.Web.Extensions
 ```
 
-### Package Dependencies
+### API Client Registration
 
-- **MX.Api.Abstractions** - Standalone core abstractions (no dependencies on other MX packages)
-- **MX.Api.Client** - Depends on MX.Api.Abstractions
-- **MX.Api.Web.Extensions** - Depends on MX.Api.Abstractions (independent of MX.Api.Client)
-
-You can use any combination of these packages based on your application's needs. For example:
-- Use only MX.Api.Abstractions if you're building your own API client implementation
-- Use MX.Api.Abstractions + MX.Api.Client for consuming APIs in console/service applications
-- Use all three packages for full-stack web applications that both consume and expose APIs
-
-## Getting Started
-
-### Basic Setup
-
-Register the API client services in your application's startup:
+**Option 1: Simple Registration (Recommended for most cases)**
 
 ```csharp
-// Add API client with API key authentication
-services.AddApiClient()
-    .WithBaseUrl("https://api.example.com")
-    .WithApiKeyAuthentication("your-api-key");
-
-// Or with Entra ID authentication
-services.AddApiClient()
-    .WithBaseUrl("https://api.example.com")
-    .WithAzureCredentials("api://your-api-audience");
-
-// Multiple authentication methods (e.g., for Azure API Management)
-services.Configure<ApiClientOptions>(options => options
-    .WithBaseUrl("https://your-api-via-apim.azure-api.net")
-    .WithSubscriptionKey("your-apim-subscription-key")      // For API Management
-    .WithEntraIdAuthentication("api://your-api-audience")); // For underlying API
-```
-
-### Named Options for Multiple API Clients
-
-Configure multiple isolated API client configurations using named options:
-
-```csharp
-// Register the API client service once
-services.AddApiClient();
-
-// Configure multiple named API clients
-services.WithBaseUrl("UsersApi", "https://users.example.com")
-        .WithApiKeyAuthentication("UsersApi", "users-api-key");
-        
-services.WithBaseUrl("OrdersApi", "https://orders.example.com")
-        .WithClientCredentials("OrdersApi", "api://orders.example.com", 
-            "tenant-id", "client-id", "client-secret");
-            
-services.WithBaseUrl("ReportsApi", "https://reports.example.com")
-        .WithAzureCredentials("ReportsApi", "api://reports.example.com");
-```
-
-### Custom Credential Provider
-
-To use a custom credential provider:
-
-```csharp
-// Register with custom credential provider
-services.AddApiClientWithCustomCredentialProvider<YourCustomCredentialProvider>();
-
-// Add your custom provider implementation
-public class YourCustomCredentialProvider : ITokenCredentialProvider
+// Program.cs
+builder.Services.AddApiClient<IMyApiClient, MyApiClient>(options =>
 {
-    public Task<TokenCredential> GetTokenCredentialAsync(CancellationToken cancellationToken = default)
-    {
-        // Your custom implementation
-        return Task.FromResult<TokenCredential>(new DefaultAzureCredential(cancellationToken: cancellationToken));
-    }
+    options.WithBaseUrl("https://api.example.com")
+           .WithApiKeyAuthentication("your-api-key");
+});
+
+// Define your client interface
+public interface IMyApiClient
+{
+    Task<ApiResult<User>> GetUserAsync(string userId, CancellationToken cancellationToken = default);
 }
-```
 
-### Creating an API Client
-
-Create your API client by inheriting from `BaseApi`:
-
-```csharp
-// Default options usage
-public class UserApi : BaseApi
+// Implement your client
+public class MyApiClient : BaseApi, IMyApiClient
 {
-    private readonly ILogger<UserApi> logger;
-
-    public UserApi(
-        ILogger<UserApi> logger,
+    public MyApiClient(
+        ILogger<BaseApi<ApiClientOptions>> logger,
         IApiTokenProvider apiTokenProvider,
         IRestClientService restClientService,
-        IOptions<ApiClientOptions> options)
+        ApiClientOptions options)
         : base(logger, apiTokenProvider, restClientService, options)
     {
-        this.logger = logger;
     }
 
-    // API methods...
-}
-
-// Named options usage
-public class UsersApiClient : BaseApi
-{
-    public UsersApiClient(
-        ILogger<UsersApiClient> logger,
-        IApiTokenProvider apiTokenProvider,
-        IRestClientService restClientService,
-        IOptionsSnapshot<ApiClientOptions> optionsSnapshot)
-        : base(logger, apiTokenProvider, restClientService, optionsSnapshot, "UsersApi")
+    public async Task<ApiResult<User>> GetUserAsync(string userId, CancellationToken cancellationToken = default)
     {
-    }
-
-    public async Task<ApiResponse<User>> GetUserAsync(string userId, CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            logger.LogInformation("Retrieving user with ID {UserId}", userId);
-            
-            var request = await CreateRequestAsync($"users/{userId}", Method.Get, cancellationToken);
-            var response = await ExecuteAsync(request, false, cancellationToken);
-            
-            return response.ToApiResponse<User>();
-        }
-        catch (Exception ex) when (ex is not OperationCanceledException)
-        {
-            logger.LogError(ex, "Failed to retrieve user with ID {UserId}", userId);
-            var errorResponse = new ApiResponse<User>(new ApiError("InternalError", "An unexpected error occurred while retrieving the user"));
-            return new ApiResult<User>(HttpStatusCode.InternalServerError, errorResponse);
-        }
+        var request = await CreateRequestAsync($"users/{userId}", Method.Get, cancellationToken);
+        var response = await ExecuteAsync(request, false, cancellationToken);
+        return response.ToApiResponse<User>();
     }
 }
 ```
 
-### Using the API Client
+**Option 2: Advanced Registration (For complex scenarios)**
 
-Inject and use your API client:
+```csharp
+// Define custom options for advanced scenarios
+public class MyApiClientOptions : ApiClientOptionsBase
+{
+    public string ApiVersion { get; set; } = "v1";
+    public int CacheTimeoutMinutes { get; set; } = 5;
+}
+
+public class MyApiClientOptionsBuilder : ApiClientOptionsBuilder<MyApiClientOptions, MyApiClientOptionsBuilder>
+{
+    public MyApiClientOptionsBuilder WithApiVersion(string version)
+    {
+        Options.ApiVersion = version;
+        return this;
+    }
+}
+
+// Register with strongly-typed options
+builder.Services.AddTypedApiClient<IMyApiClient, MyApiClient, MyApiClientOptions, MyApiClientOptionsBuilder>(options =>
+{
+    options.WithBaseUrl("https://api.example.com")
+           .WithApiKeyAuthentication("your-api-key")
+           .WithApiVersion("v2");
+});
+
+// Use strongly-typed options in your client
+public class MyApiClient : BaseApi<MyApiClientOptions>, IMyApiClient
+{
+    public MyApiClient(
+        ILogger<BaseApi<MyApiClientOptions>> logger,
+        IApiTokenProvider apiTokenProvider,
+        IRestClientService restClientService,
+        MyApiClientOptions options)
+        : base(logger, apiTokenProvider, restClientService, options)
+    {
+    }
+
+    public async Task<ApiResult<User>> GetUserAsync(string userId, CancellationToken cancellationToken = default)
+    {
+        var request = await CreateRequestAsync($"users/{userId}", Method.Get, cancellationToken);
+        
+        // Access your custom options
+        request.AddQueryParameter("version", Options.ApiVersion);
+        
+        var response = await ExecuteAsync(request, false, cancellationToken);
+        return response.ToApiResponse<User>();
+    }
+}
+```
+
+### Using Your Client
 
 ```csharp
 public class UserService
 {
-    private readonly ILogger<UserService> logger;
-    private readonly UserApi userApi;
-
-    public UserService(ILogger<UserService> logger, UserApi userApi)
+    private readonly IMyApiClient _apiClient;
+    
+    public UserService(IMyApiClient apiClient) // Use interface for better testability
     {
-        this.logger = logger;
-        this.userApi = userApi;
+        _apiClient = apiClient;
     }
-
-    public async Task<User?> GetUserAsync(string userId, CancellationToken cancellationToken = default)
+    
+    public async Task<User?> GetUserAsync(string userId)
     {
-        var response = await userApi.GetUserAsync(userId, cancellationToken);
-        
-        if (response.IsSuccess && response.Result != null)
-        {
-            return response.Result.Data;
-        }
-        
-        if (response.IsNotFound)
-        {
-            logger.LogWarning("User with ID {UserId} was not found", userId);
-            return null;
-        }
-        
-        logger.LogError("Failed to retrieve user with ID {UserId}. Status code: {StatusCode}", 
-            userId, response.StatusCode);
-        return null;
+        var result = await _apiClient.GetUserAsync(userId);
+        return result.IsSuccess ? result.Result?.Data : null;
     }
 }
 ```
 
+## Libraries
+
+This solution consists of three focused NuGet packages:
+
+| Package                   | Purpose                                                      | Dependencies        |
+| ------------------------- | ------------------------------------------------------------ | ------------------- |
+| **MX.Api.Abstractions**   | Core models and interfaces for standardized API handling     | None                |
+| **MX.Api.Client**         | Resilient REST API client implementation with authentication | MX.Api.Abstractions |
+| **MX.Api.Web.Extensions** | ASP.NET Core integration for API responses                   | MX.Api.Abstractions |
+
+## Key Features
+
+- **🔐 Multi-Authentication Support** - API keys, Bearer tokens, and Entra ID with automatic token management
+- **🛡️ Resilience Built-In** - Retry policies, circuit breakers, and exponential backoff
+- **📐 Standardized Responses** - Consistent API response models following proven design patterns
+- **🔄 ASP.NET Core Integration** - Seamless conversion between API responses and HTTP results
+- **⚡ High Performance** - Thread-safe operations with efficient caching and connection pooling
+
+## Documentation
+
+- **[📖 Implementation Guide - API Providers](docs/implementing-api-provider.md)** - Guide for teams building APIs
+- **[📖 Implementation Guide - API Consumers](docs/implementing-api-consumer.md)** - Guide for teams consuming APIs  
+- **[� Versioned API Client Pattern](docs/implementing-versioned-api-client.md)** - Advanced pattern for multi-version API support
+- **[�📐 API Design Patterns](docs/api-design-v2.md)** - Understanding the underlying design principles
+
 ## Authentication
 
-The library supports multiple authentication mechanisms:
+Supports multiple authentication methods that can be combined:
 
-1. **API Keys**: Provided via `ApiClientOptions.WithApiKeyAuthentication(apiKey)` or `AuthenticationOptions.ApiKey`
-2. **Bearer Tokens**: Automatically managed and cached by `ApiTokenProvider`
-3. **Entra ID (formerly Azure AD)**: Leverages `DefaultAzureCredential` for Azure resource access
+```csharp
+// API Key only
+services.AddApiClient()
+    .WithApiKeyAuthentication("your-api-key");
 
-The `DefaultTokenCredentialProvider` attempts to authenticate via:
-- Environment variables
-- Managed Identity
-- Visual Studio
-- Azure CLI
-- Azure PowerShell
+// Entra ID only  
+services.AddApiClient()
+    .WithEntraIdAuthentication("api://your-api-audience");
 
-## Error Handling and Resilience
-
-The `BaseApi` class implements automatic retries with exponential backoff for transient failures. You can configure retry behavior through `ApiClientOptions.MaxRetryCount`.
-
-## API Design Pattern
-
-This library implements the API design pattern, which provides:
-
-- Standardized response formats with consistent error handling across all API interactions
-- OData-like filtering with `$filter`, `$select`, `$expand`, etc. for flexible data queries
-- Pagination support with skip/take and comprehensive metadata
-- Consistent URL structure and query parameters following RESTful principles
-- Unified approach to API interactions whether consuming or exposing APIs
-
-For more details on the API design pattern, see the [API Design Documentation](docs/api-design-v2.md).
+// Combined (e.g., Azure API Management + Backend API)
+services.Configure<ApiClientOptions>(options => options
+    .WithSubscriptionKey("apim-subscription-key")     // For APIM
+    .WithEntraIdAuthentication("api://backend-api")); // For backend
+```
 
 ## Contributing
 
-Please read the [contributing](CONTRIBUTING.md) guidance; this is a learning and development project focused on building robust API abstraction patterns for .NET applications.
+Please read the [contributing guidelines](CONTRIBUTING.md) for information about contributing to this project. This is a learning and development project focused on building robust API abstraction patterns for .NET applications.
 
 ## Security
 
-Please read the [security](SECURITY.md) guidance; I am always open to security feedback through email or opening an issue.
+Please read the [security policy](SECURITY.md) for information about reporting security vulnerabilities. I am always open to security feedback through email or opening an issue.
+
+## License
+
+This project is licensed under the GPL-3.0 License - see the [LICENSE](LICENSE) file for details.
