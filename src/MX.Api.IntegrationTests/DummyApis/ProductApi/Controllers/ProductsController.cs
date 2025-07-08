@@ -53,17 +53,17 @@ public class ProductsController : ControllerBase, IProductApiV1
     /// </summary>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Collection of products</returns>
-    async Task<ApiResult<CollectionModel<Product>>> IProductApiV1.GetProductsAsync(CancellationToken cancellationToken)
+    Task<ApiResult<CollectionModel<Product>>> IProductApiV1.GetProductsAsync(CancellationToken cancellationToken)
     {
         // Check for authentication header
         var authHeader = Request.Headers.Authorization.FirstOrDefault();
         if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer test-product-key"))
         {
-            return new ApiResponse<CollectionModel<Product>>(
+            return Task.FromResult(new ApiResponse<CollectionModel<Product>>(
                 new ApiError(ApiErrorConstants.ErrorCodes.Unauthorized,
                     ApiErrorConstants.ErrorMessages.InvalidOrMissingAuthentication,
                     ApiErrorConstants.ErrorDetails.BearerTokenRequired)
-            ).ToApiResult(System.Net.HttpStatusCode.Unauthorized);
+            ).ToApiResult(System.Net.HttpStatusCode.Unauthorized));
         }
 
         var collection = new CollectionModel<Product>
@@ -73,7 +73,7 @@ public class ProductsController : ControllerBase, IProductApiV1
             FilteredCount = Products.Count
         };
 
-        return new ApiResponse<CollectionModel<Product>>(collection).ToApiResult();
+        return Task.FromResult(new ApiResponse<CollectionModel<Product>>(collection).ToApiResult());
     }
 
     /// <summary>
@@ -82,29 +82,29 @@ public class ProductsController : ControllerBase, IProductApiV1
     /// <param name="id">Product ID</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Product or error</returns>
-    async Task<ApiResult<Product>> IProductApiV1.GetProductAsync(int id, CancellationToken cancellationToken)
+    Task<ApiResult<Product>> IProductApiV1.GetProductAsync(int id, CancellationToken cancellationToken)
     {
         // Check for authentication header
         var authHeader = Request.Headers.Authorization.FirstOrDefault();
         if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer test-product-key"))
         {
-            return new ApiResponse<Product>(
+            return Task.FromResult(new ApiResponse<Product>(
                 new ApiError(ApiErrorConstants.ErrorCodes.Unauthorized,
                     ApiErrorConstants.ErrorMessages.InvalidOrMissingAuthentication,
                     ApiErrorConstants.ErrorDetails.BearerTokenRequired)
-            ).ToApiResult(System.Net.HttpStatusCode.Unauthorized);
+            ).ToApiResult(System.Net.HttpStatusCode.Unauthorized));
         }
 
         var product = Products.FirstOrDefault(p => p.Id == id);
         if (product == null)
         {
-            return new ApiResponse<Product>(
+            return Task.FromResult(new ApiResponse<Product>(
                 new ApiError(ApiErrorConstants.ErrorCodes.NotFound,
                     string.Format(ApiErrorConstants.ErrorMessages.ResourceNotFound, "Product", id),
                     string.Format(ApiErrorConstants.ErrorDetails.ResourceDoesNotExist, "product"))
-            ).ToApiResult(System.Net.HttpStatusCode.NotFound);
+            ).ToApiResult(System.Net.HttpStatusCode.NotFound));
         }
 
-        return new ApiResponse<Product>(product).ToApiResult();
+        return Task.FromResult(new ApiResponse<Product>(product).ToApiResult());
     }
 }

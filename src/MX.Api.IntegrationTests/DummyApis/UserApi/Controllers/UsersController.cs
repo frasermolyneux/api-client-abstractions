@@ -104,26 +104,26 @@ public class UsersController : ControllerBase, IUserApiV1
     /// <param name="pageSize">Page size</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Paginated users</returns>
-    async Task<ApiResult<CollectionModel<User>>> IUserApiV1.GetUsersAsync(int page, int pageSize, CancellationToken cancellationToken)
+    Task<ApiResult<CollectionModel<User>>> IUserApiV1.GetUsersAsync(int page, int pageSize, CancellationToken cancellationToken)
     {
         // Bearer token validation
         if (!Request.Headers.ContainsKey("Authorization"))
         {
-            return new ApiResponse<CollectionModel<User>>(
+            return Task.FromResult(new ApiResponse<CollectionModel<User>>(
                 new ApiError(ApiErrorConstants.ErrorCodes.Unauthorized,
                     ApiErrorConstants.ErrorMessages.AuthorizationHeaderRequired,
                     ApiErrorConstants.ErrorDetails.BearerTokenMissing)
-            ).ToApiResult(System.Net.HttpStatusCode.Unauthorized);
+            ).ToApiResult(System.Net.HttpStatusCode.Unauthorized));
         }
 
         var authHeader = Request.Headers["Authorization"].ToString();
         if (!authHeader.StartsWith("Bearer ") || authHeader != "Bearer user-test-token")
         {
-            return new ApiResponse<CollectionModel<User>>(
+            return Task.FromResult(new ApiResponse<CollectionModel<User>>(
                 new ApiError(ApiErrorConstants.ErrorCodes.Unauthorized,
                     ApiErrorConstants.ErrorMessages.InvalidOrMissingAuthentication,
                     ApiErrorConstants.ErrorDetails.InvalidBearerToken)
-            ).ToApiResult(System.Net.HttpStatusCode.Unauthorized);
+            ).ToApiResult(System.Net.HttpStatusCode.Unauthorized));
         }
 
         _logger.LogInformation("Getting users page {Page} with size {PageSize}", page, pageSize);
@@ -141,7 +141,7 @@ public class UsersController : ControllerBase, IUserApiV1
             FilteredCount = totalCount // For simplicity, no filtering in this demo
         };
 
-        return new ApiResponse<CollectionModel<User>>(collection).ToApiResult();
+        return Task.FromResult(new ApiResponse<CollectionModel<User>>(collection).ToApiResult());
     }
 
     /// <summary>
@@ -150,26 +150,26 @@ public class UsersController : ControllerBase, IUserApiV1
     /// <param name="userId">User ID</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>User</returns>
-    async Task<ApiResult<User>> IUserApiV1.GetUserByIdAsync(int userId, CancellationToken cancellationToken)
+    Task<ApiResult<User>> IUserApiV1.GetUserByIdAsync(int userId, CancellationToken cancellationToken)
     {
         // Bearer token validation
         if (!Request.Headers.ContainsKey("Authorization"))
         {
-            return new ApiResponse<User>(
+            return Task.FromResult(new ApiResponse<User>(
                 new ApiError(ApiErrorConstants.ErrorCodes.Unauthorized,
                     ApiErrorConstants.ErrorMessages.AuthorizationHeaderRequired,
                     ApiErrorConstants.ErrorDetails.BearerTokenMissing)
-            ).ToApiResult(System.Net.HttpStatusCode.Unauthorized);
+            ).ToApiResult(System.Net.HttpStatusCode.Unauthorized));
         }
 
         var authHeader = Request.Headers["Authorization"].ToString();
         if (!authHeader.StartsWith("Bearer ") || authHeader != "Bearer user-test-token")
         {
-            return new ApiResponse<User>(
+            return Task.FromResult(new ApiResponse<User>(
                 new ApiError(ApiErrorConstants.ErrorCodes.Unauthorized,
                     ApiErrorConstants.ErrorMessages.InvalidOrMissingAuthentication,
                     ApiErrorConstants.ErrorDetails.InvalidBearerToken)
-            ).ToApiResult(System.Net.HttpStatusCode.Unauthorized);
+            ).ToApiResult(System.Net.HttpStatusCode.Unauthorized));
         }
 
         _logger.LogInformation("Getting user {UserId}", userId);
@@ -177,14 +177,14 @@ public class UsersController : ControllerBase, IUserApiV1
         var user = _users.FirstOrDefault(u => u.Id == userId);
         if (user == null)
         {
-            return new ApiResponse<User>(
+            return Task.FromResult(new ApiResponse<User>(
                 new ApiError(ApiErrorConstants.ErrorCodes.NotFound,
                     string.Format(ApiErrorConstants.ErrorMessages.ResourceNotFound, "User", userId),
                     string.Format(ApiErrorConstants.ErrorDetails.ResourceDoesNotExist, "user"))
-            ).ToApiResult(System.Net.HttpStatusCode.NotFound);
+            ).ToApiResult(System.Net.HttpStatusCode.NotFound));
         }
 
-        return new ApiResponse<User>(user).ToApiResult();
+        return Task.FromResult(new ApiResponse<User>(user).ToApiResult());
     }
 
     /// <summary>
@@ -193,26 +193,26 @@ public class UsersController : ControllerBase, IUserApiV1
     /// <param name="user">User to create</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Created user</returns>
-    async Task<ApiResult<User>> IUserApiV1.CreateUserAsync(User user, CancellationToken cancellationToken)
+    Task<ApiResult<User>> IUserApiV1.CreateUserAsync(User user, CancellationToken cancellationToken)
     {
         // Bearer token validation
         if (!Request.Headers.ContainsKey("Authorization"))
         {
-            return new ApiResponse<User>(
+            return Task.FromResult(new ApiResponse<User>(
                 new ApiError(ApiErrorConstants.ErrorCodes.Unauthorized,
                     ApiErrorConstants.ErrorMessages.AuthorizationHeaderRequired,
                     ApiErrorConstants.ErrorDetails.BearerTokenMissing)
-            ).ToApiResult(System.Net.HttpStatusCode.Unauthorized);
+            ).ToApiResult(System.Net.HttpStatusCode.Unauthorized));
         }
 
         var authHeader = Request.Headers["Authorization"].ToString();
         if (!authHeader.StartsWith("Bearer ") || authHeader != "Bearer user-test-token")
         {
-            return new ApiResponse<User>(
+            return Task.FromResult(new ApiResponse<User>(
                 new ApiError(ApiErrorConstants.ErrorCodes.Unauthorized,
                     ApiErrorConstants.ErrorMessages.InvalidOrMissingAuthentication,
                     ApiErrorConstants.ErrorDetails.InvalidBearerToken)
-            ).ToApiResult(System.Net.HttpStatusCode.Unauthorized);
+            ).ToApiResult(System.Net.HttpStatusCode.Unauthorized));
         }
 
         _logger.LogInformation("Creating user {Username}", user.Username);
@@ -220,11 +220,11 @@ public class UsersController : ControllerBase, IUserApiV1
         // Check if username already exists
         if (_users.Any(u => u.Username == user.Username))
         {
-            return new ApiResponse<User>(
+            return Task.FromResult(new ApiResponse<User>(
                 new ApiError(ApiErrorConstants.ErrorCodes.ResourceExists,
                     string.Format(ApiErrorConstants.ErrorMessages.ResourceAlreadyExists, "User", "username", user.Username),
                     string.Format(ApiErrorConstants.ErrorDetails.ResourceAlreadyExistsDetail, "user", "username"))
-            ).ToApiResult(System.Net.HttpStatusCode.BadRequest);
+            ).ToApiResult(System.Net.HttpStatusCode.BadRequest));
         }
 
         // Set the ID and creation timestamp
@@ -233,7 +233,7 @@ public class UsersController : ControllerBase, IUserApiV1
 
         _users.Add(user);
 
-        return new ApiResponse<User>(user).ToApiResult(System.Net.HttpStatusCode.Created);
+        return Task.FromResult(new ApiResponse<User>(user).ToApiResult(System.Net.HttpStatusCode.Created));
     }
 
     /// <summary>
@@ -242,26 +242,26 @@ public class UsersController : ControllerBase, IUserApiV1
     /// <param name="userId">User ID to delete</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Deletion result</returns>
-    async Task<ApiResult<string>> IUserApiV1.DeleteUserAsync(int userId, CancellationToken cancellationToken)
+    Task<ApiResult<string>> IUserApiV1.DeleteUserAsync(int userId, CancellationToken cancellationToken)
     {
         // Bearer token validation
         if (!Request.Headers.ContainsKey("Authorization"))
         {
-            return new ApiResponse<string>(
+            return Task.FromResult(new ApiResponse<string>(
                 new ApiError(ApiErrorConstants.ErrorCodes.Unauthorized,
                     ApiErrorConstants.ErrorMessages.AuthorizationHeaderRequired,
                     ApiErrorConstants.ErrorDetails.BearerTokenMissing)
-            ).ToApiResult(System.Net.HttpStatusCode.Unauthorized);
+            ).ToApiResult(System.Net.HttpStatusCode.Unauthorized));
         }
 
         var authHeader = Request.Headers["Authorization"].ToString();
         if (!authHeader.StartsWith("Bearer ") || authHeader != "Bearer user-test-token")
         {
-            return new ApiResponse<string>(
+            return Task.FromResult(new ApiResponse<string>(
                 new ApiError(ApiErrorConstants.ErrorCodes.Unauthorized,
                     ApiErrorConstants.ErrorMessages.InvalidOrMissingAuthentication,
                     ApiErrorConstants.ErrorDetails.InvalidBearerToken)
-            ).ToApiResult(System.Net.HttpStatusCode.Unauthorized);
+            ).ToApiResult(System.Net.HttpStatusCode.Unauthorized));
         }
 
         _logger.LogInformation("Deleting user {UserId}", userId);
@@ -269,15 +269,15 @@ public class UsersController : ControllerBase, IUserApiV1
         var user = _users.FirstOrDefault(u => u.Id == userId);
         if (user == null)
         {
-            return new ApiResponse<string>(
+            return Task.FromResult(new ApiResponse<string>(
                 new ApiError(ApiErrorConstants.ErrorCodes.NotFound,
                     string.Format(ApiErrorConstants.ErrorMessages.ResourceNotFound, "User", userId),
                     string.Format(ApiErrorConstants.ErrorDetails.ResourceDoesNotExist, "user"))
-            ).ToApiResult(System.Net.HttpStatusCode.NotFound);
+            ).ToApiResult(System.Net.HttpStatusCode.NotFound));
         }
 
         _users.Remove(user);
 
-        return new ApiResponse<string>($"User {userId} deleted successfully").ToApiResult();
+        return Task.FromResult(new ApiResponse<string>($"User {userId} deleted successfully").ToApiResult());
     }
 }

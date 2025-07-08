@@ -76,7 +76,7 @@ public class WeatherController : ControllerBase, IWeatherApiClient
     /// <param name="days">Number of days to forecast</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Weather forecasts</returns>
-    async Task<ApiResult<IEnumerable<WeatherForecast>>> IWeatherApiClient.GetForecastAsync(
+    Task<ApiResult<IEnumerable<WeatherForecast>>> IWeatherApiClient.GetForecastAsync(
         string location,
         int days,
         CancellationToken cancellationToken)
@@ -88,7 +88,7 @@ public class WeatherController : ControllerBase, IWeatherApiClient
                 new ApiError(ApiErrorConstants.ErrorCodes.Unauthorized,
                     ApiErrorConstants.ErrorMessages.ApiKeyRequired,
                     ApiErrorConstants.ErrorDetails.XApiKeyHeaderMissing));
-            return unauthorizedResponse.ToApiResult(System.Net.HttpStatusCode.Unauthorized);
+            return Task.FromResult(unauthorizedResponse.ToApiResult(System.Net.HttpStatusCode.Unauthorized));
         }
 
         var apiKey = Request.Headers["X-API-Key"].ToString();
@@ -98,7 +98,7 @@ public class WeatherController : ControllerBase, IWeatherApiClient
                 new ApiError(ApiErrorConstants.ErrorCodes.InvalidApiKey,
                     ApiErrorConstants.ErrorMessages.InvalidApiKey,
                     ApiErrorConstants.ErrorDetails.InvalidApiKeyProvided));
-            return invalidKeyResponse.ToApiResult(System.Net.HttpStatusCode.Unauthorized);
+            return Task.FromResult(invalidKeyResponse.ToApiResult(System.Net.HttpStatusCode.Unauthorized));
         }
 
         _logger.LogInformation("Getting weather forecast for {Location} for {Days} days", location, days);
@@ -112,7 +112,7 @@ public class WeatherController : ControllerBase, IWeatherApiClient
         });
 
         var response = new ApiResponse<IEnumerable<WeatherForecast>>(forecasts);
-        return response.ToApiResult();
+        return Task.FromResult(response.ToApiResult());
     }
 
     /// <summary>
@@ -121,7 +121,7 @@ public class WeatherController : ControllerBase, IWeatherApiClient
     /// <param name="location">The location to get current weather for</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Current weather</returns>
-    async Task<ApiResult<WeatherForecast>> IWeatherApiClient.GetCurrentWeatherAsync(
+    Task<ApiResult<WeatherForecast>> IWeatherApiClient.GetCurrentWeatherAsync(
         string location,
         CancellationToken cancellationToken)
     {
@@ -132,7 +132,7 @@ public class WeatherController : ControllerBase, IWeatherApiClient
                 new ApiError(ApiErrorConstants.ErrorCodes.Unauthorized,
                     ApiErrorConstants.ErrorMessages.ApiKeyRequired,
                     ApiErrorConstants.ErrorDetails.XApiKeyHeaderMissing));
-            return unauthorizedResponse.ToApiResult(System.Net.HttpStatusCode.Unauthorized);
+            return Task.FromResult(unauthorizedResponse.ToApiResult(System.Net.HttpStatusCode.Unauthorized));
         }
 
         var apiKey = Request.Headers["X-API-Key"].ToString();
@@ -142,7 +142,7 @@ public class WeatherController : ControllerBase, IWeatherApiClient
                 new ApiError(ApiErrorConstants.ErrorCodes.InvalidApiKey,
                     ApiErrorConstants.ErrorMessages.InvalidApiKey,
                     ApiErrorConstants.ErrorDetails.InvalidApiKeyProvided));
-            return invalidKeyResponse.ToApiResult(System.Net.HttpStatusCode.Unauthorized);
+            return Task.FromResult(invalidKeyResponse.ToApiResult(System.Net.HttpStatusCode.Unauthorized));
         }
 
         _logger.LogInformation("Getting current weather for {Location}", location);
@@ -156,7 +156,7 @@ public class WeatherController : ControllerBase, IWeatherApiClient
         };
 
         var response = new ApiResponse<WeatherForecast>(current);
-        return response.ToApiResult();
+        return Task.FromResult(response.ToApiResult());
     }
 
     /// <summary>
@@ -164,10 +164,10 @@ public class WeatherController : ControllerBase, IWeatherApiClient
     /// </summary>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Health status</returns>
-    async Task<ApiResult<string>> IWeatherApiClient.HealthCheckAsync(CancellationToken cancellationToken)
+    Task<ApiResult<string>> IWeatherApiClient.HealthCheckAsync(CancellationToken cancellationToken)
     {
         var response = new ApiResponse<string>("Weather API is healthy");
-        return response.ToApiResult();
+        return Task.FromResult(response.ToApiResult());
     }
 
     #endregion

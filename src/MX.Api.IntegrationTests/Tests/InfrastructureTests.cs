@@ -33,7 +33,7 @@ public class InfrastructureTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
-    public async Task TestServer_BaseAddress_ShouldBeValid()
+    public Task TestServer_BaseAddress_ShouldBeValid()
     {
         // Arrange & Act
         using var client = _factory.CreateClient();
@@ -41,5 +41,7 @@ public class InfrastructureTests : IClassFixture<CustomWebApplicationFactory>
         // Assert
         Assert.NotNull(client.BaseAddress);
         Assert.StartsWith("http", client.BaseAddress.ToString());
+
+        return Task.CompletedTask;
     }
 }

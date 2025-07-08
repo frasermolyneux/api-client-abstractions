@@ -126,7 +126,7 @@ public class EndToEndIntegrationTests : IClassFixture<CustomWebApplicationFactor
     }
 
     [Fact]
-    public async Task UserApiClient_CanBeRegistered_Successfully()
+    public Task UserApiClient_CanBeRegistered_Successfully()
     {
         // This test verifies that the API client registration system works correctly for User API
 
@@ -153,6 +153,8 @@ public class EndToEndIntegrationTests : IClassFixture<CustomWebApplicationFactor
 
         // Verify the client is of the correct type
         Assert.IsType<UserApiClient>(userClient);
+
+        return Task.CompletedTask;
     }
 
     [Fact]
@@ -183,7 +185,7 @@ public class EndToEndIntegrationTests : IClassFixture<CustomWebApplicationFactor
     }
 
     [Fact]
-    public async Task ProductApiClient_CanBeRegistered_Successfully()
+    public Task ProductApiClient_CanBeRegistered_Successfully()
     {
         // This test verifies that the API client registration system works correctly for Product API
 
@@ -206,6 +208,8 @@ public class EndToEndIntegrationTests : IClassFixture<CustomWebApplicationFactor
 
         // Verify the client is of the correct type
         Assert.IsType<ProductApiClient>(productClient);
+
+        return Task.CompletedTask;
     }
 
     [Fact]
@@ -270,7 +274,7 @@ public class EndToEndIntegrationTests : IClassFixture<CustomWebApplicationFactor
     }
 
     [Fact]
-    public async Task AllThreeApiClients_CanBeRegistered_Simultaneously()
+    public Task AllThreeApiClients_CanBeRegistered_Simultaneously()
     {
         // This test verifies that all three API clients can be registered at the same time
 
@@ -310,6 +314,8 @@ public class EndToEndIntegrationTests : IClassFixture<CustomWebApplicationFactor
         Assert.NotEqual(weatherClient.GetType(), userClient.GetType());
         Assert.NotEqual(weatherClient.GetType(), productClient.GetType());
         Assert.NotEqual(userClient.GetType(), productClient.GetType());
+
+        return Task.CompletedTask;
     }
 
     [Fact]
