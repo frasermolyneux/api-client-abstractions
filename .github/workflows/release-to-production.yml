@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
 
     - uses: frasermolyneux/actions/dotnet-ci@main
       with:
@@ -30,7 +30,7 @@ jobs:
     needs: [dotnet-ci]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
 
     - uses: frasermolyneux/actions/publish-nuget-packages@main
       with:
