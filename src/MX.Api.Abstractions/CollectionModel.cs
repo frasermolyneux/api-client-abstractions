@@ -18,12 +18,14 @@ public record CollectionModel<T>
     /// Gets or sets the total count of items (before pagination).
     /// </summary>
     [JsonProperty(PropertyName = "totalCount")]
+    [Obsolete("Use ApiResponse<P>.Pagination.TotalCount via ApiPagination instead. This property will be removed in a future release.")]
     public int TotalCount { get; set; }
 
     /// <summary>
     /// Gets or sets the count of items after filtering.
     /// </summary>
     [JsonProperty(PropertyName = "filteredCount")]
+    [Obsolete("Use ApiResponse<P>.Pagination.FilteredCount via ApiPagination instead. This property will be removed in a future release.")]
     public int FilteredCount { get; set; }
 
     /// <summary>
