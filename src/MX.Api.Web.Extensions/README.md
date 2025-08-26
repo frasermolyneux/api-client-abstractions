@@ -180,18 +180,20 @@ public async Task<IActionResult> GetProducts(
     
     var collection = new CollectionModel<Product>
     {
-        Items = products.Items,
-        TotalCount = products.TotalCount,
-        FilteredCount = products.FilteredCount,
-        Pagination = new ApiPagination
-        {
-            Page = page,
-            PageSize = pageSize,
-            TotalPages = (int)Math.Ceiling((double)products.TotalCount / pageSize)
-        }
+        Items = products.Items
     };
 
-    var response = new ApiResponse<CollectionModel<Product>>(collection);
+    var response = new ApiResponse<CollectionModel<Product>>(collection)
+    {
+        Pagination = new ApiPagination
+        {
+            TotalCount = products.TotalCount,
+            FilteredCount = products.FilteredCount,
+            Skip = (page - 1) * pageSize,
+            Top = pageSize,
+            HasMore = products.FilteredCount > page * pageSize
+        }
+    };
     return response.ToApiResult().ToHttpResult();
 }
 ```

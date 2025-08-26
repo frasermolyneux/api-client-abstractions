@@ -68,12 +68,22 @@ public class ProductsController : ControllerBase, IProductApiV1
 
         var collection = new CollectionModel<Product>
         {
-            Items = Products,
-            TotalCount = Products.Count,
-            FilteredCount = Products.Count
+            Items = Products
         };
 
-        return Task.FromResult(new ApiResponse<CollectionModel<Product>>(collection).ToApiResult());
+        var apiResponse = new ApiResponse<CollectionModel<Product>>(collection)
+        {
+            Pagination = new ApiPagination
+            {
+                TotalCount = Products.Count,
+                FilteredCount = Products.Count,
+                Skip = 0,
+                Top = Products.Count,
+                HasMore = false
+            }
+        };
+
+        return Task.FromResult(apiResponse.ToApiResult());
     }
 
     /// <summary>

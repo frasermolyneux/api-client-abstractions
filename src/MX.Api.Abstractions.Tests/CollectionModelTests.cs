@@ -10,26 +10,20 @@ public class CollectionModelTests
 
         // Assert
         Assert.Null(collection.Items);
-        Assert.Equal(0, collection.TotalCount);
-        Assert.Equal(0, collection.FilteredCount);
         Assert.Null(collection.Metadata);
     }
 
     [Fact]
-    public void Constructor_WithParameters_SetsPropertiesCorrectly()
+    public void Constructor_WithParameters_SetsItemsCorrectly()
     {
         // Arrange
         var items = new List<string> { "Item1", "Item2", "Item3" };
-        var totalCount = 100;
-        var filteredCount = 50;
 
         // Act
-        var collection = new CollectionModel<string>(items, totalCount, filteredCount);
+        var collection = new CollectionModel<string>(items);
 
         // Assert
         Assert.Equal(items, collection.Items);
-        Assert.Equal(totalCount, collection.TotalCount);
-        Assert.Equal(filteredCount, collection.FilteredCount);
         Assert.Null(collection.Metadata);
     }
 
@@ -38,16 +32,12 @@ public class CollectionModelTests
     {
         // Arrange
         List<string>? items = null;
-        var totalCount = 100;
-        var filteredCount = 50;
 
         // Act
-        var collection = new CollectionModel<string>(items, totalCount, filteredCount);
+    var collection = new CollectionModel<string>(items);
 
         // Assert
         Assert.Null(collection.Items);
-        Assert.Equal(totalCount, collection.TotalCount);
-        Assert.Equal(filteredCount, collection.FilteredCount);
     }
 
     [Fact]
@@ -55,16 +45,12 @@ public class CollectionModelTests
     {
         // Arrange
         var items = Enumerable.Empty<string>();
-        var totalCount = 100;
-        var filteredCount = 50;
 
         // Act
-        var collection = new CollectionModel<string>(items, totalCount, filteredCount);
+    var collection = new CollectionModel<string>(items);
 
         // Assert
         Assert.Empty(collection.Items!);
-        Assert.Equal(totalCount, collection.TotalCount);
-        Assert.Equal(filteredCount, collection.FilteredCount);
     }
 
     [Fact]
@@ -97,16 +83,12 @@ public class CollectionModelTests
             new TestItem { Id = 1, Name = "Item 1" },
             new TestItem { Id = 2, Name = "Item 2" }
         };
-        var totalCount = 10;
-        var filteredCount = 2;
 
         // Act
-        var collection = new CollectionModel<TestItem>(complexItems, totalCount, filteredCount);
+    var collection = new CollectionModel<TestItem>(complexItems);
 
         // Assert
         Assert.Equal(complexItems, collection.Items);
-        Assert.Equal(totalCount, collection.TotalCount);
-        Assert.Equal(filteredCount, collection.FilteredCount);
         Assert.Equal(2, collection.Items!.Count());
         Assert.Equal("Item 1", collection.Items!.First().Name);
     }

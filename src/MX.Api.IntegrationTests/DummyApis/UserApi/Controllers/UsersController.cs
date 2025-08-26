@@ -136,12 +136,22 @@ public class UsersController : ControllerBase, IUserApiV1
 
         var collection = new CollectionModel<User>
         {
-            Items = users,
-            TotalCount = totalCount,
-            FilteredCount = totalCount // For simplicity, no filtering in this demo
+            Items = users
         };
 
-        return Task.FromResult(new ApiResponse<CollectionModel<User>>(collection).ToApiResult());
+        var response = new ApiResponse<CollectionModel<User>>(collection)
+        {
+            Pagination = new ApiPagination
+            {
+                TotalCount = totalCount,
+                FilteredCount = totalCount, // For simplicity, no filtering in this demo
+                Skip = (page - 1) * pageSize,
+                Top = users.Count,
+                HasMore = totalCount > page * pageSize
+            }
+        };
+
+        return Task.FromResult(response.ToApiResult());
     }
 
     /// <summary>
