@@ -1,6 +1,4 @@
-using System.Runtime.InteropServices;
-using System.Security;
-using System.Text;
+using System;
 
 namespace MX.Api.Client.Configuration;
 
@@ -9,44 +7,39 @@ namespace MX.Api.Client.Configuration;
 /// </summary>
 public class ApiKeyAuthenticationOptions : AuthenticationOptions, IDisposable
 {
-    private SecureString? _apiKey;
+    private char[]? _apiKeyBuffer;
     private bool _disposed = false;
 
     /// <summary>
-    /// Gets or sets the API key used for authentication (stored securely).
+    /// Gets or sets the API key used for authentication. The value is stored internally using a mutable buffer
+    /// that is cleared when the options are disposed.
     /// </summary>
-    public SecureString? ApiKey
+    public string? ApiKey
     {
-        get => _apiKey;
-        set
-        {
-            _apiKey?.Dispose();
-            _apiKey = value;
-        }
+        get => GetApiKeyInternalOrNull();
+        set => SetApiKey(value);
     }
 
     /// <summary>
-    /// Sets the API key from a plain string. The plain string is immediately cleared from memory.
+    /// Gets a value indicating whether an API key has been configured.
     /// </summary>
-    /// <param name="apiKey">The API key as a plain string.</param>
-    public void SetApiKey(string apiKey)
+    public bool HasApiKey => _apiKeyBuffer != null && _apiKeyBuffer.Length > 0;
+
+    /// <summary>
+    /// Sets the API key from a plain string. The value is copied into an internal buffer and any previously stored value
+    /// is cleared.
+    /// </summary>
+    /// <param name="apiKey">The API key as a plain string, or <c>null</c> to clear the stored value.</param>
+    public void SetApiKey(string? apiKey)
     {
         if (string.IsNullOrEmpty(apiKey))
         {
-            _apiKey?.Dispose();
-            _apiKey = null;
+            ClearApiKeyBuffer();
             return;
         }
 
-        _apiKey?.Dispose();
-        _apiKey = new SecureString();
-
-        foreach (char c in apiKey)
-        {
-            _apiKey.AppendChar(c);
-        }
-
-        _apiKey.MakeReadOnly();
+        ClearApiKeyBuffer();
+        _apiKeyBuffer = apiKey.ToCharArray();
     }
 
     /// <summary>
@@ -55,18 +48,12 @@ public class ApiKeyAuthenticationOptions : AuthenticationOptions, IDisposable
     /// <returns>The API key as a plain string, or empty string if not set.</returns>
     public string GetApiKeyAsString()
     {
-        if (_apiKey == null || _apiKey.Length == 0)
+        if (_apiKeyBuffer == null || _apiKeyBuffer.Length == 0)
+        {
             return string.Empty;
+        }
 
-        IntPtr ptr = Marshal.SecureStringToBSTR(_apiKey);
-        try
-        {
-            return Marshal.PtrToStringBSTR(ptr) ?? string.Empty;
-        }
-        finally
-        {
-            Marshal.ZeroFreeBSTR(ptr);
-        }
+        return new string(_apiKeyBuffer);
     }
 
     /// <summary>
@@ -98,18 +85,38 @@ public class ApiKeyAuthenticationOptions : AuthenticationOptions, IDisposable
         {
             if (disposing)
             {
-                _apiKey?.Dispose();
-                _apiKey = null;
+                ClearApiKeyBuffer();
             }
             _disposed = true;
         }
     }
 
     /// <summary>
-    /// Finalizer to ensure SecureString is disposed even if Dispose is not called.
+    /// Finalizer to ensure the API key buffer is cleared even if Dispose is not called.
     /// </summary>
     ~ApiKeyAuthenticationOptions()
     {
         Dispose(false);
+    }
+
+    private string? GetApiKeyInternalOrNull()
+    {
+        if (_apiKeyBuffer == null || _apiKeyBuffer.Length == 0)
+        {
+            return null;
+        }
+
+        return new string(_apiKeyBuffer);
+    }
+
+    private void ClearApiKeyBuffer()
+    {
+        if (_apiKeyBuffer == null)
+        {
+            return;
+        }
+
+        Array.Clear(_apiKeyBuffer, 0, _apiKeyBuffer.Length);
+        _apiKeyBuffer = null;
     }
 }

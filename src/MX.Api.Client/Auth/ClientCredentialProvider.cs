@@ -49,7 +49,7 @@ public class ClientCredentialProvider : ITokenCredentialProvider
         if (string.IsNullOrEmpty(options.ClientId))
             throw new ArgumentException("ClientId cannot be null or empty", nameof(options));
 
-        if (options.ClientSecret == null || options.ClientSecret.Length == 0)
+        if (!options.HasClientSecret)
             throw new ArgumentException("ClientSecret cannot be null or empty", nameof(options));
 
         this.logger = logger;

@@ -22,7 +22,6 @@ public class DefaultTokenCredentialProvider : ITokenCredentialProvider
     public DefaultTokenCredentialProvider()
         : this(null, new DefaultAzureCredentialOptions
         {
-            ExcludeSharedTokenCacheCredential = true,
             ExcludeAzurePowerShellCredential = false,
             ExcludeEnvironmentCredential = false,
             ExcludeManagedIdentityCredential = false

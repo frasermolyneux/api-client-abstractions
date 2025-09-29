@@ -13,6 +13,7 @@ public class AuthenticationOptionsTests
 
         // Assert
         Assert.Null(options.ApiKey);
+        Assert.False(options.HasApiKey);
         Assert.Equal("Ocp-Apim-Subscription-Key", options.HeaderName);
         Assert.Equal(AuthenticationType.ApiKey, options.AuthenticationType);
         Assert.Equal(string.Empty, options.GetApiKeyAsString());
@@ -32,11 +33,14 @@ public class AuthenticationOptionsTests
 
         // Assert
         Assert.Equal(apiKey, options.GetApiKeyAsString());
+        Assert.True(options.HasApiKey);
         Assert.Equal(headerName, options.HeaderName);
         Assert.Equal(AuthenticationType.ApiKey, options.AuthenticationType);
 
         // Clean up
         options.Dispose();
+        Assert.False(options.HasApiKey);
+        Assert.Equal(string.Empty, options.GetApiKeyAsString());
     }
 
     [Fact]
@@ -76,6 +80,7 @@ public class AuthenticationOptionsTests
         Assert.Equal(string.Empty, options.TenantId);
         Assert.Equal(string.Empty, options.ClientId);
         Assert.Null(options.ClientSecret);
+        Assert.False(options.HasClientSecret);
         Assert.Equal(string.Empty, options.GetClientSecretAsString());
         Assert.Equal(AuthenticationType.EntraId, options.AuthenticationType);
     }
@@ -101,9 +106,12 @@ public class AuthenticationOptionsTests
         Assert.Equal(tenantId, options.TenantId);
         Assert.Equal(clientId, options.ClientId);
         Assert.Equal(clientSecret, options.GetClientSecretAsString());
+        Assert.True(options.HasClientSecret);
         Assert.Equal(AuthenticationType.EntraId, options.AuthenticationType);
 
         // Clean up
         options.Dispose();
+        Assert.False(options.HasClientSecret);
+        Assert.Equal(string.Empty, options.GetClientSecretAsString());
     }
 }

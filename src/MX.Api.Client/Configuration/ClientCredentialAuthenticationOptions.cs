@@ -1,5 +1,4 @@
-using System.Runtime.InteropServices;
-using System.Security;
+using System;
 
 namespace MX.Api.Client.Configuration;
 
@@ -8,7 +7,7 @@ namespace MX.Api.Client.Configuration;
 /// </summary>
 public class ClientCredentialAuthenticationOptions : EntraIdAuthenticationOptions, IDisposable
 {
-    private SecureString? _clientSecret;
+    private char[]? _clientSecretBuffer;
     private bool _disposed = false;
 
     /// <summary>
@@ -22,40 +21,35 @@ public class ClientCredentialAuthenticationOptions : EntraIdAuthenticationOption
     public string ClientId { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the client secret for authentication (stored securely).
+    /// Gets or sets the client secret for authentication. The value is stored internally using a mutable buffer that is
+    /// cleared when the options are disposed.
     /// </summary>
-    public SecureString? ClientSecret
+    public string? ClientSecret
     {
-        get => _clientSecret;
-        set
-        {
-            _clientSecret?.Dispose();
-            _clientSecret = value;
-        }
+        get => GetClientSecretInternalOrNull();
+        set => SetClientSecret(value);
     }
 
     /// <summary>
-    /// Sets the client secret from a plain string. The plain string is immediately cleared from memory.
+    /// Gets a value indicating whether a client secret has been configured.
     /// </summary>
-    /// <param name="clientSecret">The client secret as a plain string.</param>
-    public void SetClientSecret(string clientSecret)
+    public bool HasClientSecret => _clientSecretBuffer != null && _clientSecretBuffer.Length > 0;
+
+    /// <summary>
+    /// Sets the client secret from a plain string. The value is copied into an internal buffer and any previously stored value
+    /// is cleared.
+    /// </summary>
+    /// <param name="clientSecret">The client secret as a plain string, or <c>null</c> to clear the stored value.</param>
+    public void SetClientSecret(string? clientSecret)
     {
         if (string.IsNullOrEmpty(clientSecret))
         {
-            _clientSecret?.Dispose();
-            _clientSecret = null;
+            ClearClientSecretBuffer();
             return;
         }
 
-        _clientSecret?.Dispose();
-        _clientSecret = new SecureString();
-
-        foreach (char c in clientSecret)
-        {
-            _clientSecret.AppendChar(c);
-        }
-
-        _clientSecret.MakeReadOnly();
+        ClearClientSecretBuffer();
+        _clientSecretBuffer = clientSecret.ToCharArray();
     }
 
     /// <summary>
@@ -64,18 +58,10 @@ public class ClientCredentialAuthenticationOptions : EntraIdAuthenticationOption
     /// <returns>The client secret as a plain string, or empty string if not set.</returns>
     public string GetClientSecretAsString()
     {
-        if (_clientSecret == null || _clientSecret.Length == 0)
+        if (_clientSecretBuffer == null || _clientSecretBuffer.Length == 0)
             return string.Empty;
 
-        IntPtr ptr = Marshal.SecureStringToBSTR(_clientSecret);
-        try
-        {
-            return Marshal.PtrToStringBSTR(ptr) ?? string.Empty;
-        }
-        finally
-        {
-            Marshal.ZeroFreeBSTR(ptr);
-        }
+        return new string(_clientSecretBuffer);
     }
 
     /// <summary>
@@ -97,18 +83,38 @@ public class ClientCredentialAuthenticationOptions : EntraIdAuthenticationOption
         {
             if (disposing)
             {
-                _clientSecret?.Dispose();
-                _clientSecret = null;
+                ClearClientSecretBuffer();
             }
             _disposed = true;
         }
     }
 
     /// <summary>
-    /// Finalizer to ensure SecureString is disposed even if Dispose is not called.
+    /// Finalizer to ensure the client secret buffer is cleared even if Dispose is not called.
     /// </summary>
     ~ClientCredentialAuthenticationOptions()
     {
         Dispose(false);
+    }
+
+    private string? GetClientSecretInternalOrNull()
+    {
+        if (_clientSecretBuffer == null || _clientSecretBuffer.Length == 0)
+        {
+            return null;
+        }
+
+        return new string(_clientSecretBuffer);
+    }
+
+    private void ClearClientSecretBuffer()
+    {
+        if (_clientSecretBuffer == null)
+        {
+            return;
+        }
+
+        Array.Clear(_clientSecretBuffer, 0, _clientSecretBuffer.Length);
+        _clientSecretBuffer = null;
     }
 }
