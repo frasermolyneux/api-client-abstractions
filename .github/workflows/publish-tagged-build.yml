@@ -36,7 +36,7 @@ jobs:
           exit 0
         }
 
-        $selected = ($tags | Sort-Object)[0]
+        $selected = ($tags | Sort-Object | Select-Object -First 1).Trim()
         Write-Host "Found release tag '$selected'. Preparing publish."
         "HAS_RELEASE_TAG=true" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
         "RELEASE_TAG=$selected" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
