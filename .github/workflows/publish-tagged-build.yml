@@ -40,21 +40,13 @@ jobs:
         "HAS_RELEASE_TAG=true" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
         "RELEASE_TAG=$selected" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
 
-    - name: Download NuGet packages
-      if: env.HAS_RELEASE_TAG == 'true'
-      uses: actions/download-artifact@v4
-      with:
-        name: nuget-packages
-        run-id: ${{ github.event.workflow_run.id }}
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        path: nuget-packages
-
     - name: Publish to NuGet.org
       if: env.HAS_RELEASE_TAG == 'true'
-      env:
+      uses: frasermolyneux/actions/publish-nuget-packages@main
+      with:
+        artifact-name: nuget-packages
+        artifact-run-id: ${{ github.event.workflow_run.id }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        artifact-output-path: nuget-packages
         NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
-      shell: bash
-      run: |
-        cd nuget-packages
-        dotnet nuget push **/*.nupkg --source 'https://api.nuget.org/v3/index.json' --api-key "$NUGET_API_KEY"
           
