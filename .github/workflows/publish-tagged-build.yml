@@ -8,7 +8,7 @@ on:
       - completed
 
 permissions:
-  contents: read  # Required for checkout/tag inspection
+  contents: write # Required to create GitHub releases
   actions: read   # Required to download artifacts from another workflow run
 
 jobs:
@@ -18,6 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       HAS_RELEASE_TAG: 'false'
+      RELEASE_TAG: ''
 
     steps:
     - name: Checkout tagged commit
@@ -49,4 +50,16 @@ jobs:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         artifact-output-path: nuget-packages
         NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+
+    - name: Create GitHub release
+      if: env.HAS_RELEASE_TAG == 'true'
+      uses: ncipollo/release-action@v1
+      with:
+        tag: ${{ env.RELEASE_TAG }}
+        name: ${{ env.RELEASE_TAG }}
+        generateReleaseNotes: true
+        skipIfReleaseExists: true
+        artifacts: nuget-packages/**/*.nupkg
+        artifactErrorsFailBuild: false
+        token: ${{ secrets.GITHUB_TOKEN }}
           
