@@ -1,0 +1,32 @@
+mode: Mainline
+next-version: 2.1.0
+tag-prefix: 'v'
+continuous-delivery-fallback-tag: preview
+semantic-version-format: Strict
+commit-message-incrementing: Enabled
+assembly-versioning-scheme: MajorMinorPatch
+assembly-file-versioning-scheme: MajorMinorPatch
+assembly-informational-format: '{FullSemVer}+{Sha}'
+branches:
+  main:
+    regex: ^main$
+    tag: ''
+    increment: Patch
+    prevent-increment-of-merged-branch-version: true
+    track-merge-target: false
+  feature:
+    regex: ^(feature|feat|bugfix|fix|hotfix|chore|task)/.*
+    tag: preview
+    increment: Inherit
+    track-merge-target: false
+  pull-request:
+    regex: ^(pull|pr)/.*
+    tag: preview
+    increment: Inherit
+    track-merge-target: false
+  support:
+    regex: ^support/.*
+    tag: hotfix
+    increment: Patch
+ignore:
+  sha: []
