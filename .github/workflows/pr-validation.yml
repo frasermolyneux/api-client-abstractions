@@ -32,4 +32,3 @@ jobs:
           9.0.x
           10.0.x-preview
         src-folder: "src"
-        majorMinorVersion: "2.0"
