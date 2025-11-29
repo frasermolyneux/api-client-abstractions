@@ -1,9 +1,9 @@
 # MX API Abstractions
 
-[![Code Quality](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/codequality.yml/badge.svg)](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/codequality.yml)
-[![Feature Development](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/feature-development.yml/badge.svg)](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/feature-development.yml)
-[![Pull Request Validation](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/pull-request-validation.yml/badge.svg)](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/pull-request-validation.yml)
-[![Release to Production](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/release-to-production.yml/badge.svg)](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/release-to-production.yml)
+[![Code Quality (Sonar + CodeQL)](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/code-quality.yml/badge.svg)](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/code-quality.yml)
+[![Feature Branch Preview Publish](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/feature-preview-ci.yml/badge.svg)](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/feature-preview-ci.yml)
+[![PR Validation (CI Only)](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/pr-validation.yml/badge.svg)](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/pr-validation.yml)
+[![Publish Tagged Build to NuGet](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/publish-tagged-build.yml/badge.svg)](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/publish-tagged-build.yml)
 
 A comprehensive set of .NET libraries providing standardized API abstractions, resilient API clients, and ASP.NET Core integration for building robust applications that consume or expose APIs.
 
@@ -157,7 +157,7 @@ This solution consists of three focused NuGet packages:
 
 - **Multi-targeted packages** – All libraries now compile for `net9.0` and `net10.0` so a single NuGet package serves current and upcoming runtime versions (including previews).
 - **Preview automation** – Feature branch builds automatically publish preview packages to NuGet using the format `<majorMinor>.<run>.<attempt>-preview` so teams can consume nightly drops.
-- **Tag-driven releases** – Create an annotated tag that starts with `v` (for example `v2.1.0` or `v2.2.0-preview.1`) to trigger the production workflow; the tag text becomes the exact NuGet package version.
+- **Tag-driven releases** – Every merge to `main` runs CI, embeds the computed semantic version, and automatically creates the next `v<major.minor.patch>` tag (still allowing manual overrides). A follow-up release workflow triggers from that CI run, downloads the same artifact, and pushes it to NuGet so packages are built once and released once.
 - **Reusable actions** – All GitHub workflows call the shared `frasermolyneux/actions/*` composites, which now install multiple SDKs (including prerelease builds) and apply the tag-or-preview version logic consistently.
 
 ## Documentation

@@ -15,7 +15,7 @@ The versioned API pattern allows you to organize your API client around differen
 
 - **Framework support** – All MX.Api packages now multi-target `net9.0` and `net10.0`, so you can adopt the next .NET wave (including previews) without changing dependencies.
 - **Preview builds** – Every non-tag build published from `feature/*` branches lands on NuGet with a `-preview` suffix so you can validate changes early in lower environments.
-- **Stable releases** – Create a Git tag that starts with `v` (for example `v2.3.0` or `v2.3.0-preview.2`) to trigger the release workflow; the tag text becomes the NuGet version applied across all packages.
+- **Stable releases** – Merges into `main` automatically compute the next `v<major.minor.patch>` tag (you can still create manual tags when needed); the downstream release workflow attaches to that CI run, reuses the exact artifact it produced, and publishes it so the tag text and embedded package version always align.
 - **Automation** – The shared GitHub Actions install each requested SDK and build/test every target framework before uploading artifacts, ensuring parity between preview and production releases.
 
 ## Architecture

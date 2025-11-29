@@ -1,0 +1,101 @@
+name: Main Branch Build + Tag
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+env:
+  MAJOR_MINOR_VERSION: "2.0"
+
+jobs:
+  dotnet-ci:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v5
+
+    - uses: frasermolyneux/actions/dotnet-ci@main
+      with:
+        dotnet-version: |
+          9.0.x
+          10.0.x-preview
+        src-folder: "src"
+        majorMinorVersion: ${{ env.MAJOR_MINOR_VERSION }}
+
+  tag-release:
+    needs: dotnet-ci
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v5
+      with:
+        fetch-depth: 0
+
+    - name: Determine next release tag
+      id: determine_tag
+      shell: pwsh
+      env:
+        MAJOR_MINOR_VERSION: ${{ env.MAJOR_MINOR_VERSION }}
+      run: |
+        git fetch --tags --force
+
+        $headTags = git tag --points-at HEAD | Where-Object { $_ -like 'v*' }
+        if ($headTags) {
+          Write-Host "HEAD already tagged with: $($headTags -join ', '). Skipping tag creation."
+          "should_tag=false" | Out-File -FilePath $Env:GITHUB_OUTPUT -Encoding utf8 -Append
+          exit 0
+        }
+
+        $base = $Env:MAJOR_MINOR_VERSION
+        if ([string]::IsNullOrWhiteSpace($base)) {
+          throw 'MAJOR_MINOR_VERSION environment variable must be set.'
+        }
+
+        $pattern = "v$base.*"
+        $existingTags = git tag --list $pattern | Where-Object { $_ -notmatch '-' }
+
+        $nextPatch = 0
+        if ($existingTags) {
+          $latestPatch = $existingTags |
+            ForEach-Object {
+              $trimmed = $_.Trim()
+              $versionPart = $trimmed.TrimStart('v').Split('-')[0]
+              $segments = $versionPart.Split('.')
+              if ($segments.Count -lt 3) {
+                0
+              }
+              [int]$segments[-1]
+            } |
+            Sort-Object |
+            Select-Object -Last 1
+
+          if ($null -ne $latestPatch) {
+            $nextPatch = $latestPatch + 1
+          }
+        }
+
+        $tagName = "v$base.$nextPatch"
+        Write-Host "Next release tag: $tagName"
+        "should_tag=true" | Out-File -FilePath $Env:GITHUB_OUTPUT -Encoding utf8 -Append
+        "tag_name=$tagName" | Out-File -FilePath $Env:GITHUB_OUTPUT -Encoding utf8 -Append
+
+    - name: Create tag
+      if: steps.determine_tag.outputs.should_tag == 'true'
+      shell: pwsh
+      run: |
+        git tag ${{ steps.determine_tag.outputs.tag_name }}
+
+    - name: Push tag
+      if: steps.determine_tag.outputs.should_tag == 'true'
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      shell: pwsh
+      run: |
+        git push origin ${{ steps.determine_tag.outputs.tag_name }}
