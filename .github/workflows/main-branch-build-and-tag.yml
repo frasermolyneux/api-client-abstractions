@@ -1,9 +1,12 @@
 name: Main Branch Build + Tag
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
+    paths:
+      - 'src/**'
 
 permissions:
   contents: read
