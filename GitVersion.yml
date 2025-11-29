@@ -12,7 +12,6 @@ branches:
     regex: ^main$
     label: ''
     increment: Patch
-    prevent-increment-of-merged-branch-version: true
     track-merge-target: false
   feature:
     regex: ^(feature|feat|bugfix|fix|hotfix|chore|task)/.*
