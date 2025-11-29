@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       semver: ${{ steps.gitversion.outputs.SemVer }}
-      nuget_version: ${{ steps.gitversion.outputs.NuGetVersionV2 }}
+      nuget_version: ${{ steps.gitversion.outputs.SemVer }}
       tag_name: ${{ steps.release_tag.outputs.tag_name }}
       should_tag: ${{ steps.release_tag.outputs.should_tag }}
 

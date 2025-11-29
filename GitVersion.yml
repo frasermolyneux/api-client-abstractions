@@ -1,31 +1,59 @@
-strategy: Mainline
+workflow: ''
 next-version: 2.1.0
-tag-prefix: 'v'
-continuous-delivery-fallback-label: preview
+tag-prefix: '[vV]'
 semantic-version-format: Strict
 commit-message-incrementing: Enabled
+continuous-delivery-fallback-label: preview
 assembly-versioning-scheme: MajorMinorPatch
 assembly-file-versioning-scheme: MajorMinorPatch
 assembly-informational-format: '{FullSemVer}+{Sha}'
+strategies:
+  - Mainline
+  - Fallback
+  - ConfiguredNextVersion
+  - TaggedCommit
+  - MergeMessage
+  - TrackReleaseBranches
+  - VersionInBranchName
 branches:
   main:
     regex: ^main$
     label: ''
     increment: Patch
+    prevent-increment:
+      of-merged-branch: true
     track-merge-target: false
+    track-merge-message: true
+    is-main-branch: true
+    source-branches: []
   feature:
-    regex: ^(feature|feat|bugfix|fix|hotfix|chore|task)/.*
+    regex: ^(feature|feat|bugfix|fix|hotfix|chore|task)[\/-](?<BranchName>.+)
     label: preview
     increment: Inherit
-    track-merge-target: false
+    prevent-increment:
+      when-current-commit-tagged: false
+    track-merge-message: true
+    source-branches:
+      - main
+    is-main-branch: false
   pull-request:
-    regex: ^(pull|pr)/.*
+    regex: ^(pull|pr)[\/-](?<Number>\d+.*)
     label: preview
     increment: Inherit
-    track-merge-target: false
+    prevent-increment:
+      of-merged-branch: true
+      when-current-commit-tagged: false
+    track-merge-message: true
+    source-branches:
+      - main
+      - feature
   support:
-    regex: ^support/.*
-    label: hotfix
+    regex: ^support[\/-](?<BranchName>.+)
+    label: ''
     increment: Patch
+    prevent-increment:
+      of-merged-branch: true
+    track-merge-target: false
+    is-main-branch: true
 ignore:
   sha: []
