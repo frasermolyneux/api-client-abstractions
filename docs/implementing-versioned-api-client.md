@@ -11,6 +11,13 @@ The versioned API pattern allows you to organize your API client around differen
 - Different features are available across different API versions
 - You want to provide a future-proof client architecture
 
+### Package Versioning & Multi-targeting
+
+- **Framework support** – All MX.Api packages now multi-target `net9.0` and `net10.0`, so you can adopt the next .NET wave (including previews) without changing dependencies.
+- **Preview builds** – Every non-tag build published from `feature/*` branches lands on NuGet with a `-preview` suffix so you can validate changes early in lower environments.
+- **Stable releases** – Create a Git tag that starts with `v` (for example `v2.3.0` or `v2.3.0-preview.2`) to trigger the release workflow; the tag text becomes the NuGet version applied across all packages.
+- **Automation** – The shared GitHub Actions install each requested SDK and build/test every target framework before uploading artifacts, ensuring parity between preview and production releases.
+
 ## Architecture
 
 The versioned API pattern consists of several layers:

@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFrameworks>net9.0;net10.0</TargetFrameworks>
     <RootNamespace>MX.Api.Abstractions</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
@@ -11,7 +11,7 @@
     <Company>Molyneux.IO</Company>
     <Product>Molyneux.IO API Abstractions</Product>
     <Title>API Abstractions - Core Models and Interfaces</Title>
-    <Description>Core abstractions library providing common models and interfaces for standardized API handling in .NET 9 applications. Contains ApiResponse models, collection wrappers, error handling, and pagination support following the API design pattern.</Description>
+    <Description>Core abstractions library providing common models and interfaces for standardized API handling in modern .NET applications (net9/net10). Contains ApiResponse models, collection wrappers, error handling, and pagination support following the API design pattern.</Description>
     <PackageProjectUrl>https://github.com/frasermolyneux/api-client-abstractions</PackageProjectUrl>
     <RepositoryUrl>https://github.com/frasermolyneux/api-client-abstractions</RepositoryUrl>
     <RepositoryType>git</RepositoryType>

@@ -3,10 +3,8 @@ name: Release to Production
 on:
   workflow_dispatch:
   push:
-    branches: 
-      - main
-  schedule:
-    - cron: "0 3 * * 4" # Weekly Thursday at 3am UTC (standardized)
+    tags:
+      - 'v*'
 
 permissions:
   contents: read  # This is required for actions/checkout
@@ -20,7 +18,9 @@ jobs:
 
     - uses: frasermolyneux/actions/dotnet-ci@main
       with:
-        dotnet-version: 9.0.x
+        dotnet-version: |
+          9.0.x
+          10.0.x-preview
         src-folder: "src"
         majorMinorVersion: "2.0"
 

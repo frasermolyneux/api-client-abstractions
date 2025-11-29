@@ -153,6 +153,13 @@ This solution consists of three focused NuGet packages:
 - **🔄 ASP.NET Core Integration** - Seamless conversion between API responses and HTTP results
 - **⚡ High Performance** - Thread-safe operations with efficient caching and connection pooling
 
+## Build & Release Strategy
+
+- **Multi-targeted packages** – All libraries now compile for `net9.0` and `net10.0` so a single NuGet package serves current and upcoming runtime versions (including previews).
+- **Preview automation** – Feature branch builds automatically publish preview packages to NuGet using the format `<majorMinor>.<run>.<attempt>-preview` so teams can consume nightly drops.
+- **Tag-driven releases** – Create an annotated tag that starts with `v` (for example `v2.1.0` or `v2.2.0-preview.1`) to trigger the production workflow; the tag text becomes the exact NuGet package version.
+- **Reusable actions** – All GitHub workflows call the shared `frasermolyneux/actions/*` composites, which now install multiple SDKs (including prerelease builds) and apply the tag-or-preview version logic consistently.
+
 ## Documentation
 
 - **[📖 Implementation Guide - API Providers](docs/implementing-api-provider.md)** - Guide for teams building APIs

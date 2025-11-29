@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFrameworks>net9.0;net10.0</TargetFrameworks>
     <RootNamespace>MX.Api.Client</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
@@ -12,7 +12,7 @@
     <Company>Molyneux.IO</Company>
     <Product>Molyneux.IO API Abstractions</Product>
     <Title>API Abstractions - REST Client Implementation</Title>
-    <Description>Resilient, authenticated REST API client library for .NET 9 applications. Provides base classes, token management, authentication, retry policies, and standardized error handling for building robust API clients.</Description>
+    <Description>Resilient, authenticated REST API client library for modern .NET (net9/net10) applications. Provides base classes, token management, authentication, retry policies, and standardized error handling for building robust API clients.</Description>
     <PackageProjectUrl>https://github.com/frasermolyneux/api-client-abstractions</PackageProjectUrl>
     <RepositoryUrl>https://github.com/frasermolyneux/api-client-abstractions</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
