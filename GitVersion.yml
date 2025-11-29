@@ -1,4 +1,4 @@
-mode: Mainline
+strategy: Mainline
 next-version: 2.1.0
 tag-prefix: 'v'
 continuous-delivery-fallback-label: preview
