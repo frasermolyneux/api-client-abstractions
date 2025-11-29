@@ -3,7 +3,7 @@ name: Release to Production
 on:
   workflow_run:
     workflows:
-      - Main Branch CI and Tagging
+      - Main Branch Build and Tag
     types:
       - completed
 
