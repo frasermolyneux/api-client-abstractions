@@ -1,7 +1,7 @@
 mode: Mainline
 next-version: 2.1.0
 tag-prefix: 'v'
-continuous-delivery-fallback-tag: preview
+continuous-delivery-fallback-label: preview
 semantic-version-format: Strict
 commit-message-incrementing: Enabled
 assembly-versioning-scheme: MajorMinorPatch
@@ -10,23 +10,23 @@ assembly-informational-format: '{FullSemVer}+{Sha}'
 branches:
   main:
     regex: ^main$
-    tag: ''
+    label: ''
     increment: Patch
     prevent-increment-of-merged-branch-version: true
     track-merge-target: false
   feature:
     regex: ^(feature|feat|bugfix|fix|hotfix|chore|task)/.*
-    tag: preview
+    label: preview
     increment: Inherit
     track-merge-target: false
   pull-request:
     regex: ^(pull|pr)/.*
-    tag: preview
+    label: preview
     increment: Inherit
     track-merge-target: false
   support:
     regex: ^support/.*
-    tag: hotfix
+    label: hotfix
     increment: Patch
 ignore:
   sha: []
