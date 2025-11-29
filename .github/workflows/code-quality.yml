@@ -46,6 +46,7 @@ jobs:
           9.0.x
           10.0.x-preview
         src-folder: "src"
+        perform-checkout: false
 
     - name: End SonarScanner
       shell: bash
