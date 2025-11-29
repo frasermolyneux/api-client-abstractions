@@ -1,4 +1,4 @@
-name: Main Branch Build + Tag
+name: Main Branch Build and Tag
 
 on:
   workflow_dispatch:

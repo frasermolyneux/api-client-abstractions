@@ -3,7 +3,7 @@ name: Publish Tagged Build to NuGet
 on:
   workflow_run:
     workflows:
-      - Main Branch Build + Tag
+      - Main Branch Build and Tag
     types:
       - completed
 
