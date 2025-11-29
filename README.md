@@ -156,9 +156,9 @@ This solution consists of three focused NuGet packages:
 ## Build & Release Strategy
 
 - **Multi-targeted packages** – All libraries now compile for `net9.0` and `net10.0` so a single NuGet package serves current and upcoming runtime versions (including previews).
-- **GitVersion-driven versions** – [GitVersion](GitVersion.yml) runs in mainline mode via the official `gittools/actions/gitversion` setup/execute steps, so semantic versions come straight from `v*` tags and assemblies/NuGet packages stay in sync without manual patch math.
-- **Preview automation** – Feature/PR builds inherit GitVersion’s `preview` pre-release tag, so every prerelease package follows the same semver rules and can be pulled from nightly feeds with confidence.
-- **Tag-driven releases** – Every merge to `main` runs CI, lets GitVersion determine the next patch, tags it as `v<semver>`, and a follow-up workflow reuses the built artifact to push to NuGet (build once, publish once).
+- **NBGV-managed versions** – [Nerdbank.GitVersioning](version.json) owns semantic versioning, so libraries, NuGet packages, and git tags all share the same `v<major.minor.patch>` values without hand-maintained math.
+- **Preview automation** – Feature/PR builds automatically get NBGV’s `preview` prerelease label, so nightly packages are predictable (`2.1.0-preview.g<sha>`) and publish straight from CI.
+- **Tag-driven releases** – Every merge to `main` runs CI, lets NBGV calculate the release version, tags it as `v<semver>`, and a follow-up workflow reuses the built artifact to push to NuGet (build once, publish once).
 - **Reusable actions** – All GitHub workflows call the shared `frasermolyneux/actions/*` composites, which now install multiple SDKs (including prerelease builds) and apply the tag-or-preview version logic consistently.
 
 ## Documentation

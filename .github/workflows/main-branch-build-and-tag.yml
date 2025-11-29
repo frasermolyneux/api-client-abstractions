@@ -15,8 +15,8 @@ jobs:
   calculate-version:
     runs-on: ubuntu-latest
     outputs:
-      semver: ${{ steps.gitversion.outputs.SemVer }}
-      nuget_version: ${{ steps.gitversion.outputs.SemVer }}
+      semver: ${{ steps.capture_version.outputs.semver }}
+      nuget_version: ${{ steps.capture_version.outputs.nuget_version }}
       tag_name: ${{ steps.release_tag.outputs.tag_name }}
       should_tag: ${{ steps.release_tag.outputs.should_tag }}
 
@@ -25,22 +25,43 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Setup GitVersion
-      uses: gittools/actions/gitversion/setup@v4
-      with:
-        versionSpec: '6.4.x'
+    - name: Install Nerdbank.GitVersioning tool
+      run: |
+        dotnet tool install --global nbgv
+        echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
 
     - name: Determine version
-      id: gitversion
-      uses: gittools/actions/gitversion/execute@v4
+      id: capture_version
+      shell: pwsh
+      run: |
+        $versionInfo = nbgv get-version -f json | ConvertFrom-Json
+        $semVer = $versionInfo.SemVer2
+        $nuGetVersion = $versionInfo.NuGetPackageVersion
+        $isPublicRelease = $versionInfo.PublicRelease
+
+        Write-Host "SemVer: $semVer"
+        Write-Host "NuGet version: $nuGetVersion"
+        Write-Host "Public release: $isPublicRelease"
+
+        "semver=$semVer" | Out-File -FilePath $Env:GITHUB_OUTPUT -Encoding utf8 -Append
+        "nuget_version=$nuGetVersion" | Out-File -FilePath $Env:GITHUB_OUTPUT -Encoding utf8 -Append
+        "public_release=$isPublicRelease" | Out-File -FilePath $Env:GITHUB_OUTPUT -Encoding utf8 -Append
 
     - name: Decide tag requirement
       id: release_tag
       shell: pwsh
       env:
-        SEMVER: ${{ steps.gitversion.outputs.SemVer }}
+        SEMVER: ${{ steps.capture_version.outputs.semver }}
+        PUBLIC_RELEASE: ${{ steps.capture_version.outputs.public_release }}
       run: |
         git fetch --tags --force
+        if ($Env:PUBLIC_RELEASE -ne 'True' -and $Env:PUBLIC_RELEASE -ne 'true') {
+          Write-Host 'Current commit is not a public release. No tag will be created.'
+          "should_tag=false" | Out-File -FilePath $Env:GITHUB_OUTPUT -Encoding utf8 -Append
+          "tag_name=" | Out-File -FilePath $Env:GITHUB_OUTPUT -Encoding utf8 -Append
+          exit 0
+        }
+        $tagName = "v$Env:SEMVER"
         $existing = git tag --points-at HEAD | Where-Object { $_ -like 'v*' } | Select-Object -First 1
         if ($existing) {
           Write-Host "HEAD already tagged with $existing; skipping tag creation."
@@ -48,8 +69,6 @@ jobs:
           "tag_name=$existing" | Out-File -FilePath $Env:GITHUB_OUTPUT -Encoding utf8 -Append
           exit 0
         }
-
-        $tagName = "v$Env:SEMVER"
         Write-Host "Next release tag: $tagName"
         "should_tag=true" | Out-File -FilePath $Env:GITHUB_OUTPUT -Encoding utf8 -Append
         "tag_name=$tagName" | Out-File -FilePath $Env:GITHUB_OUTPUT -Encoding utf8 -Append
