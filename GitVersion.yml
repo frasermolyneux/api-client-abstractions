@@ -3,7 +3,6 @@ next-version: 2.1.0
 tag-prefix: '[vV]'
 semantic-version-format: Strict
 commit-message-incrementing: Enabled
-continuous-delivery-fallback-label: preview
 assembly-versioning-scheme: MajorMinorPatch
 assembly-file-versioning-scheme: MajorMinorPatch
 assembly-informational-format: '{FullSemVer}+{Sha}'
