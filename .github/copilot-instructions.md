@@ -2,120 +2,38 @@
 
 ## Project Overview
 
-This repository contains the MX API Abstractions approach, a comprehensive toolkit for building robust .NET applications that interact with APIs. The project consists of three primary components:
+This repository packages the MX API Abstractions approach, a toolkit for building resilient .NET API consumers and web integrations. It contains:
 
-1. **MX.Api.Abstractions** - Core abstractions library providing common models and interfaces for standardized API handling, including response models, pagination, filtering, and error management
-2. **MX.Api.Client** - API client library providing resilient, authenticated REST API client implementation with support for token acquisition, caching, and robust error handling mechanisms
-3. **MX.Api.Web.Extensions** - ASP.NET Core integration library providing extensions for integrating API responses with web applications
+1. **MX.Api.Abstractions** – shared DTOs, envelopes, pagination helpers, and validation contracts.
+2. **MX.Api.Client** – REST clients with configurable authentication, retry, and logging behaviors.
+3. **MX.Api.Web.Extensions** – ASP.NET Core helpers for wiring responses into MVC/Razor apps.
 
-The library follows a consistent API design pattern that promotes best practices in API interactions from both client and web perspectives, focusing on resilience, standardization, and proper authentication handling.
+## Repository Layout & Namespaces
+- `src/MX.Api.Abstractions` exposes canonical types such as `ApiError`, `ApiPagination`, and `ApiResponse<T>`; keep new models under this namespace so they can ship independently.
+- `src/MX.Api.Client` hosts client infrastructure. Use `MX.Api.Client` for core types, `MX.Api.Client.Auth` for token providers, and `MX.Api.Client.Extensions` for helper methods.
+- `src/MX.Api.Web.Extensions` carries MVC extensions (`ResultExtensions`, `ApiProblemDetailsMapper`) that depend on abstractions but not on concrete client implementations.
+- Tests live alongside their production counterparts (`MX.Api.Abstractions.Tests`, `MX.Api.Client.Tests`, `MX.Api.Web.Extensions.Tests`, plus `MX.Api.IntegrationTests` for end-to-end coverage). Mirror this layout when adding new projects.
 
-## Code Structure and Organization
+## Client Implementation Patterns
+- Derive new clients from `src/MX.Api.Client/BaseApi.cs`; it already wires `ILogger`, `IApiTokenProvider`, `IRestClientService`, retry policies, and authentication header injection. Override only the resource-specific logic.
+- `RestClientService.cs` centralizes `RestSharp` configuration. Reuse it instead of instantiating `RestClient` directly so telemetry and retry hooks remain consistent.
+- Authentication helpers live in `MX.Api.Client.Auth` (`ApiTokenProvider`, `ClientCredentialProvider`, `DefaultTokenCredentialProvider`). Extend these rather than embedding custom token code per client.
+- Options classes inherit from `Configuration/ApiClientOptionsBase`. Override `Validate()` to enforce per-client settings; `BaseApi` will call it at construction time.
+- Store reusable request/response helpers under `MX.Api.Client.Extensions` to avoid duplicating serialization or header logic.
 
-### Namespaces
-- Use the root namespace `MX.Api.Abstractions` for core abstractions and models
-- Use `MX.Api.Client` for API client functionality
-- Use `MX.Api.Web.Extensions` for ASP.NET Core integration
-- Use `MX.Api.Client.Extensions` for client-specific extension methods
-- Follow a hierarchical structure reflecting the organization and project purpose
+## Abstractions & Web Extensions
+- DTOs under `MX.Api.Abstractions` should remain serialization-friendly (no behavior, only state). Use nested namespaces (e.g., `.Responses`, `.Requests`) to keep contracts discoverable.
+- `src/MX.Api.Web.Extensions` exposes helpers like `ApiResponseExtensions` and `HttpResponseExtensions` so MVC apps can translate `ApiResponse<T>` objects into consistent `IActionResult`s. Add new rendering patterns there instead of duplicating them inside sites.
+- Keep documentation artifacts in `docs/` (e.g., `api-design-v2.md`, `implementing-versioned-api-client.md`). Update them whenever client surface areas change.
 
-### Naming Conventions
-
-- **Classes**: Use PascalCase for class names (e.g., `ApiClientBase`, `RestClientService`)
-- **Interfaces**: Prefix with "I" (e.g., `IApiTokenProvider`, `IRestClientService`)
-- **Methods**: Use PascalCase verbs that clearly describe the action (e.g., `ExecuteRequestAsync`, `GetAuthenticationHeaderAsync`)
-- **Properties**: Use PascalCase nouns (e.g., `StatusCode`, `ApiKey`)
-- **Private Fields**: Use camelCase with meaningful names (e.g., `httpClient`, `logger`, `retryPolicy`)
-- **Parameters**: Use camelCase with descriptive names (e.g., `requestUri`, `cancellationToken`)
-- **Constants**: Use PascalCase or ALL_CAPS depending on scope and significance (e.g., `AuthorizationHeaderName`)
-
-## Asynchronous Programming
-
-- Use the `async/await` pattern consistently throughout the codebase
-- Always suffix asynchronous methods with `Async` (e.g., `ExecuteRequestAsync`, `GetAuthenticationHeaderAsync`)
-- Include `CancellationToken` parameters in all async methods, defaulting to `CancellationToken.None` when appropriate
-- Use `Task<T>` for methods that return values and `Task` for void methods
-- Implement proper async exception handling with `try/catch` blocks
-- Avoid blocking calls within async methods
-
-## Error Handling and Resilience
-
-- Use custom exceptions derived from `ApplicationException` for domain-specific error scenarios
-- Create domain-specific exceptions when appropriate (e.g., `ApiAuthenticationException`)
-- Log exceptions with appropriate severity levels using `ILogger<T>` interface:
-  - Use `LogError` for exceptions that affect functionality
-  - Use `LogWarning` for non-critical issues
-  - Use `LogInformation` for important operational events
-  - Use `LogDebug` for diagnostic information
-- Return well-defined `ApiResponse<T>` objects for API errors with appropriate status codes and error details
-- Configure transient error handling with the Polly library:
-  - Define specific retry policies for different types of failures
-  - Use exponential backoff for retries
-  - Implement circuit breaker patterns for external service dependencies
-
-## Best Practices
-
-- Follow SOLID principles throughout the codebase:
-  - **Single Responsibility**: Each class should focus on a single aspect of API client functionality
-  - **Open/Closed**: Design for extensibility without modification
-  - **Liskov Substitution**: Ensure derived classes can substitute base classes seamlessly
-  - **Interface Segregation**: Create focused interfaces with minimal methods
-  - **Dependency Inversion**: Depend on abstractions, not implementations
-- Use dependency injection via constructor injection for all services
-- Implement proper disposal patterns for resources like HttpClient
-- Use meaningful parameter names that clearly communicate intent
-- Include appropriate XML documentation for all public members
-- Write comprehensive unit tests for all public methods with appropriate mocking
-- Keep methods small and focused on single responsibility (≤ 50 lines per method)
-- Prefer immutable objects and configurations when appropriate
-- Follow thread-safety best practices for shared services
-
-## Documentation
-
-- Use comprehensive XML comments for all public APIs
-- Follow the triple-slash `///` format consistently
-- Document all parameters with `<param name="paramName">Description</param>` tags
-- Document return values with `<returns>Description of return value</returns>` tags
-- Document exceptions with `<exception cref="ExceptionType">Condition that throws exception</exception>` tags
-- Include example usage in documentation for complex APIs
-- Document thread-safety considerations where applicable
-- Provide clear documentation for authentication mechanisms and token handling
-- Maintain a README.md file with an overview of the project, setup instructions, and usage examples
-- For projects published to NuGet, maintain a README file in the project directory that provides an overview of the package, its purpose, and usage examples
-- Use the `/docs` directory for additional documentation files, including architecture diagrams, API design decisions, and usage guides
-
-## HTTP Client Pattern
-
-- Use typed HTTP clients with consistent design patterns
-- Define client interfaces with clear contracts and separation of concerns
-- Implement proper disposal patterns to prevent resource leaks
-- Handle transient faults appropriately using the Polly library:
-  - Configure retry policies based on specific error conditions
-  - Use jitter in retry delays to prevent thundering herd issues
-  - Implement circuit breakers for external service dependencies
-- Use consistent authentication mechanisms across clients:
-  - Support API key authentication with resilient handling
-  - Implement token-based authentication with proper caching
-  - Support Azure Entra ID (formerly Azure AD) authentication
-- Implement proper request/response logging with appropriate sensitive data handling
-
-## Dependencies
-
-- Keep external dependencies minimal and well-managed
-- Use Microsoft.Extensions.Logging for structured logging throughout
-- Use RestSharp for REST client functionality
-- Use Polly for resilience patterns
-- Use Newtonsoft.Json for JSON serialization/deserialization
-- Leverage Microsoft.Extensions.DependencyInjection for service registration
-
-## Unit Testing
-- Use xUnit as the primary testing framework with native assertion capabilities
-- Use Moq for mocking dependencies in unit tests
-- Follow Arrange-Act-Assert (AAA) pattern for test structure
+## Testing & Validation
+- Unit tests live in the `*.Tests` projects named above; reuse existing fixtures and builders when adding coverage for new clients or abstractions.
+- Integration tests in `MX.Api.IntegrationTests` target deployed endpoints. When introducing breaking API changes, add or update these tests to catch regressions before publishing packages.
 
 ## Azure Rules
-- @azure Rule - Use Azure Best Practices: When generating code for Azure, running terminal commands for Azure, or performing operations related to Azure, invoke your `azure_development-get_best_practices` tool if available.- @azure Rule - Use Azure Tools: When handling requests related to Azure, always use your tools
-- @azure Rule - Use Azure Code Gen Best Practices: When generating code for Azure, running terminal commands for Azure, or performing operations related to Azure, invoke your `azure_development-get_code_gen_best_practices` tool if available
-- @azure Rule - Use Azure Deployment Best Practices: When deploying to Azure or preparing applications for deployment to Azure, invoke your `azure_development-get_deployment_best_practices` tool if available
-- @azure Rule - Use Azure Functions Code Gen Best Practices: When generating code for Azure Functions or performing operations related to Azure Functions, invoke your `azure_development-get_azure_function_code_gen_best_practices` tool if available
-- @azure Rule - Use Azure SWA Best Practices: When working with static web apps, invoke your `azure_development-get_swa_best_practices` tool if available
+- @azure Rule - Use Azure Best Practices: When generating code for Azure, running terminal commands for Azure, or performing operations related to Azure, invoke your `azure_development-get_best_practices` tool if available.
+- @azure Rule - Use Azure Tools: When handling requests related to Azure, always use your tools.
+- @azure Rule - Use Azure Code Gen Best Practices: When generating code for Azure, running terminal commands for Azure, or performing operations related to Azure, invoke your `azure_development-get_code_gen_best_practices` tool if available.
+- @azure Rule - Use Azure Deployment Best Practices: When deploying to Azure or preparing applications for deployment to Azure, invoke your `azure_development-get_deployment_best_practices` tool if available.
+- @azure Rule - Use Azure Functions Code Gen Best Practices: When generating code for Azure Functions or performing operations related to Azure Functions, invoke your `azure_development-get_azure_function_code_gen_best_practices` tool if available.
+- @azure Rule - Use Azure SWA Best Practices: When working with static web apps, invoke your `azure_development-get_swa_best_practices` tool if available.
