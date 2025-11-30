@@ -60,6 +60,23 @@
                 "Release"
             ],
             "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "update-nuget-packages",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                "${workspaceFolder}/scripts/update-nuget-packages.ps1"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "detail": "Runs the repository NuGet upgrade script (dotnet-outdated + build/test).",
+            "problemMatcher": "$msCompile"
         }
     ]
 }

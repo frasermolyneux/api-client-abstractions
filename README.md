@@ -167,6 +167,7 @@ This solution consists of three focused NuGet packages:
 - **[📖 Implementation Guide - API Consumers](docs/implementing-api-consumer.md)** - Guide for teams consuming APIs  
 - **[� Versioned API Client Pattern](docs/implementing-versioned-api-client.md)** - Advanced pattern for multi-version API support
 - **[�📐 API Design Patterns](docs/api-design-v2.md)** - Understanding the underlying design principles
+- **[🧰 NuGet Package Maintenance](docs/package-maintenance.md)** - How Dependabot handles upgrades and how to run the manual script when needed
 
 ## Authentication
 
