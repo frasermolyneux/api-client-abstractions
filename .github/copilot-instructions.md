@@ -1,34 +1,38 @@
 # GitHub Copilot Instructions
 
-## Project Overview
-
-This repository packages the MX API Abstractions approach, a toolkit for building resilient .NET API consumers and web integrations. It contains:
-
-1. **MX.Api.Abstractions** – shared DTOs, envelopes, pagination helpers, and validation contracts.
-2. **MX.Api.Client** – REST clients with configurable authentication, retry, and logging behaviors.
-3. **MX.Api.Web.Extensions** – ASP.NET Core helpers for wiring responses into MVC/Razor apps.
-
-## Repository Layout & Namespaces
-- `src/MX.Api.Abstractions` exposes canonical types such as `ApiError`, `ApiPagination`, and `ApiResponse<T>`; keep new models under this namespace so they can ship independently.
-- `src/MX.Api.Client` hosts client infrastructure. Use `MX.Api.Client` for core types, `MX.Api.Client.Auth` for token providers, and `MX.Api.Client.Extensions` for helper methods.
-- `src/MX.Api.Web.Extensions` carries MVC extensions (`ResultExtensions`, `ApiProblemDetailsMapper`) that depend on abstractions but not on concrete client implementations.
-- Tests live alongside their production counterparts (`MX.Api.Abstractions.Tests`, `MX.Api.Client.Tests`, `MX.Api.Web.Extensions.Tests`, plus `MX.Api.IntegrationTests` for end-to-end coverage). Mirror this layout when adding new projects.
+## Big Picture
+- `src/MX.Api.Abstractions.sln` stitches together three NuGet packages: `MX.Api.Abstractions` (DTOs, envelopes, pagination), `MX.Api.Client` (RestSharp-based consumers with Polly and token orchestration), and `MX.Api.Web.Extensions` (ASP.NET Core glue that turns `ApiResult<T>` into `IActionResult`). Keep changes scoped to the package that owns the behavior so upgrades remain independent.
+- Data flows follow a strict pattern: controllers/services build `ApiResponse<T>` models (see `src/MX.Api.Abstractions`), clients wrap HTTP output in `ApiResult<T>` (see `src/MX.Api.Client/RestResponseExtensions.cs`), and web apps call `ToHttpResult()` from `src/MX.Api.Web.Extensions` to surface consistent status codes.
+- Documentation in `docs/api-design-v2.md`, `docs/implementing-api-consumer.md`, and `docs/implementing-versioned-api-client.md` explains why these abstractions exist; mirror those patterns rather than inventing new response shapes.
 
 ## Client Implementation Patterns
-- Derive new clients from `src/MX.Api.Client/BaseApi.cs`; it already wires `ILogger`, `IApiTokenProvider`, `IRestClientService`, retry policies, and authentication header injection. Override only the resource-specific logic.
-- `RestClientService.cs` centralizes `RestSharp` configuration. Reuse it instead of instantiating `RestClient` directly so telemetry and retry hooks remain consistent.
-- Authentication helpers live in `MX.Api.Client.Auth` (`ApiTokenProvider`, `ClientCredentialProvider`, `DefaultTokenCredentialProvider`). Extend these rather than embedding custom token code per client.
-- Options classes inherit from `Configuration/ApiClientOptionsBase`. Override `Validate()` to enforce per-client settings; `BaseApi` will call it at construction time.
-- Store reusable request/response helpers under `MX.Api.Client.Extensions` to avoid duplicating serialization or header logic.
+- New clients must inherit from `src/MX.Api.Client/BaseApi*.cs`. Use `CreateRequestAsync` + `ExecuteAsync` and let `IApiTokenProvider` (from `MX.Api.Client.Auth`) add headers—never hand-build `RestClient` instances.
+- Register clients via `ServiceCollectionExtensions`: `AddApiClient<TInterface, TImpl>` when default `ApiClientOptions` is enough; `AddTypedApiClient<...Options, ...Builder>` when you need custom option properties/validation (examples in `src/MX.Api.Client/README.md`).
+- Centralize configuration in option builders (`Configuration/ApiClientOptionsBuilder.cs`) and call `Validate()` for required fields. Consumers expect fluent methods such as `WithBaseUrl`, `WithSubscriptionKey`, and `WithEntraIdAuthentication` to be available.
+- Place reusable request helpers under `MX.Api.Client.Extensions` (e.g., `RestResponseExtensions.ToApiResponse<T>()`) so pagination, metadata, and error parsing stay uniform.
 
-## Abstractions & Web Extensions
-- DTOs under `MX.Api.Abstractions` should remain serialization-friendly (no behavior, only state). Use nested namespaces (e.g., `.Responses`, `.Requests`) to keep contracts discoverable.
-- `src/MX.Api.Web.Extensions` exposes helpers like `ApiResponseExtensions` and `HttpResponseExtensions` so MVC apps can translate `ApiResponse<T>` objects into consistent `IActionResult`s. Add new rendering patterns there instead of duplicating them inside sites.
-- Keep documentation artifacts in `docs/` (e.g., `api-design-v2.md`, `implementing-versioned-api-client.md`). Update them whenever client surface areas change.
+## Abstractions & Web Integration
+- `MX.Api.Abstractions` owns `ApiResponse`, `ApiResponse<T>`, `ApiResult<T>`, `CollectionModel<T>`, `ApiPagination`, and `FilterOptions` (see `src/MX.Api.Abstractions/README.md`). Keep these classes POCO-only—no behavior beyond serialization helpers.
+- When exposing lists, populate both `CollectionModel<T>.Items` and `ApiResponse.Pagination` so `MX.Api.Web.Extensions` can emit paging headers (see `src/MX.Api.Web.Extensions/README.md`).
+- Controllers or BFFs should never inspect raw `RestResponse`; convert to `ApiResult` first and call `ToHttpResult()` / `ToApiResult(HttpStatusCode)` from `MX.Api.Web.Extensions` to map to MVC results consistently.
 
-## Testing & Validation
-- Unit tests live in the `*.Tests` projects named above; reuse existing fixtures and builders when adding coverage for new clients or abstractions.
-- Integration tests in `MX.Api.IntegrationTests` target deployed endpoints. When introducing breaking API changes, add or update these tests to catch regressions before publishing packages.
+## Authentication & Configuration
+- `ApiClientOptions` (and typed derivatives) support layered auth: `WithApiKeyAuthentication`, `WithSubscriptionKey` for APIM, `WithBearerToken`, and `WithEntraIdAuthentication` that chains to `Azure.Identity` (examples in `src/MX.Api.Client/README.md`). You can enable multiple schemes simultaneously—the request builder will emit every configured header.
+- For advanced scenarios, define custom options (see `MX.Api.IntegrationTests/UserApiOptions`) and builders so clients can add domain-specific knobs (`WithApiVersion`, caching hints, etc.) while still being validated via `Validate()`.
+- Named clients use `IOptionsSnapshot<ApiClientOptions>` plus the `BaseApi` constructor overload that accepts the name; follow that approach when registering multiple backends in the same app.
+
+## Testing & Tooling
+- Standard workflow: `dotnet build src/MX.Api.Abstractions.sln` then `dotnet test src/MX.Api.Abstractions.sln --filter FullyQualifiedName!~IntegrationTests`; integration runs (`--filter FullyQualifiedName~IntegrationTests`) target the sandbox APIs in `src/MX.Api.IntegrationTests`.
+- Integration strategy is dual: DI/service-registration tests ensure `AddApiClient`/`AddTypedApiClient` wiring works, while HTTP tests hit the in-memory APIs directly because RestSharp cannot talk to `TestServer` (documented in `src/MX.Api.IntegrationTests/README.md`). When adding features, touch both layers where applicable.
+- Use `scripts/update-nuget-packages.ps1` when bumping dependencies; it runs `dotnet-outdated`, a Release build, and tests across all target frameworks so lockfiles stay in sync with CI expectations.
+- Projects multi-target `net9.0` + `net10.0`. New code must compile for both runtimes and avoid APIs that only exist in a single target unless wrapped with `#if` guards in `Directory.Build.props`.
+
+## Versioning & CI
+- Nerdbank.GitVersioning (`version.json`) governs package, assembly, and git tag versions. CI workflows reuse the shared composites from `frasermolyneux/actions` so preview builds get `-preview.g<sha>` automatically and tagged builds publish to NuGet without rebuilding.
+- Keep `Directory.Build.props` authoritative for analyzers and nullable/context settings; do not override them in individual projects unless coordinated, or CI style checks will fail.
+
+## Reference Material
+- Key guides live in `docs/`: API consumer/provider walkthroughs, versioned client playbook, package maintenance, and EF regeneration instructions. Link to them from PRs when introducing patterns so future contributors can find precedent quickly.
 
 ## Azure Rules
 - @azure Rule - Use Azure Best Practices: When generating code for Azure, running terminal commands for Azure, or performing operations related to Azure, invoke your `azure_development-get_best_practices` tool if available.
