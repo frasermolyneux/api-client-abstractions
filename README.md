@@ -1,7 +1,7 @@
 # MX API Abstractions
 > Unified .NET abstractions, clients, and ASP.NET extensions for standardized, resilient API integrations.
 
-`GitHub Actions workflows (7)`
+## ⚙️ Workflows
 [![Code Quality (Sonar + CodeQL)](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/code-quality.yml/badge.svg)](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/code-quality.yml)
 [![Copilot Setup Steps](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/copilot-setup-steps.yml/badge.svg)](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/copilot-setup-steps.yml)
 [![Dependabot Auto-Merge](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/dependabot-automerge.yml/badge.svg)](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/dependabot-automerge.yml)
@@ -11,13 +11,13 @@
 [![Publish Tagged Build to NuGet](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/publish-tagged-build.yml/badge.svg)](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/publish-tagged-build.yml)
 
 ## 📌 Overview
-MX API Abstractions packages response envelopes, a RestSharp-based client stack, and ASP.NET Core helpers so every team can build and consume APIs with identical conventions. Docs under `docs/` explain the cross-cutting decisions for providers, consumers, versioned clients, and package maintenance.
+MX API Abstractions packages response envelopes, a RestSharp-based client stack, and ASP.NET Core helpers so every team can build and consume APIs with identical conventions. Docs under `docs/` capture the cross-cutting decisions for providers, consumers, versioned clients, and package maintenance so updates stay coordinated.
 
 ## 🧱 Technology & Frameworks
-- `.NET 9.0 & .NET 10.0` – Multi-targeted across every package.
-- `Azure.Identity 1.17.x` – Entra ID authentication and credential orchestration.
-- `RestSharp 113 + Polly 8.6` – Resilient HTTP client pipeline with retries and caching hooks.
-- `ASP.NET Core 9/10 + MX.Api.Web.Extensions` – Consistent controller and HTTP result mapping.
+- .NET 9.0 & .NET 10.0 – Multi-targeted across every package
+- Azure.Identity 1.17.x – Entra ID authentication and credential orchestration
+- RestSharp 113 + Polly 8.6 – Resilient HTTP client pipeline with retries and caching hooks
+- ASP.NET Core 9/10 + MX.Api.Web.Extensions – Consistent controller and HTTP result mapping
 
 ## 📚 Documentation Index
 - [docs/api-design-v2.md](https://github.com/frasermolyneux/api-client-abstractions/blob/main/docs/api-design-v2.md) – Routing, filters, pagination, and response envelope reference.
@@ -73,7 +73,6 @@ git clone https://github.com/frasermolyneux/api-client-abstractions.git
 cd api-client-abstractions
 dotnet build src/MX.Api.Abstractions.sln
 dotnet test src/MX.Api.Abstractions.sln --filter FullyQualifiedName!~IntegrationTests
-# Optional integration coverage
 dotnet test src/MX.Api.Abstractions.sln --filter FullyQualifiedName~IntegrationTests
 ```
 
