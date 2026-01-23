@@ -7,8 +7,8 @@ This library targets **.NET 9** and **.NET 10** exclusively. All projects multi-
 ## Target Framework Policy
 
 ### Supported Runtimes
-- **.NET 9.0**: Current stable LTS (long-term support) release
-- **.NET 10.0**: Current preview/release candidate
+- **.NET 9.0**: Current stable release (standard support track, 18-month lifecycle)
+- **.NET 10.0**: Next major release (currently in preview/development)
 
 ### Rationale
 1. **Aligned Release Cadence**: By supporting the current stable release plus the upcoming release, consumers have a smooth upgrade path without waiting for library updates.
