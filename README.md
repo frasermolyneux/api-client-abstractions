@@ -20,6 +20,7 @@ MX API Abstractions packages response envelopes, a RestSharp-based client stack,
 - ASP.NET Core 9/10 + MX.Api.Web.Extensions – Consistent controller and HTTP result mapping
 
 ## 📚 Documentation Index
+- [docs/dotnet-support-strategy.md](https://github.com/frasermolyneux/api-client-abstractions/blob/main/docs/dotnet-support-strategy.md) – .NET 9/10 target framework policy, dependency management, and CI/CD configuration.
 - [docs/api-design-v2.md](https://github.com/frasermolyneux/api-client-abstractions/blob/main/docs/api-design-v2.md) – Routing, filters, pagination, and response envelope reference.
 - [docs/implementing-api-consumer.md](https://github.com/frasermolyneux/api-client-abstractions/blob/main/docs/implementing-api-consumer.md) – End-to-end guidance for resilient API consumers.
 - [docs/implementing-api-provider.md](https://github.com/frasermolyneux/api-client-abstractions/blob/main/docs/implementing-api-provider.md) – Controller, response, and error-handling patterns for providers.

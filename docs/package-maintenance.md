@@ -1,6 +1,8 @@
 # NuGet Package Maintenance
 
-The repository targets both `net9.0` and `net10.0`, so dependency updates must keep the two TFMs in sync. This page captures the automation that already exists and the non-standard manual process that can be used when Dependabot cannot unblock an update quickly enough.
+This repository targets both `net9.0` and `net10.0`. For the overall .NET support strategy and framework policy, see [dotnet-support-strategy.md](dotnet-support-strategy.md).
+
+This page captures the automation that already exists and the non-standard manual process that can be used when Dependabot cannot unblock an update quickly enough.
 
 ## Default Path: Dependabot
 
