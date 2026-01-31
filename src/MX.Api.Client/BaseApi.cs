@@ -145,7 +145,7 @@ public class BaseApi<TOptions>
         var request = new RestRequest(resource, method);
 
         // Apply authentication based on the configured authentication type
-        await ApplyAuthenticationAsync(request, cancellationToken);
+        await ApplyAuthenticationAsync(request, cancellationToken).ConfigureAwait(false);
 
         return request;
     }
@@ -174,7 +174,7 @@ public class BaseApi<TOptions>
                     break;
 
                 case EntraIdAuthenticationOptions entraIdOptions:
-                    await ApplyEntraIdAuthenticationAsync(request, entraIdOptions, cancellationToken);
+                    await ApplyEntraIdAuthenticationAsync(request, entraIdOptions, cancellationToken).ConfigureAwait(false);
                     break;
 
                 default:
@@ -223,7 +223,7 @@ public class BaseApi<TOptions>
                 throw new InvalidOperationException("IApiTokenProvider not available for Entra ID authentication");
             }
 
-            string accessToken = await apiTokenProvider.GetAccessTokenAsync(options.ApiAudience, cancellationToken);
+            string accessToken = await apiTokenProvider.GetAccessTokenAsync(options.ApiAudience, cancellationToken).ConfigureAwait(false);
             request.AddHeader(AuthorizationHeaderName, $"{BearerTokenPrefix}{accessToken}");
             logger.LogDebug("Added Entra ID token authentication for audience '{Audience}'", options.ApiAudience);
         }
@@ -253,8 +253,8 @@ public class BaseApi<TOptions>
         {
             // Execute the request with retry policy
             var response = await retryPolicy.ExecuteAsync(
-                async (token) => await restClientService.ExecuteAsync(options.BaseUrl, request, token),
-                cancellationToken);
+                async (token) => await restClientService.ExecuteAsync(options.BaseUrl, request, token).ConfigureAwait(false),
+                cancellationToken).ConfigureAwait(false);
 
             // Ensure response is not null to prevent NullReferenceException
             if (response is null)
