@@ -89,7 +89,7 @@ public class ApiTokenProvider : IApiTokenProvider
         {
             var credential = await tokenCredentialProvider.GetTokenCredentialAsync(cancellationToken).ConfigureAwait(false);
             var tokenResult = await credential.GetTokenAsync(
-                new TokenRequestContext(new[] { string.Format(DefaultScopeFormat, audience) }),
+                new TokenRequestContext([string.Format(DefaultScopeFormat, audience)]),
                 cancellationToken).ConfigureAwait(false);
 
             // Cache token with buffer time

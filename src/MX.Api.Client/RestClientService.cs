@@ -12,7 +12,7 @@ public class RestClientService : IRestClientService, IDisposable
 {
     private readonly TimeSpan defaultTimeout = TimeSpan.FromMinutes(5);
     private readonly Dictionary<string, RestClient> clientCache = new(StringComparer.OrdinalIgnoreCase);
-    private readonly object lockObject = new();
+    private readonly Lock lockObject = new();
     private readonly IOptionsSnapshot<ApiClientOptions>? optionsSnapshot;
     private bool disposed;
 

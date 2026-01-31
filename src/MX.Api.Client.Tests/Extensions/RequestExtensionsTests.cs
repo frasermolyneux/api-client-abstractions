@@ -65,7 +65,7 @@ public class RequestExtensionsTests
         var request = new RestRequest();
         var filterOptions = new FilterOptions
         {
-            Select = new[] { "name", "email", "age" }
+            Select = ["name", "email", "age"]
         };
 
         // Act
@@ -101,7 +101,7 @@ public class RequestExtensionsTests
         var request = new RestRequest();
         var filterOptions = new FilterOptions
         {
-            Expand = new[] { "addresses", "orders" }
+            Expand = ["addresses", "orders"]
         };
 
         // Act
@@ -248,8 +248,8 @@ public class RequestExtensionsTests
         var filterOptions = new FilterOptions
         {
             FilterExpression = "name eq 'John'",
-            Select = new[] { "name", "email" },
-            Expand = new[] { "addresses" },
+            Select = ["name", "email"],
+            Expand = ["addresses"],
             OrderBy = "name asc",
             Skip = 20,
             Top = 50,

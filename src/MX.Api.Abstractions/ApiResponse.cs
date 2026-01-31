@@ -35,7 +35,7 @@ public class ApiResponse
     public ApiResponse(ApiError error)
     {
         ArgumentNullException.ThrowIfNull(error);
-        Errors = new[] { error };
+        Errors = [error];
     }
 
     /// <summary>
@@ -103,7 +103,7 @@ public class ApiResponse<T>
     public ApiResponse(ApiError error)
     {
         ArgumentNullException.ThrowIfNull(error);
-        Errors = new[] { error };
+        Errors = [error];
     }
 
     /// <summary>
@@ -124,7 +124,7 @@ public class ApiResponse<T>
     public ApiResponse(T? data, ApiError error) : this(data)
     {
         ArgumentNullException.ThrowIfNull(error);
-        Errors = new[] { error };
+        Errors = [error];
     }
 
     /// <summary>
