@@ -19,7 +19,7 @@ public abstract class ApiClientOptionsBase
     /// Multiple authentication methods can be applied in the order they are configured.
     /// Can be empty if no authentication is required.
     /// </summary>
-    public IList<AuthenticationOptions> AuthenticationOptions { get; set; } = new List<AuthenticationOptions>();
+    public IList<AuthenticationOptions> AuthenticationOptions { get; set; } = [];
 
     /// <summary>
     /// Gets or sets the maximum number of retry attempts for failed API calls.
