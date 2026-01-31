@@ -28,12 +28,12 @@ public class UsersController : ControllerBase, IUserApiV1
         // Initialize with some test data if empty
         if (!_users.Any())
         {
-            _users.AddRange(new[]
-            {
+            _users.AddRange(
+            [
                 new User { Id = _nextId++, Username = "john.doe", Email = "john.doe@example.com", FullName = "John Doe", Role = "Admin" },
                 new User { Id = _nextId++, Username = "jane.smith", Email = "jane.smith@example.com", FullName = "Jane Smith", Role = "User" },
                 new User { Id = _nextId++, Username = "bob.wilson", Email = "bob.wilson@example.com", FullName = "Bob Wilson", Role = "User" }
-            });
+            ]);
         }
     }
 

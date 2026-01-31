@@ -14,10 +14,10 @@ namespace MX.Api.IntegrationTests.DummyApis.WeatherApi.Controllers;
 [Route("api/[controller]")]
 public class WeatherController : ControllerBase, IWeatherApiClient
 {
-    private static readonly string[] Summaries = new[]
-    {
+    private static readonly string[] Summaries =
+    [
         "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-    };
+    ];
 
     private readonly ILogger<WeatherController> _logger;
 
