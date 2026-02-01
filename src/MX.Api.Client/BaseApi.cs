@@ -27,8 +27,8 @@ public class BaseApi<TOptions>
     private readonly TOptions options;
     private readonly AsyncRetryPolicy<RestResponse> retryPolicy;
 
-    private static readonly HttpStatusCode[] SuccessStatusCodes = { HttpStatusCode.OK, HttpStatusCode.Created, HttpStatusCode.NoContent, HttpStatusCode.NotFound };
-    private static readonly HttpStatusCode[] NoRetryStatusCodes = { HttpStatusCode.OK, HttpStatusCode.Created, HttpStatusCode.NoContent, HttpStatusCode.NotFound, HttpStatusCode.Unauthorized, HttpStatusCode.BadRequest, HttpStatusCode.UnprocessableEntity };
+    private static readonly HttpStatusCode[] SuccessStatusCodes = [HttpStatusCode.OK, HttpStatusCode.Created, HttpStatusCode.NoContent, HttpStatusCode.NotFound];
+    private static readonly HttpStatusCode[] NoRetryStatusCodes = [HttpStatusCode.OK, HttpStatusCode.Created, HttpStatusCode.NoContent, HttpStatusCode.NotFound, HttpStatusCode.Unauthorized, HttpStatusCode.BadRequest, HttpStatusCode.UnprocessableEntity];
 
     /// <summary>
     /// The strongly-typed options for this client
