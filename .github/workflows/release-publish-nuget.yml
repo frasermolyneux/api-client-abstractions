@@ -8,6 +8,9 @@ on:
       - completed
 
 
+permissions: read-all
+
+
 jobs:
   publish-nuget-packages:
     permissions:
