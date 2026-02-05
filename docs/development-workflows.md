@@ -31,10 +31,10 @@ dotnet test src/MX.Api.Abstractions.sln --filter "FullyQualifiedName~Integration
 
 ## Quick Reference
 
-| Scenario                | Workflow                     | Trigger                          | Notes                        |
-| ----------------------- | ---------------------------- | -------------------------------- | ---------------------------- |
-| Feature commit          | build-and-test               | Push to feature/bugfix/hotfix    | Build/test only              |
-| PR validation           | pr-verify                    | PR to main                       | Build/test only              |
-| Version + tag           | release-version-and-tag      | Push to main (src/**) / manual   | Tags only on public releases |
-| Publish to NuGet        | release-publish-nuget        | workflow_run (version+tag)       | Requires v* tag + NuGet env  |
-| Code quality & scanning | codequality                  | Schedule / push main / PR to main| SonarCloud + CodeQL checks   |
+| Scenario                | Workflow                | Trigger                           | Notes                        |
+| ----------------------- | ----------------------- | --------------------------------- | ---------------------------- |
+| Feature commit          | build-and-test          | Push to feature/bugfix/hotfix     | Build/test only              |
+| PR validation           | pr-verify               | PR to main                        | Build/test only              |
+| Version + tag           | release-version-and-tag | Push to main (src/**) / manual    | Tags only on public releases |
+| Publish to NuGet        | release-publish-nuget   | workflow_run (version+tag)        | Requires v* tag + NuGet env  |
+| Code quality & scanning | codequality             | Schedule / push main / PR to main | SonarCloud + CodeQL checks   |
