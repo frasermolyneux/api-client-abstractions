@@ -1,15 +1,15 @@
-name: Publish Tagged Build to NuGet
+name: Release - Publish NuGet
 
 on:
   workflow_run:
     workflows:
-      - Main Branch Build and Tag
+      - Release - Version and Tag
     types:
       - completed
 
 permissions:
-  contents: write # Required to create GitHub releases
-  actions: read   # Required to download artifacts from another workflow run
+  contents: write
+  actions: read
 
 jobs:
   publish-nuget-packages:
@@ -62,4 +62,3 @@ jobs:
         artifacts: nuget-packages/**/*.nupkg
         artifactErrorsFailBuild: false
         token: ${{ secrets.GITHUB_TOKEN }}
-          

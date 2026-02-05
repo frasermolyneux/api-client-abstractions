@@ -2,13 +2,13 @@
 > Unified .NET abstractions, clients, and ASP.NET extensions for standardized, resilient API integrations.
 
 ## ⚙️ Workflows
-[![Code Quality (Sonar + CodeQL)](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/code-quality.yml/badge.svg)](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/code-quality.yml)
-[![Copilot Setup Steps](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/copilot-setup-steps.yml/badge.svg)](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/copilot-setup-steps.yml)
+[![Build and Test](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/build-and-test.yml)
+[![PR Verify](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/pr-verify.yml/badge.svg)](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/pr-verify.yml)
+[![Code Quality](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/codequality.yml/badge.svg)](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/codequality.yml)
+[![Release - Version and Tag](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/release-version-and-tag.yml/badge.svg)](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/release-version-and-tag.yml)
+[![Release - Publish NuGet](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/release-publish-nuget.yml/badge.svg)](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/release-publish-nuget.yml)
 [![Dependabot Auto-Merge](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/dependabot-automerge.yml/badge.svg)](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/dependabot-automerge.yml)
-[![Feature Branch Preview Publish](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/feature-preview-ci.yml/badge.svg)](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/feature-preview-ci.yml)
-[![Main Branch Build and Tag](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/main-branch-build-and-tag.yml/badge.svg)](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/main-branch-build-and-tag.yml)
-[![PR Validation (CI Only)](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/pr-validation.yml/badge.svg)](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/pr-validation.yml)
-[![Publish Tagged Build to NuGet](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/publish-tagged-build.yml/badge.svg)](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/publish-tagged-build.yml)
+[![Copilot Setup Steps](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/copilot-setup-steps.yml/badge.svg)](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/copilot-setup-steps.yml)
 
 ## 📌 Overview
 MX API Abstractions packages response envelopes, a RestSharp-based client stack, and ASP.NET Core helpers so every team can build and consume APIs with identical conventions. Docs under `docs/` capture the cross-cutting decisions for providers, consumers, versioned clients, and package maintenance so updates stay coordinated.
@@ -26,6 +26,7 @@ MX API Abstractions packages response envelopes, a RestSharp-based client stack,
 - [docs/implementing-api-provider.md](https://github.com/frasermolyneux/api-client-abstractions/blob/main/docs/implementing-api-provider.md) – Controller, response, and error-handling patterns for providers.
 - [docs/implementing-versioned-api-client.md](https://github.com/frasermolyneux/api-client-abstractions/blob/main/docs/implementing-versioned-api-client.md) – Structuring multi-version clients with shared options/builders.
 - [docs/package-maintenance.md](https://github.com/frasermolyneux/api-client-abstractions/blob/main/docs/package-maintenance.md) – Dependabot flow and manual NuGet update process.
+- [docs/development-workflows.md](https://github.com/frasermolyneux/api-client-abstractions/blob/main/docs/development-workflows.md) – CI/CD flow for builds, PRs, and NuGet releases.
 
 ## 🚀 Getting Started
 **Highlights**

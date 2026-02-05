@@ -1,17 +1,21 @@
 name: Code Quality
 
 on:
+  schedule:
+    - cron: "0 3 * * 1" # Monday 3am UTC
   push:
     branches:
       - main
   pull_request:
-    types: [opened, synchronize, reopened]
+    branches:
+      - main
+    types: [opened, synchronize, reopened, ready_for_review]
 
 permissions:
   contents: read
   actions: read
   security-events: write
-
+  
 jobs:
   quality:
     uses: frasermolyneux/actions/.github/workflows/codequality.yml@main
@@ -22,7 +26,7 @@ jobs:
       build-target: dotnet-ci
       dotnet-version: |
         9.0.x
-        10.0.x-preview
+        10.0.x
       src-folder: src
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
