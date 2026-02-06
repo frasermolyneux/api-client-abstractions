@@ -171,8 +171,10 @@ public class TestingExtensionsIntegrationTests
         // Arrange
         var services = new ServiceCollection();
         
-        // When registering multiple test clients, they will share the same InMemoryRestClientService
-        // Configure all responses on one service
+        // Note: When calling AddTestApiClient multiple times, the last call's InMemoryRestClientService
+        // will be registered in the DI container. To configure responses for multiple clients,
+        // configure all responses in one call, or use UseInMemoryRestClientService to explicitly
+        // replace the service.
         var testService = services.AddTestApiClient<IStandardTestApiClient, StandardTestApiClient>(
             options => options.WithBaseUrl("https://api1.example.com"),
             service =>
@@ -191,7 +193,8 @@ public class TestingExtensionsIntegrationTests
                 });
             });
 
-        // Register second client - it will use the same test service
+        // Register second client - It will attempt to register a new IRestClientService,
+        // but since TryAddSingleton is used, it won't replace the first one
         services.AddTestTypedApiClient<ITestApiClient, TestApiClient, TestApiOptions, TestApiOptionsBuilder>(
             options => options.WithBaseUrl("https://api2.example.com"));
 
@@ -207,7 +210,7 @@ public class TestingExtensionsIntegrationTests
         Assert.True(result1.IsSuccess);
         Assert.True(result2.IsSuccess);
         
-        // Both clients share the same test service
+        // Both clients share the same test service (from the first registration)
         Assert.True(testService.WasCalled("test-resource"));
         Assert.True(testService.WasCalled("custom-endpoint"));
     }
