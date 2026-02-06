@@ -594,3 +594,93 @@ public async Task<ApiResponse<CollectionModel<ResourceDto>>> GetResourcesAsync(F
     }
 }
 ```
+
+## Testing
+
+The library includes comprehensive testing utilities to help you write tests without making actual HTTP calls:
+
+### Unit Testing with InMemoryRestClientService
+
+```csharp
+using MX.Api.Client.Testing;
+using Microsoft.Extensions.DependencyInjection;
+using System.Net;
+using RestSharp;
+using Xunit;
+
+public class UserServiceTests
+{
+    [Fact]
+    public async Task GetUser_ReturnsUser_WhenUserExists()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        
+        // Register API client with test doubles
+        var testService = services.AddTestApiClient<IUserApiClient, UserApiClient>(
+            options => options.WithBaseUrl("https://test.example.com"),
+            testService =>
+            {
+                testService.AddResponse("users/123", new RestResponse
+                {
+                    StatusCode = HttpStatusCode.OK,
+                    Content = "{\"data\": {\"id\": \"123\", \"name\": \"John Doe\"}}"
+                });
+            });
+
+        var serviceProvider = services.BuildServiceProvider();
+        var userApiClient = serviceProvider.GetRequiredService<IUserApiClient>();
+
+        // Act
+        var result = await userApiClient.GetUserAsync("123");
+
+        // Assert
+        Assert.True(result.IsSuccess);
+        Assert.Equal("123", result.Result?.Data?.Id);
+        
+        // Verify the API was called
+        Assert.True(testService.WasCalled("users/123"));
+    }
+}
+```
+
+### Testing with FakeApiTokenProvider
+
+```csharp
+[Fact]
+public async Task ApiClient_UsesAuthentication_Correctly()
+{
+    // Arrange
+    var services = new ServiceCollection();
+    
+    // Setup fake token provider
+    var fakeTokenProvider = new FakeApiTokenProvider();
+    fakeTokenProvider.SetToken("api://users", "test-token-123");
+    services.AddSingleton<IApiTokenProvider>(fakeTokenProvider);
+    
+    var testService = services.AddTestApiClient<IUserApiClient, UserApiClient>(
+        options => options
+            .WithBaseUrl("https://test.example.com")
+            .WithEntraIdAuthentication("api://users"),
+        testService =>
+        {
+            testService.AddResponse("users/123", new RestResponse
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = "{\"data\": {\"id\": \"123\"}}"
+            });
+        });
+
+    var serviceProvider = services.BuildServiceProvider();
+    var client = serviceProvider.GetRequiredService<IUserApiClient>();
+
+    // Act
+    var result = await client.GetUserAsync("123");
+
+    // Assert
+    Assert.True(result.IsSuccess);
+    Assert.True(fakeTokenProvider.WasTokenRequested("api://users"));
+}
+```
+
+**For complete testing examples including UI tests with Playwright, see the [Testing Guide](../../docs/testing-guide.md).**

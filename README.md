@@ -25,6 +25,7 @@ MX API Abstractions packages response envelopes, a RestSharp-based client stack,
 - [docs/implementing-api-consumer.md](https://github.com/frasermolyneux/api-client-abstractions/blob/main/docs/implementing-api-consumer.md) – End-to-end guidance for resilient API consumers.
 - [docs/implementing-api-provider.md](https://github.com/frasermolyneux/api-client-abstractions/blob/main/docs/implementing-api-provider.md) – Controller, response, and error-handling patterns for providers.
 - [docs/implementing-versioned-api-client.md](https://github.com/frasermolyneux/api-client-abstractions/blob/main/docs/implementing-versioned-api-client.md) – Structuring multi-version clients with shared options/builders.
+- [docs/testing-guide.md](https://github.com/frasermolyneux/api-client-abstractions/blob/main/docs/testing-guide.md) – Comprehensive testing guide for unit, integration, and UI tests with test doubles.
 - [docs/package-maintenance.md](https://github.com/frasermolyneux/api-client-abstractions/blob/main/docs/package-maintenance.md) – Dependabot flow and manual NuGet update process.
 - [docs/development-workflows.md](https://github.com/frasermolyneux/api-client-abstractions/blob/main/docs/development-workflows.md) – CI/CD flow for builds, PRs, and NuGet releases.
 
@@ -77,6 +78,38 @@ dotnet build src/MX.Api.Abstractions.sln
 dotnet test src/MX.Api.Abstractions.sln --filter FullyQualifiedName!~IntegrationTests
 dotnet test src/MX.Api.Abstractions.sln --filter FullyQualifiedName~IntegrationTests
 ```
+
+## 🧪 Testing Your Code
+
+The library provides comprehensive testing utilities to help you write unit tests, integration tests, and UI tests without making actual HTTP calls:
+
+```csharp
+// Setup test with in-memory responses
+var services = new ServiceCollection();
+var testService = services.AddTestApiClient<IMyApiClient, MyApiClient>(
+    options => options.WithBaseUrl("https://test.example.com"),
+    testService =>
+    {
+        testService.AddResponse("users/123", new RestResponse
+        {
+            StatusCode = HttpStatusCode.OK,
+            Content = "{\"data\": {\"id\": \"123\", \"name\": \"John Doe\"}}"
+        });
+    });
+
+var client = services.BuildServiceProvider().GetRequiredService<IMyApiClient>();
+var result = await client.GetUserAsync("123");
+
+Assert.True(result.IsSuccess);
+Assert.True(testService.WasCalled("users/123"));
+```
+
+**See the complete [Testing Guide](https://github.com/frasermolyneux/api-client-abstractions/blob/main/docs/testing-guide.md) for:**
+- Unit testing examples
+- Integration testing with ASP.NET Core
+- UI testing with Playwright
+- Mocking authentication
+- Testing error scenarios
 
 ## 🤝 Contributing
 Please read the [contributing](https://github.com/frasermolyneux/api-client-abstractions/blob/main/CONTRIBUTING.md) guidance; this is a learning and development project.
