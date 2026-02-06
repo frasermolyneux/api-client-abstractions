@@ -14,7 +14,7 @@ This guide explains how consuming projects can write comprehensive tests (unit t
 
 ## Overview
 
-The MX API Abstractions library provides several test doubles and utilities that allow you to test your code without making actual HTTP calls:
+The MX API Abstractions library provides several test doubles and utilities in the **`MX.Api.Client.Testing`** package that allow you to test your code without making actual HTTP calls:
 
 - **`InMemoryRestClientService`**: An in-memory implementation of `IRestClientService` that returns predefined responses
 - **`FakeApiTokenProvider`**: A fake implementation of `IApiTokenProvider` that returns predefined tokens
@@ -29,10 +29,10 @@ These utilities enable:
 
 ## Quick Start
 
-### 1. Install the Package
+### 1. Install the Testing Package
 
 ```bash
-dotnet add package MX.Api.Client
+dotnet add package MX.Api.Client.Testing
 ```
 
 ### 2. Basic Test Setup

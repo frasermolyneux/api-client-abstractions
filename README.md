@@ -81,7 +81,11 @@ dotnet test src/MX.Api.Abstractions.sln --filter FullyQualifiedName~IntegrationT
 
 ## 🧪 Testing Your Code
 
-The library provides comprehensive testing utilities to help you write unit tests, integration tests, and UI tests without making actual HTTP calls:
+The library provides comprehensive testing utilities in a separate package to help you write unit tests, integration tests, and UI tests without making actual HTTP calls:
+
+```bash
+dotnet add package MX.Api.Client.Testing
+```
 
 ```csharp
 // Setup test with in-memory responses

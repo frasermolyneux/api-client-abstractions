@@ -24,6 +24,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MX.Api.Client\MX.Api.Client.csproj" />
+    <ProjectReference Include="..\MX.Api.Client.Testing\MX.Api.Client.Testing.csproj" />
     <ProjectReference Include="..\MX.Api.Abstractions\MX.Api.Abstractions.csproj" />
   </ItemGroup>
 

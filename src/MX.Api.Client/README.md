@@ -684,3 +684,19 @@ public async Task ApiClient_UsesAuthentication_Correctly()
 ```
 
 **For complete testing examples including UI tests with Playwright, see the [Testing Guide](../../docs/testing-guide.md).**
+
+## Need Testing Utilities?
+
+For comprehensive testing support including in-memory test doubles, install the separate testing package:
+
+```bash
+dotnet add package MX.Api.Client.Testing
+```
+
+The testing package provides:
+- `InMemoryRestClientService` - In-memory REST client for testing
+- `FakeApiTokenProvider` - Fake authentication provider
+- `AddTestApiClient()` - Simple DI registration for tests
+- Helper methods for verification and assertions
+
+See the [Testing Guide](../../docs/testing-guide.md) for complete examples.
