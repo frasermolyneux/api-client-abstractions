@@ -1,7 +1,4 @@
 # MX API Abstractions
-> Unified .NET abstractions, clients, and ASP.NET extensions for standardized, resilient API integrations.
-
-## ⚙️ Workflows
 [![Build and Test](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/build-and-test.yml)
 [![PR Verify](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/pr-verify.yml/badge.svg)](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/pr-verify.yml)
 [![Code Quality](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/codequality.yml/badge.svg)](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/codequality.yml)
@@ -10,79 +7,20 @@
 [![Dependabot Auto-Merge](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/dependabot-automerge.yml/badge.svg)](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/dependabot-automerge.yml)
 [![Copilot Setup Steps](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/copilot-setup-steps.yml/badge.svg)](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/copilot-setup-steps.yml)
 
-## 📌 Overview
-MX API Abstractions packages response envelopes, a RestSharp-based client stack, and ASP.NET Core helpers so every team can build and consume APIs with identical conventions. Docs under `docs/` capture the cross-cutting decisions for providers, consumers, versioned clients, and package maintenance so updates stay coordinated.
+## Documentation
+* [Development Workflows](docs/development-workflows.md) - Branch strategy, CI/CD triggers, and development flows
+* [API Design V2](docs/api-design-v2.md) - Routing, filters, pagination, and response envelope reference
+* [Implementing API Consumer](docs/implementing-api-consumer.md) - Guidance for resilient API consumers
+* [Implementing API Provider](docs/implementing-api-provider.md) - Controller, response, and error-handling patterns
+* [Implementing Versioned API Client](docs/implementing-versioned-api-client.md) - Structuring multi-version clients with shared options and builders
+* [Package Maintenance](docs/package-maintenance.md) - Dependabot flow and manual NuGet update process
+* [Dotnet Support Strategy](docs/dotnet-support-strategy.md) - Target framework policy and dependency management
 
-## 🧱 Technology & Frameworks
-- .NET 9.0 & .NET 10.0 – Multi-targeted across every package
-- Azure.Identity 1.17.x – Entra ID authentication and credential orchestration
-- RestSharp 113 + Polly 8.6 – Resilient HTTP client pipeline with retries and caching hooks
-- ASP.NET Core 9/10 + MX.Api.Web.Extensions – Consistent controller and HTTP result mapping
+## Overview
+MX API Abstractions delivers shared response envelopes, RestSharp-based API clients, and ASP.NET Core extensions so providers and consumers follow the same conventions. Packages multi-target net9.0 and net10.0, layering Polly retries and Entra ID or API key authentication through a configurable options builder. Documentation in docs/ captures API design patterns, client/provider guidance, and release practices to keep integrations consistent.
 
-## 📚 Documentation Index
-- [docs/dotnet-support-strategy.md](https://github.com/frasermolyneux/api-client-abstractions/blob/main/docs/dotnet-support-strategy.md) – .NET 9/10 target framework policy, dependency management, and CI/CD configuration.
-- [docs/api-design-v2.md](https://github.com/frasermolyneux/api-client-abstractions/blob/main/docs/api-design-v2.md) – Routing, filters, pagination, and response envelope reference.
-- [docs/implementing-api-consumer.md](https://github.com/frasermolyneux/api-client-abstractions/blob/main/docs/implementing-api-consumer.md) – End-to-end guidance for resilient API consumers.
-- [docs/implementing-api-provider.md](https://github.com/frasermolyneux/api-client-abstractions/blob/main/docs/implementing-api-provider.md) – Controller, response, and error-handling patterns for providers.
-- [docs/implementing-versioned-api-client.md](https://github.com/frasermolyneux/api-client-abstractions/blob/main/docs/implementing-versioned-api-client.md) – Structuring multi-version clients with shared options/builders.
-- [docs/package-maintenance.md](https://github.com/frasermolyneux/api-client-abstractions/blob/main/docs/package-maintenance.md) – Dependabot flow and manual NuGet update process.
-- [docs/development-workflows.md](https://github.com/frasermolyneux/api-client-abstractions/blob/main/docs/development-workflows.md) – CI/CD flow for builds, PRs, and NuGet releases.
+## Contributing
+Please read the [contributing](CONTRIBUTING.md) guidance; this is a learning and development project.
 
-## 🚀 Getting Started
-**Highlights**
-- `ApiResponse<T>`, `ApiResult<T>`, and `CollectionModel<T>` keep contracts uniform across APIs and clients.
-- RestSharp clients layer Polly retries plus multiple authentication schemes stitched through `IApiTokenProvider`.
-- `MX.Api.Web.Extensions` turns provider responses or consumer results into ASP.NET Core `IActionResult` instances with matching headers.
-
-**Sample Usage (optional)**
-```csharp
-// Program.cs
-builder.Services.AddApiClient<IMyApiClient, MyApiClient>(options =>
-{
-    options.WithBaseUrl("https://api.example.com")
-           .WithSubscriptionKey("apim-key")
-           .WithEntraIdAuthentication("api://backend-api");
-});
-
-public interface IMyApiClient
-{
-    Task<ApiResult<User>> GetUserAsync(string userId, CancellationToken cancellationToken = default);
-}
-
-public class MyApiClient : BaseApi, IMyApiClient
-{
-    public MyApiClient(
-        ILogger<BaseApi<ApiClientOptions>> logger,
-        IApiTokenProvider apiTokenProvider,
-        IRestClientService restClientService,
-        ApiClientOptions options)
-        : base(logger, apiTokenProvider, restClientService, options)
-    {
-    }
-
-    public async Task<ApiResult<User>> GetUserAsync(string userId, CancellationToken cancellationToken = default)
-    {
-        var request = await CreateRequestAsync($"users/{userId}", Method.Get, cancellationToken);
-        var response = await ExecuteAsync(request, false, cancellationToken);
-        return response.ToApiResponse<User>();
-    }
-}
-```
-
-## 🛠️ Developer Quick Start
-```shell
-git clone https://github.com/frasermolyneux/api-client-abstractions.git
-cd api-client-abstractions
-dotnet build src/MX.Api.Abstractions.sln
-dotnet test src/MX.Api.Abstractions.sln --filter FullyQualifiedName!~IntegrationTests
-dotnet test src/MX.Api.Abstractions.sln --filter FullyQualifiedName~IntegrationTests
-```
-
-## 🤝 Contributing
-Please read the [contributing](https://github.com/frasermolyneux/api-client-abstractions/blob/main/CONTRIBUTING.md) guidance; this is a learning and development project.
-
-## 🔐 Security
-Please read the [security](https://github.com/frasermolyneux/api-client-abstractions/blob/main/SECURITY.md) guidance; I am always open to security feedback through email or opening an issue.
-
-## 📄 License
-Distributed under the [GNU General Public License v3.0](https://github.com/frasermolyneux/api-client-abstractions/blob/main/LICENSE).
+## Security
+Please read the [security](SECURITY.md) guidance; I am always open to security feedback through email or opening an issue.
