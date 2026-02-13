@@ -1,11 +1,11 @@
 # MX API Abstractions
 [![Build and Test](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/build-and-test.yml)
-[![PR Verify](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/pr-verify.yml/badge.svg)](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/pr-verify.yml)
 [![Code Quality](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/codequality.yml/badge.svg)](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/codequality.yml)
-[![Release - Version and Tag](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/release-version-and-tag.yml/badge.svg)](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/release-version-and-tag.yml)
-[![Release - Publish NuGet](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/release-publish-nuget.yml/badge.svg)](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/release-publish-nuget.yml)
-[![Dependabot Auto-Merge](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/dependabot-automerge.yml/badge.svg)](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/dependabot-automerge.yml)
 [![Copilot Setup Steps](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/copilot-setup-steps.yml/badge.svg)](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/copilot-setup-steps.yml)
+[![Dependabot Auto-Merge](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/dependabot-automerge.yml/badge.svg)](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/dependabot-automerge.yml)
+[![PR Verify](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/pr-verify.yml/badge.svg)](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/pr-verify.yml)
+[![Release - Publish NuGet](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/release-publish-nuget.yml/badge.svg)](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/release-publish-nuget.yml)
+[![Release - Version and Tag](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/release-version-and-tag.yml/badge.svg)](https://github.com/frasermolyneux/api-client-abstractions/actions/workflows/release-version-and-tag.yml)
 
 ## Documentation
 * [Development Workflows](docs/development-workflows.md) - Branch strategy, CI/CD triggers, and development flows
