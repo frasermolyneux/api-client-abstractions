@@ -9,15 +9,11 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>MX.Api.Client</PackageId>
-    <Authors>Fraser Molyneux</Authors>
-    <Company>Molyneux.IO</Company>
     <Product>Molyneux.IO API Abstractions</Product>
     <Title>API Abstractions - REST Client Implementation</Title>
     <Description>Resilient, authenticated REST API client library for modern .NET (net9/net10) applications. Provides base classes, token management, authentication, retry policies, and standardized error handling for building robust API clients.</Description>
     <PackageProjectUrl>https://github.com/frasermolyneux/api-client-abstractions</PackageProjectUrl>
     <RepositoryUrl>https://github.com/frasermolyneux/api-client-abstractions</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
-    <PackageLicenseExpression>GPL-3.0-only</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
   <ItemGroup>
