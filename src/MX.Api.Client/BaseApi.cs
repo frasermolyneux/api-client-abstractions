@@ -194,8 +194,16 @@ public class BaseApi<TOptions>
         var apiKey = options.GetApiKeyAsString();
         if (!string.IsNullOrEmpty(apiKey))
         {
-            request.AddHeader(options.HeaderName, apiKey);
-            logger.LogDebug("Added API key authentication");
+            if (options.Location == Configuration.ApiKeyLocation.QueryParameter)
+            {
+                request.AddQueryParameter(options.HeaderName, apiKey);
+                logger.LogDebug("Added API key authentication as query parameter");
+            }
+            else
+            {
+                request.AddHeader(options.HeaderName, apiKey);
+                logger.LogDebug("Added API key authentication as header");
+            }
         }
         else
         {

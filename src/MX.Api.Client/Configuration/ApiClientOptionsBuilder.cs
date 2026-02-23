@@ -61,16 +61,18 @@ public abstract class ApiClientOptionsBuilder<TOptions, TBuilder>
     /// Adds API key authentication
     /// </summary>
     /// <param name="apiKey">The API key to use for authentication</param>
-    /// <param name="headerName">The header name to use for the API key. Defaults to "Ocp-Apim-Subscription-Key".</param>
+    /// <param name="headerName">The header or query parameter name to use for the API key. Defaults to "Ocp-Apim-Subscription-Key".</param>
+    /// <param name="location">Where to place the API key in the request. Defaults to <see cref="ApiKeyLocation.Header"/>.</param>
     /// <returns>The builder instance for method chaining</returns>
-    public TBuilder WithApiKeyAuthentication(string apiKey, string headerName = "Ocp-Apim-Subscription-Key")
+    public TBuilder WithApiKeyAuthentication(string apiKey, string headerName = "Ocp-Apim-Subscription-Key", ApiKeyLocation location = ApiKeyLocation.Header)
     {
         ArgumentException.ThrowIfNullOrEmpty(apiKey);
         ArgumentException.ThrowIfNullOrEmpty(headerName);
 
         var apiKeyOptions = new ApiKeyAuthenticationOptions
         {
-            HeaderName = headerName
+            HeaderName = headerName,
+            Location = location
         };
         apiKeyOptions.SetApiKey(apiKey);
         Options.AuthenticationOptions.Add(apiKeyOptions);

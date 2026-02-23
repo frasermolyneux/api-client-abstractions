@@ -15,8 +15,43 @@ public class AuthenticationOptionsTests
         Assert.Null(options.ApiKey);
         Assert.False(options.HasApiKey);
         Assert.Equal("Ocp-Apim-Subscription-Key", options.HeaderName);
+        Assert.Equal(ApiKeyLocation.Header, options.Location);
         Assert.Equal(AuthenticationType.ApiKey, options.AuthenticationType);
         Assert.Equal(string.Empty, options.GetApiKeyAsString());
+    }
+
+    [Fact]
+    public void ApiKeyAuthenticationOptions_Location_CanBeSetToQueryParameter()
+    {
+        // Arrange
+        var options = new ApiKeyAuthenticationOptions();
+
+        // Act
+        options.Location = ApiKeyLocation.QueryParameter;
+
+        // Assert
+        Assert.Equal(ApiKeyLocation.QueryParameter, options.Location);
+    }
+
+    [Fact]
+    public void ApiKeyAuthenticationOptions_QueryParameter_FullConfiguration()
+    {
+        // Arrange & Act
+        var options = new ApiKeyAuthenticationOptions
+        {
+            HeaderName = "key",
+            Location = ApiKeyLocation.QueryParameter
+        };
+        options.SetApiKey("my-api-key");
+
+        // Assert
+        Assert.Equal("key", options.HeaderName);
+        Assert.Equal(ApiKeyLocation.QueryParameter, options.Location);
+        Assert.Equal("my-api-key", options.GetApiKeyAsString());
+        Assert.True(options.HasApiKey);
+
+        // Clean up
+        options.Dispose();
     }
 
     [Fact]

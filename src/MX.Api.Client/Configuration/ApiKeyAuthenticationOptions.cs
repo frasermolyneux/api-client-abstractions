@@ -57,9 +57,14 @@ public class ApiKeyAuthenticationOptions : AuthenticationOptions, IDisposable
     }
 
     /// <summary>
-    /// Gets or sets the header name for the API key. Defaults to "Ocp-Apim-Subscription-Key" for Azure API Management.
+    /// Gets or sets the header or query parameter name for the API key. Defaults to "Ocp-Apim-Subscription-Key" for Azure API Management.
     /// </summary>
     public string HeaderName { get; set; } = "Ocp-Apim-Subscription-Key";
+
+    /// <summary>
+    /// Gets or sets where the API key should be placed in the request. Defaults to <see cref="ApiKeyLocation.Header"/>.
+    /// </summary>
+    public ApiKeyLocation Location { get; set; } = ApiKeyLocation.Header;
 
     /// <summary>
     /// Gets the type of authentication.
