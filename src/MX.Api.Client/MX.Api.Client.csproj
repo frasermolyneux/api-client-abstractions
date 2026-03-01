@@ -17,7 +17,7 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
   <ItemGroup>
-	<PackageReference Include="Azure.Identity" Version="1.17.1" />
+	<PackageReference Include="Azure.Identity" Version="1.18.0" />
 	<PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="10.0.3" />
 	<PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.0.3" />
 	<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.3" />
