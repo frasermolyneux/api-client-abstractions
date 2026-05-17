@@ -23,7 +23,7 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="9.0.15" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="9.0.16" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
