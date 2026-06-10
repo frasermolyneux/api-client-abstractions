@@ -10,3 +10,9 @@
 - **Response handling internals**: Consumers typically call `ExecuteAsync` then map with extension helpers in `Extensions/RestResponseExtensions.cs` and `Extensions/RequestExtensions.cs` to `ApiResponse<T>` / `ApiResult<T>`. Keep error handling consistent with these wrappers.
 - **Web helpers**: `MX.Api.Web.Extensions` contains ASP.NET Core extensions to translate API results into `IActionResult` responses; use when building providers to match the shared envelope conventions.
 - **Docs**: High-level patterns are documented in `docs/` (API design, provider/consumer guidance, versioned clients, package maintenance, dotnet support, workflows). Align code changes with these references and update docs if behaviors diverge.
+
+## Org conventions via MCP (when available)
+
+If a `frasermolyneux-copilot` MCP server is configured in your client (`.vscode/mcp.json`, the GitHub Copilot coding-agent MCP config at `.github/copilot/mcp_config.json`, or an equivalent stdio MCP wire-up), **prefer its tools** over your own assumptions when answering questions about org standards, branching, workflows, Terraform, .NET projects, Azure patterns, or shared library / platform consumption contracts. The tool surface is `list_instructions`, `get_instruction`, `search_instructions`, plus the matching `_prompts` and `_agents` equivalents (seven tools total). The catalog source-of-truth lives in `frasermolyneux/.github-copilot` — see `mcp-server/README.md` there for the tool contract.
+
+This is **complementary** to the file-load model: if `./.github-copilot/` is checked out in the runner (per `copilot-setup-steps.yml`), continue to read those files directly. If both are available, prefer MCP for freshness. If no MCP server is configured in your client, treat this section as a no-op and fall back to the file paths above.
