@@ -19,6 +19,14 @@
 ## Overview
 MX API Abstractions delivers shared response envelopes, RestSharp-based API clients, and ASP.NET Core extensions so providers and consumers follow the same conventions. Packages multi-target net9.0 and net10.0, layering Polly retries and Entra ID or API key authentication through a configurable options builder. Documentation in docs/ captures API design patterns, client/provider guidance, and release practices to keep integrations consistent.
 
+## NuGet Packages
+
+| Package                                                                         | Latest                                                                                                                      | Description                                                                  |
+| ------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| [`MX.Api.Abstractions`](https://www.nuget.org/packages/MX.Api.Abstractions)     | [![NuGet](https://img.shields.io/nuget/v/MX.Api.Abstractions.svg)](https://www.nuget.org/packages/MX.Api.Abstractions/)     | Core API response envelopes and shared abstractions                          |
+| [`MX.Api.Client`](https://www.nuget.org/packages/MX.Api.Client)                 | [![NuGet](https://img.shields.io/nuget/v/MX.Api.Client.svg)](https://www.nuget.org/packages/MX.Api.Client/)                 | Resilient typed REST client foundation with authentication and retry support |
+| [`MX.Api.Web.Extensions`](https://www.nuget.org/packages/MX.Api.Web.Extensions) | [![NuGet](https://img.shields.io/nuget/v/MX.Api.Web.Extensions.svg)](https://www.nuget.org/packages/MX.Api.Web.Extensions/) | ASP.NET Core helpers for mapping API result envelopes to HTTP responses      |
+
 ## Contributing
 Please read the [contributing](CONTRIBUTING.md) guidance; this is a learning and development project.
 
