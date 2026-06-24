@@ -12,7 +12,7 @@ updates:
       time: "06:00"
       timezone: "Etc/UTC"
     groups:
-      nuget:
+      all-updates:
         patterns:
           - "*"
     ignore:
@@ -30,7 +30,7 @@ updates:
       time: "06:00"
       timezone: "Etc/UTC"
     groups:
-      github-actions:
+      all-updates:
         patterns:
           - "*"
 
@@ -43,6 +43,6 @@ updates:
       time: "06:00"
       timezone: "Etc/UTC"
     groups:
-      devcontainers:
+      all-updates:
         patterns:
           - "*"
