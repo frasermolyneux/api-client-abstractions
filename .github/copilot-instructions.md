@@ -1,7 +1,6 @@
 # Copilot Instructions
 
-This repository defines the shared MX.Api.* framework consumed by other libraries in the organization.
-Use this as the source of truth for response envelopes, API client execution patterns, and ASP.NET API-result mapping helpers.
+This repository provides the shared MX.Api.* .NET libraries used for API result envelopes, typed client execution, and ASP.NET response mapping.
 
 ## Org conventions via MCP (when available)
 
@@ -9,22 +8,22 @@ If a `frasermolyneux-copilot` MCP server is configured in your client (`~/.copil
 
 This is **complementary** to the file-load model: if `./.github-copilot/` is checked out in the runner (per `copilot-setup-steps.yml`), continue to read those files directly. If both are available, prefer MCP for freshness. If no MCP server is configured in your client, treat this section as a no-op and fall back to the file paths above.
 
-## Repository shape
+## Architecture
 
-- Core solution: `src/MX.Api.Abstractions.sln`.
-- Packages: `MX.Api.Abstractions`, `MX.Api.Client`, and `MX.Api.Web.Extensions`.
-- Tests: sibling `*.Tests` projects; integration tests in `src/MX.Api.IntegrationTests` require external services/auth.
-- Docs: `docs/` contains design and implementation guidance that should stay in sync with behavior changes.
+- Solution: `src/MX.Api.Abstractions.sln`
+- Packages: `src/MX.Api.Abstractions`, `src/MX.Api.Client`, `src/MX.Api.Web.Extensions`
+- Tests: matching `*.Tests` projects; integration coverage in `src/MX.Api.IntegrationTests`
+- Supporting docs: top-level guidance in `docs/`
 
-## Key implementation conventions
+## Key conventions
 
-- DI registration lives in `MX.Api.Client/Extensions/ApiClientExtensions.cs`; keep fluent options and auth wiring consistent.
-- `BaseApi<TOptions>` in `MX.Api.Client/BaseApi.cs` is the execution entry point: options validation, auth header application, request creation, and retry-backed execution happen there.
-- Entra ID auth requires `IApiTokenProvider` and is enabled when `EntraIdAuthenticationOptions` are configured.
-- Response mapping should use extension helpers in `MX.Api.Client/Extensions` (`RestResponseExtensions`, `RequestExtensions`) to keep `ApiResponse<T>` and `ApiResult<T>` behavior uniform.
-- ASP.NET translation helpers in `MX.Api.Web.Extensions/ApiResponseExtensions.cs` and `MX.Api.Web.Extensions/HttpResponseExtensions.cs` should remain aligned with the shared envelope contract.
+- Keep response-envelope behavior consistent across packages (`ApiResponse<T>`, `ApiResult<T>`, `IApiResult<T>` in `src/MX.Api.Abstractions`).
+- Keep client execution flow centralized in `src/MX.Api.Client/BaseApi.cs` (options validation, auth setup, request creation, retry-backed execution).
+- Keep DI and auth wiring aligned with `src/MX.Api.Client/Extensions/ApiClientExtensions.cs` and `src/MX.Api.Client/Auth`.
+- Use client extension helpers in `src/MX.Api.Client/Extensions` for request/response mapping consistency.
+- Keep ASP.NET translation helpers in `src/MX.Api.Web.Extensions/ApiResponseExtensions.cs` and `src/MX.Api.Web.Extensions/HttpResponseExtensions.cs` aligned with the shared envelope contract.
 
-## Build and test commands
+## Build and validation
 
 ```pwsh
 dotnet build src/MX.Api.Abstractions.sln
@@ -37,3 +36,4 @@ dotnet format src/MX.Api.Abstractions.sln --verify-no-changes
 
 - `.github-copilot/.github/instructions/dotnet-nuget-library.instructions.md`
 - `.github-copilot/.github/instructions/dotnet-api-client-libraries.instructions.md`
+- `.github-copilot/.github/instructions/patterns.api-client.instructions.md`
