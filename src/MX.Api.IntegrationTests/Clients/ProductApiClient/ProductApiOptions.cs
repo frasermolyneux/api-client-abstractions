@@ -27,6 +27,6 @@ public class ProductApiOptionsBuilder : ApiClientOptionsBuilder<ProductApiOption
     /// <returns>The builder instance for method chaining</returns>
     public ProductApiOptionsBuilder WithTestDefaults()
     {
-        return this.WithMaxRetryCount(3);
+        return WithMaxRetryCount(3);
     }
 }

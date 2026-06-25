@@ -71,7 +71,7 @@ public class UserApiOptionsBuilder : ApiClientOptionsBuilder<UserApiOptions, Use
     {
         var apiKeyOptions = new ApiKeyAuthenticationOptions();
         apiKeyOptions.SetApiKey(apiToken);
-        return this.WithAuthentication(apiKeyOptions);
+        return WithAuthentication(apiKeyOptions);
     }
 
     /// <summary>
@@ -80,7 +80,7 @@ public class UserApiOptionsBuilder : ApiClientOptionsBuilder<UserApiOptions, Use
     /// <returns>The builder instance for method chaining</returns>
     public UserApiOptionsBuilder WithTestDefaults()
     {
-        return this.WithUserCaching(30)
+        return WithUserCaching(30)
                    .WithDetailedLogging()
                    .WithDefaultRole("Member")
                    .WithMaxPageSize(50);

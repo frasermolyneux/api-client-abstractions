@@ -18,6 +18,6 @@ public class WeatherApiOptionsBuilder : ApiClientOptionsBuilder<ApiClientOptions
     /// <returns>The builder instance for method chaining</returns>
     public WeatherApiOptionsBuilder WithTestDefaults()
     {
-        return this.WithMaxRetryCount(3);
+        return WithMaxRetryCount(3);
     }
 }
