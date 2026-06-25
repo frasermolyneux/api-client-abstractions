@@ -124,7 +124,7 @@ public class ClientCredentialProvider : ITokenCredentialProvider
             ClientId = clientId
         };
         clientCredOptions.SetClientSecret(clientSecret);
-        this.options = clientCredOptions;
+        options = clientCredOptions;
     }
 
     /// <summary>
@@ -137,9 +137,9 @@ public class ClientCredentialProvider : ITokenCredentialProvider
         // Check for cancellation before proceeding
         cancellationToken.ThrowIfCancellationRequested();
 
-        if (logger != null)
+        if (logger is { } log)
         {
-            LogCreatingClientSecretCredential(logger, options.ClientId, options.TenantId, null);
+            LogCreatingClientSecretCredential(log, options.ClientId, options.TenantId, null);
         }
 
         // Get the client secret securely - it will be automatically cleared from memory

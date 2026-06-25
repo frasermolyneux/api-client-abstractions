@@ -167,14 +167,15 @@ public static class ApiClientExtensions
             });
 
         // Register the client with a factory that creates it with all required dependencies
-        _ = services.AddTransient<TClient>(serviceProvider =>
+        _ = services.AddTransient(serviceProvider =>
         {
             var logger = serviceProvider.GetRequiredService<ILoggerFactory>().CreateLogger<BaseApi<TOptions>>();
             var apiTokenProvider = serviceProvider.GetService<IApiTokenProvider>();
             var restClientService = serviceProvider.GetRequiredService<IRestClientService>();
             var clientOptions = serviceProvider.GetRequiredService<TOptions>();
 
-            return (TClient)Activator.CreateInstance(typeof(TImplementation), logger, apiTokenProvider, restClientService, clientOptions)!;
+            return Activator.CreateInstance(typeof(TImplementation), logger, apiTokenProvider, restClientService, clientOptions) as TClient
+                ?? throw new InvalidOperationException($"Could not create instance of {typeof(TImplementation).Name} as {typeof(TClient).Name}.");
         });
 
         return services;

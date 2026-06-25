@@ -1,3 +1,4 @@
+using System.Text.Json;
 using MX.Api.Client;
 using MX.Api.IntegrationTests.Clients.ProductApiClient;
 using MX.Api.IntegrationTests.Clients.UserApiClient;
@@ -101,14 +102,13 @@ public class EndToEndIntegrationTests : IClassFixture<CustomWebApplicationFactor
         Assert.Contains("\"id\":", userContent.ToLowerInvariant());
 
         // Act & Assert - Create User (POST)
-        var createUserJson = """
-            {
-                "id": 999,
-                "username": "testuser_12345",
-                "email": "test@example.com",
-                "fullName": "Test User"
-            }
-            """;
+        var createUserJson = JsonSerializer.Serialize(new
+        {
+            id = 999,
+            username = "testuser_12345",
+            email = "test@example.com",
+            fullName = "Test User"
+        });
 
         var createContent = new StringContent(createUserJson, System.Text.Encoding.UTF8, "application/json");
         var createResponse = await authenticatedClient.PostAsync("/api/users", createContent);
