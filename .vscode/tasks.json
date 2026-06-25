@@ -2,16 +2,22 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "build-debug",
+            "label": "dotnet: clean",
+            "type": "process",
             "command": "dotnet",
-            "type": "shell",
+            "args": [
+                "clean",
+                "${workspaceFolder}/src/MX.Api.Abstractions.sln"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "dotnet: build",
+            "type": "process",
+            "command": "dotnet",
             "args": [
                 "build",
-                "${workspaceFolder}/src/MX.Api.Abstractions.sln",
-                "/property:GenerateFullPaths=true",
-                "/consoleloggerparameters:NoSummary",
-                "--configuration",
-                "Debug"
+                "${workspaceFolder}/src/MX.Api.Abstractions.sln"
             ],
             "group": {
                 "kind": "build",
@@ -20,28 +26,14 @@
             "problemMatcher": "$msCompile"
         },
         {
-            "label": "build-release",
+            "label": "dotnet: test",
+            "type": "process",
             "command": "dotnet",
-            "type": "shell",
-            "args": [
-                "build",
-                "${workspaceFolder}/src/MX.Api.Abstractions.sln",
-                "/property:GenerateFullPaths=true",
-                "/consoleloggerparameters:NoSummary",
-                "--configuration",
-                "Release"
-            ],
-            "problemMatcher": "$msCompile"
-        },
-        {
-            "label": "test-debug",
-            "command": "dotnet",
-            "type": "shell",
             "args": [
                 "test",
                 "${workspaceFolder}/src/MX.Api.Abstractions.sln",
-                "--configuration",
-                "Debug"
+                "--filter",
+                "FullyQualifiedName!~IntegrationTests"
             ],
             "group": {
                 "kind": "test",
@@ -50,14 +42,25 @@
             "problemMatcher": "$msCompile"
         },
         {
-            "label": "test-release",
+            "label": "dotnet: format",
+            "type": "process",
             "command": "dotnet",
-            "type": "shell",
+            "args": [
+                "format",
+                "${workspaceFolder}/src/MX.Api.Abstractions.sln",
+                "--verify-no-changes"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "dotnet: test-integration",
+            "type": "process",
+            "command": "dotnet",
             "args": [
                 "test",
                 "${workspaceFolder}/src/MX.Api.Abstractions.sln",
-                "--configuration",
-                "Release"
+                "--filter",
+                "FullyQualifiedName~IntegrationTests"
             ],
             "problemMatcher": "$msCompile"
         }
