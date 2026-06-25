@@ -12,6 +12,12 @@ namespace MX.Api.Client.Auth;
 /// </summary>
 public class DefaultTokenCredentialProvider : ITokenCredentialProvider
 {
+    private static readonly Action<ILogger, bool, bool, bool, Exception?> LogCreatingDefaultAzureCredential =
+        LoggerMessage.Define<bool, bool, bool>(
+            LogLevel.Debug,
+            new EventId(1, nameof(LogCreatingDefaultAzureCredential)),
+            "Creating DefaultAzureCredential asynchronously with authentication settings: ManagedIdentity={ManagedIdentityEnabled}, Environment={EnvironmentEnabled}, AzurePowerShell={PowerShellEnabled}");
+
     private readonly ILogger<DefaultTokenCredentialProvider>? logger;
     private readonly DefaultAzureCredentialOptions options;
 
@@ -71,11 +77,15 @@ public class DefaultTokenCredentialProvider : ITokenCredentialProvider
     /// <returns>A task containing a DefaultAzureCredential instance for token acquisition.</returns>
     public Task<TokenCredential> GetTokenCredentialAsync(CancellationToken cancellationToken = default)
     {
-        logger?.LogDebug("Creating DefaultAzureCredential asynchronously with authentication settings: ManagedIdentity={ManagedIdentityEnabled}, " +
-                         "Environment={EnvironmentEnabled}, AzurePowerShell={PowerShellEnabled}",
-            !options.ExcludeManagedIdentityCredential,
-            !options.ExcludeEnvironmentCredential,
-            !options.ExcludeAzurePowerShellCredential);
+        if (logger != null)
+        {
+            LogCreatingDefaultAzureCredential(
+                logger,
+                !options.ExcludeManagedIdentityCredential,
+                !options.ExcludeEnvironmentCredential,
+                !options.ExcludeAzurePowerShellCredential,
+                null);
+        }
 
         // Creating DefaultAzureCredential is not an async operation,
         // but we wrap it in a Task to conform to the async interface pattern

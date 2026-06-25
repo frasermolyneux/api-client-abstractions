@@ -11,7 +11,7 @@ public class ApiClientOptionsBuilderTests
     {
         // Arrange & Act
         var builder = new TestApiOptionsBuilder();
-        builder.WithBaseUrl("https://api.example.com")
+        _ = builder.WithBaseUrl("https://api.example.com")
                .WithApiKeyAuthentication("test-key");
         var options = builder.Build();
 
@@ -28,7 +28,7 @@ public class ApiClientOptionsBuilderTests
     {
         // Arrange & Act
         var builder = new TestApiOptionsBuilder();
-        builder.WithBaseUrl("https://api.example.com")
+        _ = builder.WithBaseUrl("https://api.example.com")
                .WithApiKeyAuthentication("my-api-key", "key", ApiKeyLocation.QueryParameter);
         var options = builder.Build();
 
@@ -45,7 +45,7 @@ public class ApiClientOptionsBuilderTests
     {
         // Arrange & Act
         var builder = new TestApiOptionsBuilder();
-        builder.WithBaseUrl("https://api.example.com")
+        _ = builder.WithBaseUrl("https://api.example.com")
                .WithApiKeyAuthentication("test-key", "X-Custom-Key");
         var options = builder.Build();
 
@@ -61,7 +61,7 @@ public class ApiClientOptionsBuilderTests
     {
         // Arrange & Act
         var builder = new TestApiOptionsBuilder();
-        builder.WithBaseUrl("https://api.example.com")
+        _ = builder.WithBaseUrl("https://api.example.com")
                .WithApiKeyAuthentication("test-key", "X-Api-Key", ApiKeyLocation.Header);
         var options = builder.Build();
 
@@ -76,7 +76,7 @@ public class ApiClientOptionsBuilderTests
     {
         // Arrange & Act
         var builder = new TestApiOptionsBuilder();
-        builder.WithBaseUrl("https://api.example.com")
+        _ = builder.WithBaseUrl("https://api.example.com")
                .WithSubscriptionKey("sub-key");
         var options = builder.Build();
 
@@ -91,7 +91,7 @@ public class ApiClientOptionsBuilderTests
     public void WithApiKeyAuthentication_NullApiKey_ThrowsArgumentException()
     {
         var builder = new TestApiOptionsBuilder();
-        Assert.Throws<ArgumentNullException>(() =>
+        _ = Assert.Throws<ArgumentNullException>(() =>
             builder.WithApiKeyAuthentication(null!));
     }
 
@@ -99,7 +99,7 @@ public class ApiClientOptionsBuilderTests
     public void WithApiKeyAuthentication_EmptyApiKey_ThrowsArgumentException()
     {
         var builder = new TestApiOptionsBuilder();
-        Assert.Throws<ArgumentException>(() =>
+        _ = Assert.Throws<ArgumentException>(() =>
             builder.WithApiKeyAuthentication(""));
     }
 
@@ -107,7 +107,7 @@ public class ApiClientOptionsBuilderTests
     public void WithApiKeyAuthentication_EmptyHeaderName_ThrowsArgumentException()
     {
         var builder = new TestApiOptionsBuilder();
-        Assert.Throws<ArgumentException>(() =>
+        _ = Assert.Throws<ArgumentException>(() =>
             builder.WithApiKeyAuthentication("test-key", ""));
     }
 }

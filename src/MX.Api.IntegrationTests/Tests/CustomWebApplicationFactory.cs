@@ -1,7 +1,4 @@
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using MX.Api.IntegrationTests.TestApp;
 
 namespace MX.Api.IntegrationTests.Tests;
@@ -16,14 +13,14 @@ public class CustomWebApplicationFactory : WebApplicationFactory<TestStartup>
         return Host.CreateDefaultBuilder()
             .ConfigureWebHostDefaults(webBuilder =>
             {
-                webBuilder.UseStartup<TestStartup>();
-                webBuilder.UseEnvironment("Testing");
+                _ = webBuilder.UseStartup<TestStartup>();
+                _ = webBuilder.UseEnvironment("Testing");
             });
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        builder.ConfigureServices(services =>
+        _ = builder.ConfigureServices(services =>
         {
             // Additional test-specific service configuration can go here
         });

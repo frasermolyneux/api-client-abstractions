@@ -1,8 +1,4 @@
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Moq;
 using MX.Api.Client;
-using MX.Api.Client.Auth;
 using MX.Api.Client.Configuration;
 using MX.Api.Client.Extensions;
 using MX.Api.IntegrationTests.Clients.ProductApiClient;
@@ -22,20 +18,20 @@ public class MultipleClientConfigurationTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddLogging();
+        _ = services.AddLogging();
 
         // Act - Register Weather API client using the new simplified method
-        services.AddWeatherApiClient(
+        _ = services.AddWeatherApiClient(
             "https://weather.example.com",
             "weather-test-key");
 
         // Act - Register User API client using the streamlined extension method
-        services.AddUserApiClient(
+        _ = services.AddUserApiClient(
             "https://users.example.com",
             "user-test-token");
 
         // Act - Register Product API client using the new simplified method
-        services.AddProductApiClient(
+        _ = services.AddProductApiClient(
             "https://products.example.com",
             "product-test-key");
 
@@ -50,9 +46,9 @@ public class MultipleClientConfigurationTests
         Assert.NotNull(weatherClient);
         Assert.NotNull(userClient);
         Assert.NotNull(productClient);
-        Assert.IsType<WeatherApiClient>(weatherClient);
-        Assert.IsType<UserApiClient>(userClient);
-        Assert.IsType<ProductApiClient>(productClient);
+        _ = Assert.IsType<WeatherApiClient>(weatherClient);
+        _ = Assert.IsType<UserApiClient>(userClient);
+        _ = Assert.IsType<ProductApiClient>(productClient);
 
         // Verify they are different instances
         Assert.NotEqual(weatherClient.GetType(), userClient.GetType());
@@ -65,10 +61,10 @@ public class MultipleClientConfigurationTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddLogging();
+        _ = services.AddLogging();
 
         // Act
-        services.AddWeatherApiClient(
+        _ = services.AddWeatherApiClient(
             "https://weather.example.com",
             "test-key");
 
@@ -90,10 +86,10 @@ public class MultipleClientConfigurationTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddLogging();
+        _ = services.AddLogging();
 
         // Act - Using the streamlined User API registration
-        services.AddUserApiClient(options => options
+        _ = services.AddUserApiClient(options => options
             .WithBaseUrl("https://users.example.com")
             .WithBasicAuth("test-token")
             .WithUserCaching(120)
@@ -118,18 +114,18 @@ public class MultipleClientConfigurationTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddLogging();
+        _ = services.AddLogging();
 
         // Act - Register the same client type multiple times with different configurations
-        services.AddApiClient<IWeatherApiClient, WeatherApiClient>(options =>
+        _ = services.AddApiClient<IWeatherApiClient, WeatherApiClient>(options =>
         {
-            options.WithBaseUrl("https://weather1.example.com")
+            _ = options.WithBaseUrl("https://weather1.example.com")
                    .WithApiKeyAuthentication("key1", "X-API-Key");
         });
 
-        services.AddApiClient<IWeatherApiClient, WeatherApiClient>(options =>
+        _ = services.AddApiClient<IWeatherApiClient, WeatherApiClient>(options =>
         {
-            options.WithBaseUrl("https://weather2.example.com")
+            _ = options.WithBaseUrl("https://weather2.example.com")
                    .WithApiKeyAuthentication("key2", "X-API-Key");
         });
 
@@ -148,7 +144,7 @@ public class MultipleClientConfigurationTests
         var services = new ServiceCollection();
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() =>
+        _ = Assert.Throws<ArgumentNullException>(() =>
             services.AddApiClient<IWeatherApiClient, WeatherApiClient>(null!));
     }
 
@@ -159,7 +155,7 @@ public class MultipleClientConfigurationTests
         IServiceCollection services = null!;
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() =>
+        _ = Assert.Throws<ArgumentNullException>(() =>
             services.AddApiClient<IWeatherApiClient, WeatherApiClient>(options =>
                 options.WithBaseUrl("https://test.com")));
     }
@@ -170,23 +166,23 @@ public class MultipleClientConfigurationTests
         // Arrange
         var services1 = new ServiceCollection();
         var services2 = new ServiceCollection();
-        services1.AddLogging();
-        services2.AddLogging();
+        _ = services1.AddLogging();
+        _ = services2.AddLogging();
 
         var baseUrl = "https://test.example.com";
         var apiKey = "test-key";
 
         // Act - Use simplified method
-        services1.AddApiClient<IWeatherApiClient, WeatherApiClient>(options =>
+        _ = services1.AddApiClient<IWeatherApiClient, WeatherApiClient>(options =>
         {
-            options.WithBaseUrl(baseUrl)
+            _ = options.WithBaseUrl(baseUrl)
                    .WithApiKeyAuthentication(apiKey, "X-API-Key");
         });
 
         // Act - Use full method with standard options
-        services2.AddTypedApiClient<IWeatherApiClient, WeatherApiClient, ApiClientOptions, ApiClientOptionsBuilder>(options =>
+        _ = services2.AddTypedApiClient<IWeatherApiClient, WeatherApiClient, ApiClientOptions, ApiClientOptionsBuilder>(options =>
         {
-            options.WithBaseUrl(baseUrl)
+            _ = options.WithBaseUrl(baseUrl)
                    .WithApiKeyAuthentication(apiKey, "X-API-Key");
         });
 
@@ -214,12 +210,12 @@ public class MultipleClientConfigurationTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddLogging();
+        _ = services.AddLogging();
 
         // Act - Use the new streamlined registration methods
-        services.AddWeatherApiClient("https://weather.example.com", "weather-key");
-        services.AddUserApiClient("https://users.example.com", "user-token");
-        services.AddProductApiClient("https://products.example.com", "product-key");
+        _ = services.AddWeatherApiClient("https://weather.example.com", "weather-key");
+        _ = services.AddUserApiClient("https://users.example.com", "user-token");
+        _ = services.AddProductApiClient("https://products.example.com", "product-key");
 
         // Assert
         var serviceProvider = services.BuildServiceProvider();

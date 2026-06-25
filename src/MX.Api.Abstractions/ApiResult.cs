@@ -26,9 +26,7 @@ public class ApiResult : IApiResult
     /// Gets a value indicating whether the HTTP response was successful.
     /// </summary>
     [JsonIgnore]
-    public bool IsSuccess => StatusCode == HttpStatusCode.OK ||
-                            StatusCode == HttpStatusCode.Created ||
-                            StatusCode == HttpStatusCode.Accepted;
+    public bool IsSuccess => StatusCode is HttpStatusCode.OK or HttpStatusCode.Created or HttpStatusCode.Accepted;
 
     /// <summary>
     /// Gets a value indicating whether the HTTP response indicates a resource was not found.

@@ -1,5 +1,3 @@
-using System;
-
 namespace MX.Api.Client.Configuration;
 
 /// <summary>
@@ -8,7 +6,7 @@ namespace MX.Api.Client.Configuration;
 public class ClientCredentialAuthenticationOptions : EntraIdAuthenticationOptions, IDisposable
 {
     private char[]? _clientSecretBuffer;
-    private bool _disposed = false;
+    private bool _disposed;
 
     /// <summary>
     /// Gets or sets the tenant (directory) ID for authentication.
@@ -58,10 +56,7 @@ public class ClientCredentialAuthenticationOptions : EntraIdAuthenticationOption
     /// <returns>The client secret as a plain string, or empty string if not set.</returns>
     public string GetClientSecretAsString()
     {
-        if (_clientSecretBuffer == null || _clientSecretBuffer.Length == 0)
-            return string.Empty;
-
-        return new string(_clientSecretBuffer);
+        return _clientSecretBuffer == null || _clientSecretBuffer.Length == 0 ? string.Empty : new string(_clientSecretBuffer);
     }
 
     /// <summary>
@@ -99,12 +94,7 @@ public class ClientCredentialAuthenticationOptions : EntraIdAuthenticationOption
 
     private string? GetClientSecretInternalOrNull()
     {
-        if (_clientSecretBuffer == null || _clientSecretBuffer.Length == 0)
-        {
-            return null;
-        }
-
-        return new string(_clientSecretBuffer);
+        return _clientSecretBuffer == null || _clientSecretBuffer.Length == 0 ? null : new string(_clientSecretBuffer);
     }
 
     private void ClearClientSecretBuffer()

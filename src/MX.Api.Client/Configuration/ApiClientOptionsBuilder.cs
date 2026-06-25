@@ -12,7 +12,7 @@ public abstract class ApiClientOptionsBuilder<TOptions, TBuilder>
     /// <summary>
     /// The options instance being configured
     /// </summary>
-    protected readonly TOptions Options;
+    protected TOptions Options { get; }
 
     /// <summary>
     /// Initializes a new instance of the builder

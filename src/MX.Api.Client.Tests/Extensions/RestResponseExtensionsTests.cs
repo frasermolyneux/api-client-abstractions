@@ -16,7 +16,7 @@ public class RestResponseExtensionsTests
         RestResponse? response = null;
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => response!.ToApiResult());
+        _ = Assert.Throws<ArgumentNullException>(() => response!.ToApiResult());
     }
 
     [Fact]
@@ -59,7 +59,7 @@ public class RestResponseExtensionsTests
         Assert.True(result.IsSuccess); // HTTP request succeeded with a 200 status code
         Assert.NotNull(result.Result);
         Assert.NotNull(result.Result!.Errors);
-        Assert.Single(result.Result.Errors!);
+        _ = Assert.Single(result.Result.Errors!);
         Assert.Equal("NullContent", result.Result.Errors![0].Code);
     }
     [Fact]
@@ -81,7 +81,7 @@ public class RestResponseExtensionsTests
         Assert.True(result.IsSuccess); // HTTP request succeeded with a 200 status code
         Assert.NotNull(result.Result);
         Assert.NotNull(result.Result!.Errors);
-        Assert.Single(result.Result.Errors!);
+        _ = Assert.Single(result.Result.Errors!);
         Assert.Equal("JsonError", result.Result.Errors![0].Code);
     }
     [Fact]
@@ -134,7 +134,7 @@ public class RestResponseExtensionsTests
         RestResponse? response = null;
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => response!.ToApiResult<string>());
+        _ = Assert.Throws<ArgumentNullException>(() => response!.ToApiResult<string>());
     }
 
     [Fact]
@@ -179,7 +179,7 @@ public class RestResponseExtensionsTests
         Assert.True(result.IsSuccess); // HTTP request succeeded with a 200 status code
         Assert.NotNull(result.Result);
         Assert.NotNull(result.Result!.Errors);
-        Assert.Single(result.Result.Errors!);
+        _ = Assert.Single(result.Result.Errors!);
         Assert.Equal("NullContent", result.Result.Errors![0].Code);
     }
     [Fact]
@@ -201,7 +201,7 @@ public class RestResponseExtensionsTests
         Assert.True(result.IsSuccess); // HTTP request succeeded with a 200 status code
         Assert.NotNull(result.Result);
         Assert.NotNull(result.Result!.Errors);
-        Assert.Single(result.Result.Errors!);
+        _ = Assert.Single(result.Result.Errors!);
         Assert.Equal("JsonError", result.Result.Errors![0].Code);
     }
     [Fact]

@@ -1,9 +1,6 @@
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using MX.Api.Abstractions;
 using MX.Api.Client;
 using MX.Api.Client.Auth;
-using MX.Api.Client.Configuration;
 using MX.Api.Client.Extensions;
 using MX.Api.IntegrationTests.Clients.UserApiClient.Interfaces.V1;
 using MX.Api.IntegrationTests.DummyApis.UserApi.Models;
@@ -14,16 +11,12 @@ namespace MX.Api.IntegrationTests.Clients.UserApiClient.Api.V1;
 /// <summary>
 /// Implementation of User API version 1
 /// </summary>
-public class UserApiV1 : BaseApi<UserApiOptions>, IUserApiV1
+public class UserApiV1(
+    ILogger<BaseApi<UserApiOptions>> logger,
+    IApiTokenProvider apiTokenProvider,
+    IRestClientService restClientService,
+    UserApiOptions options) : BaseApi<UserApiOptions>(logger, apiTokenProvider, restClientService, options), IUserApiV1
 {
-    public UserApiV1(
-        ILogger<BaseApi<UserApiOptions>> logger,
-        IApiTokenProvider apiTokenProvider,
-        IRestClientService restClientService,
-        UserApiOptions options)
-        : base(logger, apiTokenProvider, restClientService, options)
-    {
-    }
 
     /// <summary>
     /// Gets all users with pagination
@@ -56,7 +49,7 @@ public class UserApiV1 : BaseApi<UserApiOptions>, IUserApiV1
     public async Task<ApiResult<User>> CreateUserAsync(User user, CancellationToken cancellationToken = default)
     {
         var request = await CreateRequestAsync("v1/users", Method.Post, cancellationToken);
-        request.AddJsonBody(user);
+        _ = request.AddJsonBody(user);
         var response = await ExecuteAsync(request, cancellationToken);
 
         return response.ToApiResult<User>();

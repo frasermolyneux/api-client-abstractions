@@ -11,7 +11,7 @@ public class ApiResultTests
         var wrapper = new ApiResult();
 
         // Assert
-        Assert.Equal(default(HttpStatusCode), wrapper.StatusCode);
+        Assert.Equal(default, wrapper.StatusCode);
         Assert.False(wrapper.IsSuccess);
         Assert.False(wrapper.IsNotFound);
         Assert.False(wrapper.IsConflict);
@@ -71,7 +71,7 @@ public class ApiResultTests
         var wrapper = new ApiResult();
 
         // Assert
-        Assert.IsAssignableFrom<IApiResult>(wrapper);
+        _ = Assert.IsAssignableFrom<IApiResult>(wrapper);
     }
 
     [Fact]
@@ -113,7 +113,7 @@ public class ApiResultTests
         var wrapper = new ApiResult<string>();
 
         // Assert
-        Assert.Equal(default(HttpStatusCode), wrapper.StatusCode);
+        Assert.Equal(default, wrapper.StatusCode);
         Assert.False(wrapper.IsSuccess);
         Assert.Null(wrapper.Result);
     }
@@ -174,8 +174,8 @@ public class ApiResultTests
         var wrapper = new ApiResult<string>();
 
         // Assert
-        Assert.IsAssignableFrom<IApiResult>(wrapper);
-        Assert.IsAssignableFrom<IApiResult<string>>(wrapper);
+        _ = Assert.IsAssignableFrom<IApiResult>(wrapper);
+        _ = Assert.IsAssignableFrom<IApiResult<string>>(wrapper);
     }
 
     [Fact]
@@ -185,17 +185,17 @@ public class ApiResultTests
         var wrapper = new ApiResult<string>();
 
         // Assert
-        Assert.IsAssignableFrom<ApiResult>(wrapper);
-        Assert.IsAssignableFrom<IApiResult>(wrapper);
-        Assert.IsAssignableFrom<IApiResult<string>>(wrapper);
+        _ = Assert.IsAssignableFrom<ApiResult>(wrapper);
+        _ = Assert.IsAssignableFrom<IApiResult>(wrapper);
+        _ = Assert.IsAssignableFrom<IApiResult<string>>(wrapper);
     }
 
     [Fact]
     public void ApiResult_And_GenericApiResult_CanBeUsedPolymorphically()
     {
         // Arrange
-        IApiResult baseWrapper = new ApiResult(HttpStatusCode.OK, new ApiResponse());
-        IApiResult<string> genericWrapper = new ApiResult<string>(HttpStatusCode.OK, new ApiResponse<string>("test"));
+        var baseWrapper = new ApiResult(HttpStatusCode.OK, new ApiResponse());
+        var genericWrapper = new ApiResult<string>(HttpStatusCode.OK, new ApiResponse<string>("test"));
 
         // Assert
         Assert.True(baseWrapper.IsSuccess);
@@ -204,13 +204,12 @@ public class ApiResultTests
         Assert.NotNull(genericWrapper.Result);
 
         // Verify types
-        Assert.IsType<ApiResponse>(baseWrapper.Result);
-        Assert.IsType<ApiResponse<string>>(genericWrapper.Result);
+        _ = Assert.IsType<ApiResponse>(baseWrapper.Result);
+        _ = Assert.IsType<ApiResponse<string>>(genericWrapper.Result);
 
         // Verify that generic wrapper can also be used as base interface
-        IApiResult baseInterfaceView = (ApiResult<string>)genericWrapper;
-        Assert.True(baseInterfaceView.IsSuccess);
-        // Note: baseInterfaceView.Result will be null due to the 'new' keyword hiding the base property
+        Assert.True(((IApiResult)genericWrapper).IsSuccess);
+        // Note: the base IApiResult view exposes the base Result property, which is hidden by the generic type.
         // This is expected behavior when using the 'new' keyword for property hiding
     }
 }

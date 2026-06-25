@@ -34,7 +34,7 @@ public class CollectionModelTests
         List<string>? items = null;
 
         // Act
-    var collection = new CollectionModel<string>(items);
+        var collection = new CollectionModel<string>(items);
 
         // Assert
         Assert.Null(collection.Items);
@@ -47,7 +47,7 @@ public class CollectionModelTests
         var items = Enumerable.Empty<string>();
 
         // Act
-    var collection = new CollectionModel<string>(items);
+        var collection = new CollectionModel<string>(items);
 
         // Assert
         Assert.Empty(collection.Items!);
@@ -80,12 +80,12 @@ public class CollectionModelTests
         // Arrange
         var complexItems = new List<TestItem>
         {
-            new TestItem { Id = 1, Name = "Item 1" },
-            new TestItem { Id = 2, Name = "Item 2" }
+            new() { Id = 1, Name = "Item 1" },
+            new() { Id = 2, Name = "Item 2" }
         };
 
         // Act
-    var collection = new CollectionModel<TestItem>(complexItems);
+        var collection = new CollectionModel<TestItem>(complexItems);
 
         // Assert
         Assert.Equal(complexItems, collection.Items);
@@ -94,7 +94,7 @@ public class CollectionModelTests
     }
 
     // Test helper class
-    private class TestItem
+    private sealed class TestItem
     {
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;

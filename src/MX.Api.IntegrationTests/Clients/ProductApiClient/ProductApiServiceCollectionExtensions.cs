@@ -1,4 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
 using MX.Api.Client.Extensions;
 using MX.Api.IntegrationTests.Clients.ProductApiClient.Api.V1;
 using MX.Api.IntegrationTests.Clients.ProductApiClient.Interfaces.V1;
@@ -22,22 +21,22 @@ public static class ProductApiServiceCollectionExtensions
         string baseUrl,
         string bearerToken)
     {
-        services.AddTypedApiClient<IProductApiV1, ProductApiV1, ProductApiOptions, ProductApiOptionsBuilder>(builder => builder
+        _ = services.AddTypedApiClient<IProductApiV1, ProductApiV1, ProductApiOptions, ProductApiOptionsBuilder>(builder => builder
             .WithBaseUrl(baseUrl)
             .WithApiKeyAuthentication(bearerToken));
 
         // Configure custom options
-        services.Configure<ProductApiOptions>(options =>
+        _ = services.Configure<ProductApiOptions>(options =>
         {
             options.BaseUrl = baseUrl;
             options.MaxRetryCount = 3;
         });
 
         // Register versioned API wrapper
-        services.AddScoped<IVersionedProductApi, VersionedProductApi>();
+        _ = services.AddScoped<IVersionedProductApi, VersionedProductApi>();
 
         // Register main client
-        services.AddScoped<IProductApiClient, ProductApiClient>();
+        _ = services.AddScoped<IProductApiClient, ProductApiClient>();
 
         return services;
     }
@@ -52,24 +51,24 @@ public static class ProductApiServiceCollectionExtensions
         this IServiceCollection services,
         Action<ProductApiOptionsBuilder> configureOptions)
     {
-        services.AddTypedApiClient<IProductApiV1, ProductApiV1, ProductApiOptions, ProductApiOptionsBuilder>(configureOptions);
+        _ = services.AddTypedApiClient<IProductApiV1, ProductApiV1, ProductApiOptions, ProductApiOptionsBuilder>(configureOptions);
 
         // Build options using builder pattern
         var builder = new ProductApiOptionsBuilder();
         configureOptions(builder);
         var options = builder.Build();
 
-        services.Configure<ProductApiOptions>(opts =>
+        _ = services.Configure<ProductApiOptions>(opts =>
         {
             opts.BaseUrl = options.BaseUrl;
             opts.MaxRetryCount = options.MaxRetryCount;
         });
 
         // Register versioned API wrapper
-        services.AddScoped<IVersionedProductApi, VersionedProductApi>();
+        _ = services.AddScoped<IVersionedProductApi, VersionedProductApi>();
 
         // Register main client
-        services.AddScoped<IProductApiClient, ProductApiClient>();
+        _ = services.AddScoped<IProductApiClient, ProductApiClient>();
 
         return services;
     }

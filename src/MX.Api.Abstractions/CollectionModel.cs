@@ -32,7 +32,6 @@ public record CollectionModel<T>
     /// Initializes a new instance of the <see cref="CollectionModel{T}"/> class with the specified items.
     /// </summary>
     /// <param name="items">The collection of items.</param>
-    /// <param name="items">The collection of items.</param>
     public CollectionModel(IEnumerable<T>? items)
     {
         Items = items;

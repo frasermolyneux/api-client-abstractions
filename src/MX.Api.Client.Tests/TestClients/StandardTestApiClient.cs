@@ -19,19 +19,15 @@ public interface IStandardTestApiClient
 /// <summary>
 /// Test API client implementation that uses standard ApiClientOptions
 /// </summary>
-public class StandardTestApiClient : BaseApi<ApiClientOptions>, IStandardTestApiClient
+/// <remarks>
+/// Initializes a new instance of the StandardTestApiClient
+/// </remarks>
+public class StandardTestApiClient(
+    ILogger<BaseApi<ApiClientOptions>> logger,
+    IApiTokenProvider? apiTokenProvider,
+    IRestClientService restClientService,
+    ApiClientOptions options) : BaseApi<ApiClientOptions>(logger, apiTokenProvider, restClientService, options), IStandardTestApiClient
 {
-    /// <summary>
-    /// Initializes a new instance of the StandardTestApiClient
-    /// </summary>
-    public StandardTestApiClient(
-        ILogger<BaseApi<ApiClientOptions>> logger,
-        IApiTokenProvider? apiTokenProvider,
-        IRestClientService restClientService,
-        ApiClientOptions options)
-        : base(logger, apiTokenProvider, restClientService, options)
-    {
-    }
 
     /// <summary>
     /// Test method implementation

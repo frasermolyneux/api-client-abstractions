@@ -1,5 +1,3 @@
-using System;
-
 namespace MX.Api.Client.Configuration;
 
 /// <summary>
@@ -8,7 +6,7 @@ namespace MX.Api.Client.Configuration;
 public class ApiKeyAuthenticationOptions : AuthenticationOptions, IDisposable
 {
     private char[]? _apiKeyBuffer;
-    private bool _disposed = false;
+    private bool _disposed;
 
     /// <summary>
     /// Gets or sets the API key used for authentication. The value is stored internally using a mutable buffer
@@ -48,12 +46,7 @@ public class ApiKeyAuthenticationOptions : AuthenticationOptions, IDisposable
     /// <returns>The API key as a plain string, or empty string if not set.</returns>
     public string GetApiKeyAsString()
     {
-        if (_apiKeyBuffer == null || _apiKeyBuffer.Length == 0)
-        {
-            return string.Empty;
-        }
-
-        return new string(_apiKeyBuffer);
+        return _apiKeyBuffer == null || _apiKeyBuffer.Length == 0 ? string.Empty : new string(_apiKeyBuffer);
     }
 
     /// <summary>
@@ -106,12 +99,7 @@ public class ApiKeyAuthenticationOptions : AuthenticationOptions, IDisposable
 
     private string? GetApiKeyInternalOrNull()
     {
-        if (_apiKeyBuffer == null || _apiKeyBuffer.Length == 0)
-        {
-            return null;
-        }
-
-        return new string(_apiKeyBuffer);
+        return _apiKeyBuffer == null || _apiKeyBuffer.Length == 0 ? null : new string(_apiKeyBuffer);
     }
 
     private void ClearApiKeyBuffer()

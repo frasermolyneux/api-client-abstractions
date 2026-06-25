@@ -5,6 +5,8 @@
     <RootNamespace>MX.Api.Web.Extensions.Tests</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <!-- Test projects do not require XML docs on every test method. -->
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>

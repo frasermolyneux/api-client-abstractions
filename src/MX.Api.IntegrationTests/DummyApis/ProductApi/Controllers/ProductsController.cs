@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using MX.Api.Abstractions;
 using MX.Api.IntegrationTests.Constants;
@@ -14,14 +16,17 @@ namespace MX.Api.IntegrationTests.DummyApis.ProductApi.Controllers;
 [Route("api/[controller]")]
 public class ProductsController : ControllerBase, IProductApiV1
 {
-    private static readonly List<Product> Products = new()
-    {
+    private static readonly CompositeFormat ResourceNotFoundMessageFormat = CompositeFormat.Parse(ApiErrorConstants.ErrorMessages.ResourceNotFound);
+    private static readonly CompositeFormat ResourceDoesNotExistDetailFormat = CompositeFormat.Parse(ApiErrorConstants.ErrorDetails.ResourceDoesNotExist);
+
+    private static readonly List<Product> Products =
+    [
         new() { Id = 1, Name = "Laptop", Category = "Electronics", Price = 999.99m, InStock = true },
         new() { Id = 2, Name = "Desk Chair", Category = "Furniture", Price = 199.99m, InStock = true },
         new() { Id = 3, Name = "Coffee Mug", Category = "Kitchen", Price = 9.99m, InStock = false },
         new() { Id = 4, Name = "Notebook", Category = "Stationery", Price = 4.99m, InStock = true },
         new() { Id = 5, Name = "Monitor", Category = "Electronics", Price = 299.99m, InStock = true }
-    };
+    ];
 
     /// <summary>
     /// Get all products
@@ -57,7 +62,7 @@ public class ProductsController : ControllerBase, IProductApiV1
     {
         // Check for authentication header
         var authHeader = Request.Headers.Authorization.FirstOrDefault();
-        if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer test-product-key"))
+        if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer test-product-key", StringComparison.Ordinal))
         {
             return Task.FromResult(new ApiResponse<CollectionModel<Product>>(
                 new ApiError(ApiErrorConstants.ErrorCodes.Unauthorized,
@@ -96,7 +101,7 @@ public class ProductsController : ControllerBase, IProductApiV1
     {
         // Check for authentication header
         var authHeader = Request.Headers.Authorization.FirstOrDefault();
-        if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer test-product-key"))
+        if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer test-product-key", StringComparison.Ordinal))
         {
             return Task.FromResult(new ApiResponse<Product>(
                 new ApiError(ApiErrorConstants.ErrorCodes.Unauthorized,
@@ -106,15 +111,12 @@ public class ProductsController : ControllerBase, IProductApiV1
         }
 
         var product = Products.FirstOrDefault(p => p.Id == id);
-        if (product == null)
-        {
-            return Task.FromResult(new ApiResponse<Product>(
+        return product == null
+            ? Task.FromResult(new ApiResponse<Product>(
                 new ApiError(ApiErrorConstants.ErrorCodes.NotFound,
-                    string.Format(ApiErrorConstants.ErrorMessages.ResourceNotFound, "Product", id),
-                    string.Format(ApiErrorConstants.ErrorDetails.ResourceDoesNotExist, "product"))
-            ).ToApiResult(System.Net.HttpStatusCode.NotFound));
-        }
-
-        return Task.FromResult(new ApiResponse<Product>(product).ToApiResult());
+                    string.Format(CultureInfo.InvariantCulture, ResourceNotFoundMessageFormat, "Product", id),
+                    string.Format(CultureInfo.InvariantCulture, ResourceDoesNotExistDetailFormat, "product"))
+            ).ToApiResult(System.Net.HttpStatusCode.NotFound))
+            : Task.FromResult(new ApiResponse<Product>(product).ToApiResult());
     }
 }

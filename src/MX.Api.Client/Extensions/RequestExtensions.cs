@@ -1,3 +1,4 @@
+using System.Globalization;
 using MX.Api.Abstractions;
 using RestSharp;
 
@@ -24,42 +25,42 @@ public static class RequestExtensions
         // Add filter expression
         if (!string.IsNullOrWhiteSpace(filterOptions.FilterExpression))
         {
-            request.AddQueryParameter("$filter", filterOptions.FilterExpression);
+            _ = request.AddQueryParameter("$filter", filterOptions.FilterExpression);
         }
 
         // Add select fields
         if (filterOptions.Select != null && filterOptions.Select.Length > 0)
         {
-            request.AddQueryParameter("$select", string.Join(",", filterOptions.Select));
+            _ = request.AddQueryParameter("$select", string.Join(",", filterOptions.Select));
         }
 
         // Add expand fields
         if (filterOptions.Expand != null && filterOptions.Expand.Length > 0)
         {
-            request.AddQueryParameter("$expand", string.Join(",", filterOptions.Expand));
+            _ = request.AddQueryParameter("$expand", string.Join(",", filterOptions.Expand));
         }
 
         // Add order by
         if (!string.IsNullOrWhiteSpace(filterOptions.OrderBy))
         {
-            request.AddQueryParameter("$orderby", filterOptions.OrderBy);
+            _ = request.AddQueryParameter("$orderby", filterOptions.OrderBy);
         }
 
         // Add pagination
         if (filterOptions.Skip > 0)
         {
-            request.AddQueryParameter("$skip", filterOptions.Skip.ToString());
+            _ = request.AddQueryParameter("$skip", filterOptions.Skip.ToString(CultureInfo.InvariantCulture));
         }
 
         if (filterOptions.Top > 0)
         {
-            request.AddQueryParameter("$top", filterOptions.Top.ToString());
+            _ = request.AddQueryParameter("$top", filterOptions.Top.ToString(CultureInfo.InvariantCulture));
         }
 
         // Add count flag
         if (filterOptions.Count)
         {
-            request.AddQueryParameter("$count", "true");
+            _ = request.AddQueryParameter("$count", "true");
         }
 
         return request;

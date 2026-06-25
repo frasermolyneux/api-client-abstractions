@@ -3,7 +3,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MX.Api.Client.Auth;
 using MX.Api.Client.Configuration;
-using MX.Api.Client.Extensions;
 using Polly;
 using Polly.Extensions.Http;
 
@@ -104,13 +103,13 @@ public static class ApiClientExtensions
         where TOptions : ApiClientOptionsBase, new()
         where TBuilder : ApiClientOptionsBuilder<TOptions, TBuilder>, new()
     {
-        if (configureOptions == null)
-            throw new ArgumentNullException(nameof(configureOptions));
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(configureOptions);
 
         // Add base API client services if not already added
-        services.AddMemoryCache();
-        services.AddLogging();
-        services.AddScoped<IRestClientService, RestClientService>();
+        _ = services.AddMemoryCache();
+        _ = services.AddLogging();
+        _ = services.AddScoped<IRestClientService, RestClientService>();
 
         // Create and configure options using the builder
         var builder = new TBuilder();
@@ -118,15 +117,15 @@ public static class ApiClientExtensions
         var options = builder.Build();
 
         // Register the options as a singleton
-        services.AddSingleton(options);
-        services.AddSingleton<IOptions<TOptions>>(new OptionsWrapper<TOptions>(options));
+        _ = services.AddSingleton(options);
+        _ = services.AddSingleton<IOptions<TOptions>>(new OptionsWrapper<TOptions>(options));
 
         // Register API token provider if using Entra ID authentication
         var entraIdOptions = options.AuthenticationOptions.OfType<EntraIdAuthenticationOptions>().ToList();
-        if (entraIdOptions.Any() && !services.Any(sd => sd.ServiceType == typeof(IApiTokenProvider)))
+        if (entraIdOptions.Count > 0 && !services.Any(sd => sd.ServiceType == typeof(IApiTokenProvider)))
         {
             // Ensure that IMemoryCache is registered
-            services.AddMemoryCache();
+            _ = services.AddMemoryCache();
 
             // Register the appropriate token credential provider based on the first Entra ID option
             var firstEntraIdOption = entraIdOptions.First();
@@ -134,12 +133,12 @@ public static class ApiClientExtensions
             // Register the token credential provider if using Azure credentials
             if (firstEntraIdOption is AzureCredentialAuthenticationOptions)
             {
-                services.AddSingleton<ITokenCredentialProvider, DefaultTokenCredentialProvider>();
+                _ = services.AddSingleton<ITokenCredentialProvider, DefaultTokenCredentialProvider>();
             }
             // Register the token credential provider if using client credentials
             else if (firstEntraIdOption is ClientCredentialAuthenticationOptions clientCredOptions)
             {
-                services.AddSingleton<ITokenCredentialProvider>(sp =>
+                _ = services.AddSingleton<ITokenCredentialProvider>(sp =>
                 {
                     var logger = sp.GetService<ILogger<ClientCredentialProvider>>();
                     return new ClientCredentialProvider(logger, clientCredOptions);
@@ -147,11 +146,11 @@ public static class ApiClientExtensions
             }
 
             // Register the API token provider for all Entra ID authentication types
-            services.AddSingleton<IApiTokenProvider, ApiTokenProvider>();
+            _ = services.AddSingleton<IApiTokenProvider, ApiTokenProvider>();
         }
 
         // Register the client with HttpClientFactory and policy handlers
-        services.AddHttpClient(typeof(TImplementation).Name, client =>
+        _ = services.AddHttpClient(typeof(TImplementation).Name, client =>
         {
             // Pre-configure HttpClient if needed
             client.BaseAddress = !string.IsNullOrEmpty(options.BaseUrl) ? new Uri(options.BaseUrl) : null;
@@ -168,7 +167,7 @@ public static class ApiClientExtensions
             });
 
         // Register the client with a factory that creates it with all required dependencies
-        services.AddTransient<TClient>(serviceProvider =>
+        _ = services.AddTransient<TClient>(serviceProvider =>
         {
             var logger = serviceProvider.GetRequiredService<ILoggerFactory>().CreateLogger<BaseApi<TOptions>>();
             var apiTokenProvider = serviceProvider.GetService<IApiTokenProvider>();

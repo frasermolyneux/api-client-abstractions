@@ -1,7 +1,6 @@
 using System.Net;
 
 using MX.Api.Abstractions;
-using MX.Api.Web.Extensions;
 
 namespace MX.Api.Web.Extensions.Tests;
 
@@ -50,7 +49,7 @@ public class ApiResponseExtensionsTests
         ApiResponse? apiResponse = null;
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => apiResponse!.ToApiResult());
+        _ = Assert.Throws<ArgumentNullException>(() => apiResponse!.ToApiResult());
     }
 
     [Fact]
@@ -78,7 +77,7 @@ public class ApiResponseExtensionsTests
         ApiResponse<string>? apiResponse = null;
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => apiResponse!.ToApiResult());
+        _ = Assert.Throws<ArgumentNullException>(() => apiResponse!.ToApiResult());
     }
 
     #endregion
@@ -206,7 +205,7 @@ public class ApiResponseExtensionsTests
         ApiResponse? apiResponse = null;
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => apiResponse!.ToCreatedResult());
+        _ = Assert.Throws<ArgumentNullException>(() => apiResponse!.ToCreatedResult());
     }
 
     #endregion
@@ -252,7 +251,7 @@ public class ApiResponseExtensionsTests
         ApiResponse? apiResponse = null;
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => apiResponse!.ToAcceptedResult());
+        _ = Assert.Throws<ArgumentNullException>(() => apiResponse!.ToAcceptedResult());
     }
 
     #endregion
@@ -296,7 +295,7 @@ public class ApiResponseExtensionsTests
         ApiResponse? apiResponse = null;
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => apiResponse!.ToNotFoundResult());
+        _ = Assert.Throws<ArgumentNullException>(() => apiResponse!.ToNotFoundResult());
     }
 
     #endregion
@@ -343,7 +342,7 @@ public class ApiResponseExtensionsTests
         ApiResponse? apiResponse = null;
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => apiResponse!.ToBadRequestResult());
+        _ = Assert.Throws<ArgumentNullException>(() => apiResponse!.ToBadRequestResult());
     }
 
     #endregion
@@ -390,7 +389,7 @@ public class ApiResponseExtensionsTests
         ApiResponse? apiResponse = null;
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => apiResponse!.ToConflictResult());
+        _ = Assert.Throws<ArgumentNullException>(() => apiResponse!.ToConflictResult());
     }
 
     #endregion

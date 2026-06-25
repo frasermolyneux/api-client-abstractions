@@ -24,10 +24,11 @@ public class AuthenticationOptionsTests
     public void ApiKeyAuthenticationOptions_Location_CanBeSetToQueryParameter()
     {
         // Arrange
-        var options = new ApiKeyAuthenticationOptions();
-
-        // Act
-        options.Location = ApiKeyLocation.QueryParameter;
+        var options = new ApiKeyAuthenticationOptions
+        {
+            // Act
+            Location = ApiKeyLocation.QueryParameter
+        };
 
         // Assert
         Assert.Equal(ApiKeyLocation.QueryParameter, options.Location);

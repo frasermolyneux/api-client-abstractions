@@ -10,7 +10,7 @@ public class UserApiOptions : ApiClientOptionsBase
     /// <summary>
     /// Whether to enable user caching
     /// </summary>
-    public bool EnableUserCaching { get; set; } = false;
+    public bool EnableUserCaching { get; set; }
 
     /// <summary>
     /// Cache expiration time in minutes
@@ -20,7 +20,7 @@ public class UserApiOptions : ApiClientOptionsBase
     /// <summary>
     /// Whether to enable detailed logging
     /// </summary>
-    public bool EnableDetailedLogging { get; set; } = false;
+    public bool EnableDetailedLogging { get; set; }
 
     /// <summary>
     /// Default role for new users

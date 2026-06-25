@@ -18,19 +18,15 @@ public interface ITestApiClient
 /// <summary>
 /// Test API client implementation
 /// </summary>
-public class TestApiClient : BaseApi<TestApiOptions>, ITestApiClient
+/// <remarks>
+/// Initializes a new instance of the TestApiClient
+/// </remarks>
+public class TestApiClient(
+    ILogger<BaseApi<TestApiOptions>> logger,
+    IApiTokenProvider? apiTokenProvider,
+    IRestClientService restClientService,
+    TestApiOptions options) : BaseApi<TestApiOptions>(logger, apiTokenProvider, restClientService, options), ITestApiClient
 {
-    /// <summary>
-    /// Initializes a new instance of the TestApiClient
-    /// </summary>
-    public TestApiClient(
-        ILogger<BaseApi<TestApiOptions>> logger,
-        IApiTokenProvider? apiTokenProvider,
-        IRestClientService restClientService,
-        TestApiOptions options)
-        : base(logger, apiTokenProvider, restClientService, options)
-    {
-    }
 
     /// <summary>
     /// Test method implementation

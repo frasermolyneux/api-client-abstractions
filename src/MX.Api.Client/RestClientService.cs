@@ -8,22 +8,17 @@ namespace MX.Api.Client;
 /// Service for executing RestSharp requests.
 /// Provides simplified resource management compared to the singleton approach.
 /// </summary>
-public class RestClientService : IRestClientService, IDisposable
+/// <remarks>
+/// Initializes a new instance of the <see cref="RestClientService"/> class.
+/// </remarks>
+/// <param name="optionsSnapshot">Optional snapshot of API client options for named configurations.</param>
+public class RestClientService(IOptionsSnapshot<ApiClientOptions>? optionsSnapshot = null) : IRestClientService, IDisposable
 {
     private readonly TimeSpan defaultTimeout = TimeSpan.FromMinutes(5);
     private readonly Dictionary<string, RestClient> clientCache = new(StringComparer.OrdinalIgnoreCase);
     private readonly Lock lockObject = new();
-    private readonly IOptionsSnapshot<ApiClientOptions>? optionsSnapshot;
+    private readonly IOptionsSnapshot<ApiClientOptions>? optionsSnapshot = optionsSnapshot;
     private bool disposed;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="RestClientService"/> class.
-    /// </summary>
-    /// <param name="optionsSnapshot">Optional snapshot of API client options for named configurations.</param>
-    public RestClientService(IOptionsSnapshot<ApiClientOptions>? optionsSnapshot = null)
-    {
-        this.optionsSnapshot = optionsSnapshot;
-    }
 
     /// <summary>
     /// Executes the specified REST request asynchronously.
@@ -38,10 +33,7 @@ public class RestClientService : IRestClientService, IDisposable
     /// <exception cref="ObjectDisposedException">Thrown when the class has been disposed.</exception>
     public Task<RestResponse> ExecuteAsync(string baseUrl, RestRequest request, CancellationToken cancellationToken = default)
     {
-        if (disposed)
-        {
-            throw new ObjectDisposedException(nameof(RestClientService));
-        }
+        ObjectDisposedException.ThrowIf(disposed, this);
 
         if (string.IsNullOrEmpty(baseUrl))
         {
@@ -71,10 +63,7 @@ public class RestClientService : IRestClientService, IDisposable
     /// <exception cref="ObjectDisposedException">Thrown when the class has been disposed.</exception>
     public Task<RestResponse> ExecuteWithNamedOptionsAsync(string optionsName, RestRequest request, CancellationToken cancellationToken = default)
     {
-        if (disposed)
-        {
-            throw new ObjectDisposedException(nameof(RestClientService));
-        }
+        ObjectDisposedException.ThrowIf(disposed, this);
 
         if (string.IsNullOrEmpty(optionsName))
         {

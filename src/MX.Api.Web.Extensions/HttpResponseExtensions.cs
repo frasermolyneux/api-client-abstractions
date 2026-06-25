@@ -1,6 +1,4 @@
-﻿using System.Net;
-
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 
 using MX.Api.Abstractions;
 
@@ -25,15 +23,12 @@ public static class HttpResponseExtensions
     {
         ArgumentNullException.ThrowIfNull(apiResult);
 
-        if (apiResult.Result != null)
-        {
-            return new ObjectResult(apiResult.Result)
+        return apiResult.Result != null
+            ? new ObjectResult(apiResult.Result)
             {
                 StatusCode = (int)apiResult.StatusCode
-            };
-        }
-
-        return new StatusCodeResult((int)apiResult.StatusCode);
+            }
+            : new StatusCodeResult((int)apiResult.StatusCode);
     }
 
     /// <summary>

@@ -1,6 +1,3 @@
-using MX.Api.Abstractions;
-using MX.Api.IntegrationTests.DummyApis.UserApi.Models;
-
 namespace MX.Api.IntegrationTests.Clients.UserApiClient;
 
 /// <summary>

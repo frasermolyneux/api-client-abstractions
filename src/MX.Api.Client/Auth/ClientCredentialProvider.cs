@@ -11,6 +11,12 @@ namespace MX.Api.Client.Auth;
 /// </summary>
 public class ClientCredentialProvider : ITokenCredentialProvider
 {
+    private static readonly Action<ILogger, string, string, Exception?> LogCreatingClientSecretCredential =
+        LoggerMessage.Define<string, string>(
+            LogLevel.Debug,
+            new EventId(1, nameof(LogCreatingClientSecretCredential)),
+            "Creating ClientSecretCredential for client ID: {ClientId}, tenant ID: {TenantId}");
+
     private readonly ILogger<ClientCredentialProvider>? logger;
     private readonly ClientCredentialAuthenticationOptions options;
     private readonly TokenCredentialOptions? tokenCredentialOptions;
@@ -44,13 +50,19 @@ public class ClientCredentialProvider : ITokenCredentialProvider
         ArgumentNullException.ThrowIfNull(options);
 
         if (string.IsNullOrEmpty(options.TenantId))
+        {
             throw new ArgumentException("TenantId cannot be null or empty", nameof(options));
+        }
 
         if (string.IsNullOrEmpty(options.ClientId))
+        {
             throw new ArgumentException("ClientId cannot be null or empty", nameof(options));
+        }
 
         if (!options.HasClientSecret)
+        {
             throw new ArgumentException("ClientSecret cannot be null or empty", nameof(options));
+        }
 
         this.logger = logger;
         this.options = options;
@@ -88,13 +100,19 @@ public class ClientCredentialProvider : ITokenCredentialProvider
         TokenCredentialOptions? tokenCredentialOptions = null)
     {
         if (string.IsNullOrEmpty(tenantId))
+        {
             throw new ArgumentException($"'{nameof(tenantId)}' cannot be null or empty", nameof(tenantId));
+        }
 
         if (string.IsNullOrEmpty(clientId))
+        {
             throw new ArgumentException($"'{nameof(clientId)}' cannot be null or empty", nameof(clientId));
+        }
 
         if (string.IsNullOrEmpty(clientSecret))
+        {
             throw new ArgumentException($"'{nameof(clientSecret)}' cannot be null or empty", nameof(clientSecret));
+        }
 
         this.logger = logger;
         this.tokenCredentialOptions = tokenCredentialOptions;
@@ -119,8 +137,10 @@ public class ClientCredentialProvider : ITokenCredentialProvider
         // Check for cancellation before proceeding
         cancellationToken.ThrowIfCancellationRequested();
 
-        logger?.LogDebug("Creating ClientSecretCredential for client ID: {ClientId}, tenant ID: {TenantId}",
-            options.ClientId, options.TenantId);
+        if (logger != null)
+        {
+            LogCreatingClientSecretCredential(logger, options.ClientId, options.TenantId, null);
+        }
 
         // Get the client secret securely - it will be automatically cleared from memory
         var clientSecret = options.GetClientSecretAsString();
@@ -144,7 +164,7 @@ public class ClientCredentialProvider : ITokenCredentialProvider
                 {
                     fixed (char* ptr = clientSecret)
                     {
-                        for (int i = 0; i < clientSecret.Length; i++)
+                        for (var i = 0; i < clientSecret.Length; i++)
                         {
                             ptr[i] = '\0';
                         }

@@ -1,4 +1,3 @@
-using System.Net.Http;
 using MX.Api.Client;
 using RestSharp;
 
@@ -35,5 +34,6 @@ public class TestRestClientService : IRestClientService
     public void Dispose()
     {
         _restClient?.Dispose();
+        GC.SuppressFinalize(this);
     }
 }

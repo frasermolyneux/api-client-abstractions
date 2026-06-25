@@ -19,7 +19,7 @@ public class ApiClientExtensionsTests
         var services = new ServiceCollection();
 
         // Add required logging services for DI resolution
-        services.AddLogging();
+        _ = services.AddLogging();
 
         // Act
         var result = services.AddTypedApiClient<ITestApiClient, TestApiClient, TestApiOptions, TestApiOptionsBuilder>(options => options
@@ -42,7 +42,7 @@ public class ApiClientExtensionsTests
 
         // Verify the client is registered
         Assert.NotNull(serviceProvider.GetService<ITestApiClient>());
-        Assert.IsType<TestApiClient>(serviceProvider.GetService<ITestApiClient>());
+        _ = Assert.IsType<TestApiClient>(serviceProvider.GetService<ITestApiClient>());
     }
 
     [Fact]
@@ -50,13 +50,13 @@ public class ApiClientExtensionsTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddLogging(); // Add required logging services
+        _ = services.AddLogging(); // Add required logging services
 
         var baseUrl = "https://api.example.com";
         var apiKey = "test-api-key";
 
         // Act
-        services.AddTypedApiClient<ITestApiClient, TestApiClient, TestApiOptions, TestApiOptionsBuilder>(options => options
+        _ = services.AddTypedApiClient<ITestApiClient, TestApiClient, TestApiOptions, TestApiOptionsBuilder>(options => options
             .WithBaseUrl(baseUrl)
             .WithApiKeyAuthentication(apiKey)
             .WithTestFeature());
@@ -67,8 +67,8 @@ public class ApiClientExtensionsTests
 
         Assert.Equal(baseUrl, configuredOptions.BaseUrl);
         Assert.True(configuredOptions.EnableTestFeature);
-        Assert.Single(configuredOptions.AuthenticationOptions);
-        Assert.IsType<ApiKeyAuthenticationOptions>(configuredOptions.AuthenticationOptions.First());
+        _ = Assert.Single(configuredOptions.AuthenticationOptions);
+        _ = Assert.IsType<ApiKeyAuthenticationOptions>(configuredOptions.AuthenticationOptions.First());
     }
 
     [Fact]
@@ -79,13 +79,13 @@ public class ApiClientExtensionsTests
 
         // Add required services for logging
         var loggerFactoryMock = new Mock<ILoggerFactory>();
-        loggerFactoryMock.Setup(x => x.CreateLogger(It.IsAny<string>()))
+        _ = loggerFactoryMock.Setup(x => x.CreateLogger(It.IsAny<string>()))
             .Returns(Mock.Of<ILogger>());
-        services.AddSingleton(loggerFactoryMock.Object);
-        services.AddLogging();
+        _ = services.AddSingleton(loggerFactoryMock.Object);
+        _ = services.AddLogging();
 
         // Act
-        services.AddTypedApiClient<ITestApiClient, TestApiClient, TestApiOptions, TestApiOptionsBuilder>(options => options
+        _ = services.AddTypedApiClient<ITestApiClient, TestApiClient, TestApiOptions, TestApiOptionsBuilder>(options => options
             .WithBaseUrl("https://api.example.com")
             .WithEntraIdAuthentication("api://resource"));
 
@@ -97,8 +97,8 @@ public class ApiClientExtensionsTests
         Assert.NotNull(serviceProvider.GetService<IApiTokenProvider>());
 
         // Verify correct implementation types
-        Assert.IsType<DefaultTokenCredentialProvider>(serviceProvider.GetService<ITokenCredentialProvider>());
-        Assert.IsType<ApiTokenProvider>(serviceProvider.GetService<IApiTokenProvider>());
+        _ = Assert.IsType<DefaultTokenCredentialProvider>(serviceProvider.GetService<ITokenCredentialProvider>());
+        _ = Assert.IsType<ApiTokenProvider>(serviceProvider.GetService<IApiTokenProvider>());
     }
 
     [Fact]
@@ -109,10 +109,10 @@ public class ApiClientExtensionsTests
 
         // Add required services for logging
         var loggerFactoryMock = new Mock<ILoggerFactory>();
-        loggerFactoryMock.Setup(x => x.CreateLogger(It.IsAny<string>()))
+        _ = loggerFactoryMock.Setup(x => x.CreateLogger(It.IsAny<string>()))
             .Returns(Mock.Of<ILogger>());
-        services.AddSingleton(loggerFactoryMock.Object);
-        services.AddLogging();
+        _ = services.AddSingleton(loggerFactoryMock.Object);
+        _ = services.AddLogging();
 
         var clientCredOptions = new ClientCredentialAuthenticationOptions
         {
@@ -123,7 +123,7 @@ public class ApiClientExtensionsTests
         clientCredOptions.SetClientSecret("client-secret");
 
         // Act
-        services.AddTypedApiClient<ITestApiClient, TestApiClient, TestApiOptions, TestApiOptionsBuilder>(options => options
+        _ = services.AddTypedApiClient<ITestApiClient, TestApiClient, TestApiOptions, TestApiOptionsBuilder>(options => options
             .WithBaseUrl("https://api.example.com")
             .WithAuthentication(clientCredOptions));
 
@@ -135,8 +135,8 @@ public class ApiClientExtensionsTests
         Assert.NotNull(serviceProvider.GetService<IApiTokenProvider>());
 
         // Verify correct implementation types
-        Assert.IsType<ClientCredentialProvider>(serviceProvider.GetService<ITokenCredentialProvider>());
-        Assert.IsType<ApiTokenProvider>(serviceProvider.GetService<IApiTokenProvider>());
+        _ = Assert.IsType<ClientCredentialProvider>(serviceProvider.GetService<ITokenCredentialProvider>());
+        _ = Assert.IsType<ApiTokenProvider>(serviceProvider.GetService<IApiTokenProvider>());
     }
 
     [Fact]
@@ -144,14 +144,14 @@ public class ApiClientExtensionsTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddLogging(); // Add required logging services
+        _ = services.AddLogging(); // Add required logging services
 
         // Act - Register two different API clients
-        services.AddTypedApiClient<ITestApiClient, TestApiClient, TestApiOptions, TestApiOptionsBuilder>(options => options
+        _ = services.AddTypedApiClient<ITestApiClient, TestApiClient, TestApiOptions, TestApiOptionsBuilder>(options => options
             .WithBaseUrl("https://api1.example.com")
             .WithTestFeature());
 
-        services.AddTypedApiClient<ITestApiClient, TestApiClient, TestApiOptions, TestApiOptionsBuilder>(options => options
+        _ = services.AddTypedApiClient<ITestApiClient, TestApiClient, TestApiOptions, TestApiOptionsBuilder>(options => options
             .WithBaseUrl("https://api2.example.com"));
 
         // Assert
@@ -167,10 +167,10 @@ public class ApiClientExtensionsTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddLogging(); // Add required logging services
+        _ = services.AddLogging(); // Add required logging services
 
         // Act
-        services.AddTypedApiClient<ITestApiClient, TestApiClient, TestApiOptions, TestApiOptionsBuilder>(options => options
+        _ = services.AddTypedApiClient<ITestApiClient, TestApiClient, TestApiOptions, TestApiOptionsBuilder>(options => options
             .WithBaseUrl("https://api.example.com")
             .WithMaxRetryCount(5));
 
@@ -181,7 +181,7 @@ public class ApiClientExtensionsTests
         Assert.NotNull(httpClientFactory);
 
         // Verify we can create an HttpClient for our typed client
-        var httpClient = httpClientFactory?.CreateClient(typeof(TestApiClient).Name);
+        var httpClient = httpClientFactory?.CreateClient(nameof(TestApiClient));
         Assert.NotNull(httpClient);
     }
 
@@ -190,10 +190,10 @@ public class ApiClientExtensionsTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddLogging(); // Add required logging services
+        _ = services.AddLogging(); // Add required logging services
 
         // Act
-        services.AddTypedApiClient<IStandardTestApiClient, StandardTestApiClient, ApiClientOptions, ApiClientOptionsBuilder>(options => options
+        _ = services.AddTypedApiClient<IStandardTestApiClient, StandardTestApiClient, ApiClientOptions, ApiClientOptionsBuilder>(options => options
             .WithBaseUrl("https://api.example.com")
             .WithApiKeyAuthentication("test-key"));
 
@@ -212,7 +212,7 @@ public class ApiClientExtensionsTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddLogging(); // Add required logging services
+        _ = services.AddLogging(); // Add required logging services
 
         // Act & Assert
         var ex = Assert.Throws<ArgumentNullException>(() =>
@@ -227,7 +227,7 @@ public class ApiClientExtensionsTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddLogging(); // Add required logging services
+        _ = services.AddLogging(); // Add required logging services
 
         // Act & Assert
         var ex = Assert.Throws<ArgumentException>(() =>
@@ -244,7 +244,7 @@ public class ApiClientExtensionsTests
         var services = new ServiceCollection();
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() =>
+        _ = Assert.Throws<ArgumentNullException>(() =>
             services.AddTypedApiClient<ITestApiClient, TestApiClient, TestApiOptions, TestApiOptionsBuilder>(null!));
     }
 
@@ -253,13 +253,13 @@ public class ApiClientExtensionsTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddLogging(); // Add required logging services
+        _ = services.AddLogging(); // Add required logging services
 
         // Act
-        services.AddTypedApiClient<ITestApiClient, TestApiClient, TestApiOptions, TestApiOptionsBuilder>(options => options
+        _ = services.AddTypedApiClient<ITestApiClient, TestApiClient, TestApiOptions, TestApiOptionsBuilder>(options => options
             .WithBaseUrl("https://api1.example.com"));
 
-        services.AddTypedApiClient<IStandardTestApiClient, StandardTestApiClient, ApiClientOptions, ApiClientOptionsBuilder>(options => options
+        _ = services.AddTypedApiClient<IStandardTestApiClient, StandardTestApiClient, ApiClientOptions, ApiClientOptionsBuilder>(options => options
             .WithBaseUrl("https://api2.example.com"));
 
         // Assert
@@ -280,7 +280,7 @@ public class ApiClientExtensionsTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddLogging(); // Add required logging services
+        _ = services.AddLogging(); // Add required logging services
 
         // Act
         var result = services.AddApiClient<IStandardTestApiClient, StandardTestApiClient>(options => options
@@ -303,7 +303,7 @@ public class ApiClientExtensionsTests
 
         // Verify the client is registered
         Assert.NotNull(serviceProvider.GetService<IStandardTestApiClient>());
-        Assert.IsType<StandardTestApiClient>(serviceProvider.GetService<IStandardTestApiClient>());
+        _ = Assert.IsType<StandardTestApiClient>(serviceProvider.GetService<IStandardTestApiClient>());
     }
 
     [Fact]
@@ -311,13 +311,13 @@ public class ApiClientExtensionsTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddLogging(); // Add required logging services
+        _ = services.AddLogging(); // Add required logging services
 
         var baseUrl = "https://api.example.com";
         var apiKey = "test-api-key";
 
         // Act
-        services.AddApiClient<IStandardTestApiClient, StandardTestApiClient>(options => options
+        _ = services.AddApiClient<IStandardTestApiClient, StandardTestApiClient>(options => options
             .WithBaseUrl(baseUrl)
             .WithApiKeyAuthentication(apiKey));
 
@@ -326,8 +326,8 @@ public class ApiClientExtensionsTests
         var configuredOptions = serviceProvider.GetRequiredService<ApiClientOptions>();
 
         Assert.Equal(baseUrl, configuredOptions.BaseUrl);
-        Assert.Single(configuredOptions.AuthenticationOptions);
-        Assert.IsType<ApiKeyAuthenticationOptions>(configuredOptions.AuthenticationOptions.First());
+        _ = Assert.Single(configuredOptions.AuthenticationOptions);
+        _ = Assert.IsType<ApiKeyAuthenticationOptions>(configuredOptions.AuthenticationOptions.First());
     }
 
     [Fact]
@@ -338,13 +338,13 @@ public class ApiClientExtensionsTests
 
         // Add required services for logging
         var loggerFactoryMock = new Mock<ILoggerFactory>();
-        loggerFactoryMock.Setup(x => x.CreateLogger(It.IsAny<string>()))
+        _ = loggerFactoryMock.Setup(x => x.CreateLogger(It.IsAny<string>()))
             .Returns(Mock.Of<ILogger>());
-        services.AddSingleton(loggerFactoryMock.Object);
-        services.AddLogging();
+        _ = services.AddSingleton(loggerFactoryMock.Object);
+        _ = services.AddLogging();
 
         // Act
-        services.AddApiClient<IStandardTestApiClient, StandardTestApiClient>(options => options
+        _ = services.AddApiClient<IStandardTestApiClient, StandardTestApiClient>(options => options
             .WithBaseUrl("https://api.example.com")
             .WithEntraIdAuthentication("api://resource"));
 
@@ -356,8 +356,8 @@ public class ApiClientExtensionsTests
         Assert.NotNull(serviceProvider.GetService<IApiTokenProvider>());
 
         // Verify correct implementation types
-        Assert.IsType<DefaultTokenCredentialProvider>(serviceProvider.GetService<ITokenCredentialProvider>());
-        Assert.IsType<ApiTokenProvider>(serviceProvider.GetService<IApiTokenProvider>());
+        _ = Assert.IsType<DefaultTokenCredentialProvider>(serviceProvider.GetService<ITokenCredentialProvider>());
+        _ = Assert.IsType<ApiTokenProvider>(serviceProvider.GetService<IApiTokenProvider>());
     }
 
     [Fact]
@@ -367,7 +367,7 @@ public class ApiClientExtensionsTests
         IServiceCollection services = null!;
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() =>
+        _ = Assert.Throws<ArgumentNullException>(() =>
             services.AddApiClient<IStandardTestApiClient, StandardTestApiClient>(options => options
                 .WithBaseUrl("https://api.example.com")));
     }
@@ -379,7 +379,7 @@ public class ApiClientExtensionsTests
         var services = new ServiceCollection();
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() =>
+        _ = Assert.Throws<ArgumentNullException>(() =>
             services.AddApiClient<IStandardTestApiClient, StandardTestApiClient>(null!));
     }
 
@@ -388,13 +388,13 @@ public class ApiClientExtensionsTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddLogging(); // Add required logging services
+        _ = services.AddLogging(); // Add required logging services
 
         // Act - Register multiple clients with simplified method
-        services.AddApiClient<IStandardTestApiClient, StandardTestApiClient>(options => options
+        _ = services.AddApiClient<IStandardTestApiClient, StandardTestApiClient>(options => options
             .WithBaseUrl("https://api1.example.com"));
 
-        services.AddApiClient<IStandardTestApiClient, StandardTestApiClient>(options => options
+        _ = services.AddApiClient<IStandardTestApiClient, StandardTestApiClient>(options => options
             .WithBaseUrl("https://api2.example.com"));
 
         // Assert
@@ -410,10 +410,10 @@ public class ApiClientExtensionsTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddLogging(); // Add required logging services
+        _ = services.AddLogging(); // Add required logging services
 
         // Act
-        services.AddApiClient<IStandardTestApiClient, StandardTestApiClient>(options => options
+        _ = services.AddApiClient<IStandardTestApiClient, StandardTestApiClient>(options => options
             .WithBaseUrl("https://api.example.com")
             .WithMaxRetryCount(5));
 
@@ -424,7 +424,7 @@ public class ApiClientExtensionsTests
         Assert.NotNull(httpClientFactory);
 
         // Verify we can create an HttpClient for our typed client
-        var httpClient = httpClientFactory?.CreateClient(typeof(StandardTestApiClient).Name);
+        var httpClient = httpClientFactory?.CreateClient(nameof(StandardTestApiClient));
         Assert.NotNull(httpClient);
     }
 
@@ -434,19 +434,19 @@ public class ApiClientExtensionsTests
         // Arrange
         var services1 = new ServiceCollection();
         var services2 = new ServiceCollection();
-        services1.AddLogging();
-        services2.AddLogging();
+        _ = services1.AddLogging();
+        _ = services2.AddLogging();
 
         var baseUrl = "https://api.example.com";
         var apiKey = "test-api-key";
 
         // Act - Register using simplified method
-        services1.AddApiClient<IStandardTestApiClient, StandardTestApiClient>(options => options
+        _ = services1.AddApiClient<IStandardTestApiClient, StandardTestApiClient>(options => options
             .WithBaseUrl(baseUrl)
             .WithApiKeyAuthentication(apiKey));
 
         // Act - Register using full method with default options
-        services2.AddTypedApiClient<IStandardTestApiClient, StandardTestApiClient, ApiClientOptions, ApiClientOptionsBuilder>(options => options
+        _ = services2.AddTypedApiClient<IStandardTestApiClient, StandardTestApiClient, ApiClientOptions, ApiClientOptionsBuilder>(options => options
             .WithBaseUrl(baseUrl)
             .WithApiKeyAuthentication(apiKey));
 

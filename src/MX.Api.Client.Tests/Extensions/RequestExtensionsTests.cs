@@ -3,7 +3,7 @@ using MX.Api.Client.Extensions;
 using RestSharp;
 using Xunit;
 
-namespace MX.Api.Client.Tests;
+namespace MX.Api.Client.Tests.Extensions;
 
 public class RequestExtensionsTests
 {
@@ -33,7 +33,7 @@ public class RequestExtensionsTests
         };
 
         // Act
-        request.AddFilterOptions(filterOptions);
+        _ = request.AddFilterOptions(filterOptions);
 
         // Assert
         var parameter = Assert.Single(request.Parameters);
@@ -52,7 +52,7 @@ public class RequestExtensionsTests
         };
 
         // Act
-        request.AddFilterOptions(filterOptions);
+        _ = request.AddFilterOptions(filterOptions);
 
         // Assert
         Assert.Empty(request.Parameters);
@@ -69,7 +69,7 @@ public class RequestExtensionsTests
         };
 
         // Act
-        request.AddFilterOptions(filterOptions);
+        _ = request.AddFilterOptions(filterOptions);
 
         // Assert
         var parameter = Assert.Single(request.Parameters);
@@ -84,11 +84,11 @@ public class RequestExtensionsTests
         var request = new RestRequest();
         var filterOptions = new FilterOptions
         {
-            Select = Array.Empty<string>()
+            Select = []
         };
 
         // Act
-        request.AddFilterOptions(filterOptions);
+        _ = request.AddFilterOptions(filterOptions);
 
         // Assert
         Assert.Empty(request.Parameters);
@@ -105,7 +105,7 @@ public class RequestExtensionsTests
         };
 
         // Act
-        request.AddFilterOptions(filterOptions);
+        _ = request.AddFilterOptions(filterOptions);
 
         // Assert
         var parameter = Assert.Single(request.Parameters);
@@ -124,7 +124,7 @@ public class RequestExtensionsTests
         };
 
         // Act
-        request.AddFilterOptions(filterOptions);
+        _ = request.AddFilterOptions(filterOptions);
 
         // Assert
         var parameter = Assert.Single(request.Parameters);
@@ -143,7 +143,7 @@ public class RequestExtensionsTests
         };
 
         // Act
-        request.AddFilterOptions(filterOptions);
+        _ = request.AddFilterOptions(filterOptions);
 
         // Assert
         var parameter = Assert.Single(request.Parameters);
@@ -162,7 +162,7 @@ public class RequestExtensionsTests
         };
 
         // Act
-        request.AddFilterOptions(filterOptions);
+        _ = request.AddFilterOptions(filterOptions);
 
         // Assert
         Assert.Empty(request.Parameters);
@@ -179,7 +179,7 @@ public class RequestExtensionsTests
         };
 
         // Act
-        request.AddFilterOptions(filterOptions);
+        _ = request.AddFilterOptions(filterOptions);
 
         // Assert
         var parameter = Assert.Single(request.Parameters);
@@ -198,7 +198,7 @@ public class RequestExtensionsTests
         };
 
         // Act
-        request.AddFilterOptions(filterOptions);
+        _ = request.AddFilterOptions(filterOptions);
 
         // Assert
         Assert.Empty(request.Parameters);
@@ -215,7 +215,7 @@ public class RequestExtensionsTests
         };
 
         // Act
-        request.AddFilterOptions(filterOptions);
+        _ = request.AddFilterOptions(filterOptions);
 
         // Assert
         var parameter = Assert.Single(request.Parameters);
@@ -234,7 +234,7 @@ public class RequestExtensionsTests
         };
 
         // Act
-        request.AddFilterOptions(filterOptions);
+        _ = request.AddFilterOptions(filterOptions);
 
         // Assert
         Assert.Empty(request.Parameters);
@@ -257,7 +257,7 @@ public class RequestExtensionsTests
         };
 
         // Act
-        request.AddFilterOptions(filterOptions);
+        _ = request.AddFilterOptions(filterOptions);
 
         // Assert
         Assert.Equal(7, request.Parameters.Count);

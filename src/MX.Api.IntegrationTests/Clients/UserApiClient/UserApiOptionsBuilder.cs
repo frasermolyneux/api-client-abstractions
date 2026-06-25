@@ -1,4 +1,3 @@
-using MX.Api.Client.Auth;
 using MX.Api.Client.Configuration;
 
 namespace MX.Api.IntegrationTests.Clients.UserApiClient;
@@ -55,7 +54,9 @@ public class UserApiOptionsBuilder : ApiClientOptionsBuilder<UserApiOptions, Use
     public UserApiOptionsBuilder WithMaxPageSize(int maxPageSize)
     {
         if (maxPageSize <= 0)
+        {
             throw new ArgumentException("Max page size must be greater than 0", nameof(maxPageSize));
+        }
 
         Options.MaxPageSize = maxPageSize;
         return this;

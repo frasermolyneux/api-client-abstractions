@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Mvc.Testing;
 using Xunit;
 
 namespace MX.Api.IntegrationTests.Tests;
@@ -6,14 +5,9 @@ namespace MX.Api.IntegrationTests.Tests;
 /// <summary>
 /// Tests to validate the test infrastructure is working correctly
 /// </summary>
-public class InfrastructureTests : IClassFixture<CustomWebApplicationFactory>
+public class InfrastructureTests(CustomWebApplicationFactory factory) : IClassFixture<CustomWebApplicationFactory>
 {
-    private readonly CustomWebApplicationFactory _factory;
-
-    public InfrastructureTests(CustomWebApplicationFactory factory)
-    {
-        _factory = factory;
-    }
+    private readonly CustomWebApplicationFactory _factory = factory;
 
     [Fact]
     public async Task TestServer_ShouldStart_Successfully()

@@ -10,24 +10,31 @@ namespace MX.Api.IntegrationTests.DummyApis.WeatherApi.Controllers;
 /// <summary>
 /// Weather API controller for testing purposes
 /// </summary>
+/// <remarks>
+/// Initializes a new instance of the WeatherController
+/// </remarks>
 [ApiController]
 [Route("api/[controller]")]
-public class WeatherController : ControllerBase, IWeatherApiClient
+public class WeatherController(ILogger<WeatherController> logger) : ControllerBase, IWeatherApiClient
 {
+    private static readonly Action<ILogger, string, int, Exception?> LogGettingForecast =
+        LoggerMessage.Define<string, int>(
+            LogLevel.Information,
+            new EventId(1, nameof(LogGettingForecast)),
+            "Getting weather forecast for {Location} for {Days} days");
+
+    private static readonly Action<ILogger, string, Exception?> LogGettingCurrentWeather =
+        LoggerMessage.Define<string>(
+            LogLevel.Information,
+            new EventId(2, nameof(LogGettingCurrentWeather)),
+            "Getting current weather for {Location}");
+
     private static readonly string[] Summaries =
     [
         "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
     ];
 
-    private readonly ILogger<WeatherController> _logger;
-
-    /// <summary>
-    /// Initializes a new instance of the WeatherController
-    /// </summary>
-    public WeatherController(ILogger<WeatherController> logger)
-    {
-        _logger = logger;
-    }
+    private readonly ILogger<WeatherController> _logger = logger;
 
     /// <summary>
     /// Gets weather forecasts for a location
@@ -82,7 +89,7 @@ public class WeatherController : ControllerBase, IWeatherApiClient
         CancellationToken cancellationToken)
     {
         // Simple API key validation
-        if (!Request.Headers.ContainsKey("X-API-Key"))
+        if (!Request.Headers.TryGetValue("X-API-Key", out var apiKeyValues))
         {
             var unauthorizedResponse = new ApiResponse<IEnumerable<WeatherForecast>>(
                 new ApiError(ApiErrorConstants.ErrorCodes.Unauthorized,
@@ -91,7 +98,7 @@ public class WeatherController : ControllerBase, IWeatherApiClient
             return Task.FromResult(unauthorizedResponse.ToApiResult(System.Net.HttpStatusCode.Unauthorized));
         }
 
-        var apiKey = Request.Headers["X-API-Key"].ToString();
+        var apiKey = apiKeyValues.ToString();
         if (apiKey != "weather-test-key")
         {
             var invalidKeyResponse = new ApiResponse<IEnumerable<WeatherForecast>>(
@@ -101,7 +108,7 @@ public class WeatherController : ControllerBase, IWeatherApiClient
             return Task.FromResult(invalidKeyResponse.ToApiResult(System.Net.HttpStatusCode.Unauthorized));
         }
 
-        _logger.LogInformation("Getting weather forecast for {Location} for {Days} days", location, days);
+        LogGettingForecast(_logger, location, days, null);
 
         var forecasts = Enumerable.Range(1, Math.Min(days, 10)).Select(index => new WeatherForecast
         {
@@ -126,7 +133,7 @@ public class WeatherController : ControllerBase, IWeatherApiClient
         CancellationToken cancellationToken)
     {
         // Simple API key validation
-        if (!Request.Headers.ContainsKey("X-API-Key"))
+        if (!Request.Headers.TryGetValue("X-API-Key", out var apiKeyValues))
         {
             var unauthorizedResponse = new ApiResponse<WeatherForecast>(
                 new ApiError(ApiErrorConstants.ErrorCodes.Unauthorized,
@@ -135,7 +142,7 @@ public class WeatherController : ControllerBase, IWeatherApiClient
             return Task.FromResult(unauthorizedResponse.ToApiResult(System.Net.HttpStatusCode.Unauthorized));
         }
 
-        var apiKey = Request.Headers["X-API-Key"].ToString();
+        var apiKey = apiKeyValues.ToString();
         if (apiKey != "weather-test-key")
         {
             var invalidKeyResponse = new ApiResponse<WeatherForecast>(
@@ -145,7 +152,7 @@ public class WeatherController : ControllerBase, IWeatherApiClient
             return Task.FromResult(invalidKeyResponse.ToApiResult(System.Net.HttpStatusCode.Unauthorized));
         }
 
-        _logger.LogInformation("Getting current weather for {Location}", location);
+        LogGettingCurrentWeather(_logger, location, null);
 
         var current = new WeatherForecast
         {

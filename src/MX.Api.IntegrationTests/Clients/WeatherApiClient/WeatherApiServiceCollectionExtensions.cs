@@ -1,4 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
 using MX.Api.Client.Configuration;
 using MX.Api.Client.Extensions;
 
@@ -23,7 +22,7 @@ public static class WeatherApiServiceCollectionExtensions
     {
         return services.AddTypedApiClient<IWeatherApiClient, WeatherApiClient, ApiClientOptions, WeatherApiOptionsBuilder>(options =>
         {
-            options.WithBaseUrl(baseUrl)
+            _ = options.WithBaseUrl(baseUrl)
                    .WithApiKeyAuthentication(apiKey, "X-API-Key")
                    .WithTestDefaults();
         });

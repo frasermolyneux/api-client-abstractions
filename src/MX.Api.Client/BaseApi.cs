@@ -18,13 +18,90 @@ namespace MX.Api.Client;
 public class BaseApi<TOptions>
     where TOptions : ApiClientOptionsBase
 {
+    private static readonly Action<ILogger, HttpStatusCode, TimeSpan, int, Exception?> LogRetryWithStatusCode =
+        LoggerMessage.Define<HttpStatusCode, TimeSpan, int>(
+            LogLevel.Warning,
+            new EventId(1, nameof(LogRetryWithStatusCode)),
+            "Request failed with {StatusCode}. Waiting {Timespan} before next retry. Retry attempt {RetryCount}");
+
+    private static readonly Action<ILogger, TimeSpan, int, Exception?> LogRetryWithNullResponse =
+        LoggerMessage.Define<TimeSpan, int>(
+            LogLevel.Warning,
+            new EventId(2, nameof(LogRetryWithNullResponse)),
+            "Request failed with null response. Waiting {Timespan} before next retry. Retry attempt {RetryCount}");
+
+    private static readonly Action<ILogger, Exception?> LogNoAuthenticationOptionsConfigured =
+        LoggerMessage.Define(
+            LogLevel.Debug,
+            new EventId(3, nameof(LogNoAuthenticationOptionsConfigured)),
+            "No authentication options configured");
+
+    private static readonly Action<ILogger, string, Exception?> LogUnsupportedAuthenticationType =
+        LoggerMessage.Define<string>(
+            LogLevel.Warning,
+            new EventId(4, nameof(LogUnsupportedAuthenticationType)),
+            "Unsupported authentication type: {AuthenticationType}");
+
+    private static readonly Action<ILogger, Exception?> LogApiKeyAddedAsQueryParameter =
+        LoggerMessage.Define(
+            LogLevel.Debug,
+            new EventId(5, nameof(LogApiKeyAddedAsQueryParameter)),
+            "Added API key authentication as query parameter");
+
+    private static readonly Action<ILogger, Exception?> LogApiKeyAddedAsHeader =
+        LoggerMessage.Define(
+            LogLevel.Debug,
+            new EventId(6, nameof(LogApiKeyAddedAsHeader)),
+            "Added API key authentication as header");
+
+    private static readonly Action<ILogger, Exception?> LogApiKeyRequestedButNotConfigured =
+        LoggerMessage.Define(
+            LogLevel.Warning,
+            new EventId(7, nameof(LogApiKeyRequestedButNotConfigured)),
+            "API key authentication requested but no API key is configured");
+
+    private static readonly Action<ILogger, string, Exception?> LogEntraTokenAddedForAudience =
+        LoggerMessage.Define<string>(
+            LogLevel.Debug,
+            new EventId(8, nameof(LogEntraTokenAddedForAudience)),
+            "Added Entra ID token authentication for audience '{Audience}'");
+
+    private static readonly Action<ILogger, string, Exception?> LogFailedToGetTokenForAudience =
+        LoggerMessage.Define<string>(
+            LogLevel.Error,
+            new EventId(9, nameof(LogFailedToGetTokenForAudience)),
+            "Failed to get authentication token for audience '{Audience}'");
+
+    private static readonly Action<ILogger, Method, string, Exception?> LogReceivedNullResponse =
+        LoggerMessage.Define<Method, string>(
+            LogLevel.Error,
+            new EventId(10, nameof(LogReceivedNullResponse)),
+            "Received null response for {Method} to '{Resource}'");
+
+    private static readonly Action<ILogger, string, Exception?> LogRequestCanceled =
+        LoggerMessage.Define<string>(
+            LogLevel.Information,
+            new EventId(11, nameof(LogRequestCanceled)),
+            "Request to '{Resource}' was canceled");
+
+    private static readonly Action<ILogger, Method, string, Exception?> LogUnexpectedErrorExecutingRequest =
+        LoggerMessage.Define<Method, string>(
+            LogLevel.Error,
+            new EventId(12, nameof(LogUnexpectedErrorExecutingRequest)),
+            "Unexpected error executing {Method} request to '{Resource}'");
+
+    private static readonly Action<ILogger, HttpStatusCode, Method, string, string?, Exception?> LogHttpError =
+        LoggerMessage.Define<HttpStatusCode, Method, string, string?>(
+            LogLevel.Error,
+            new EventId(13, nameof(LogHttpError)),
+            "HTTP error {StatusCode} for {Method} to '{Resource}': {Content}");
+
     private const string AuthorizationHeaderName = "Authorization";
     private const string BearerTokenPrefix = "Bearer ";
 
     private readonly ILogger<BaseApi<TOptions>> logger;
     private readonly IApiTokenProvider? apiTokenProvider;
     private readonly IRestClientService restClientService;
-    private readonly TOptions options;
     private readonly AsyncRetryPolicy<RestResponse> retryPolicy;
 
     private static readonly HttpStatusCode[] SuccessStatusCodes = [HttpStatusCode.OK, HttpStatusCode.Created, HttpStatusCode.NoContent, HttpStatusCode.NotFound];
@@ -33,7 +110,7 @@ public class BaseApi<TOptions>
     /// <summary>
     /// The strongly-typed options for this client
     /// </summary>
-    protected TOptions Options => options;
+    protected TOptions Options { get; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="BaseApi{TOptions}"/> class.
@@ -64,10 +141,10 @@ public class BaseApi<TOptions>
             throw new ArgumentException("IApiTokenProvider must be provided when using Entra ID authentication", nameof(apiTokenProvider));
         }
 
-        this.options = options;
+        Options = options;
 
         // Configure retry policy
-        retryPolicy = CreateRetryPolicy(this.options.MaxRetryCount > 0 ? this.options.MaxRetryCount : 3);
+        retryPolicy = CreateRetryPolicy(Options.MaxRetryCount > 0 ? Options.MaxRetryCount : 3);
     }
 
     /// <summary>
@@ -108,13 +185,11 @@ public class BaseApi<TOptions>
                 {
                     if (response?.Result is not null)
                     {
-                        this.logger.LogWarning("Request failed with {StatusCode}. Waiting {Timespan} before next retry. Retry attempt {RetryCount}",
-                            response.Result.StatusCode, timespan, attemptCount);
+                        LogRetryWithStatusCode(logger, response.Result.StatusCode, timespan, attemptCount, null);
                     }
                     else
                     {
-                        this.logger.LogWarning("Request failed with null response. Waiting {Timespan} before next retry. Retry attempt {RetryCount}",
-                            timespan, attemptCount);
+                        LogRetryWithNullResponse(logger, timespan, attemptCount, null);
                     }
 
                     return Task.CompletedTask;
@@ -159,13 +234,13 @@ public class BaseApi<TOptions>
     /// <exception cref="AuthenticationException">Thrown when authentication token acquisition fails.</exception>
     private async Task ApplyAuthenticationAsync(RestRequest request, CancellationToken cancellationToken)
     {
-        if (options.AuthenticationOptions == null || !options.AuthenticationOptions.Any())
+        if (Options.AuthenticationOptions == null || Options.AuthenticationOptions.Count == 0)
         {
-            logger.LogDebug("No authentication options configured");
+            LogNoAuthenticationOptionsConfigured(logger, null);
             return;
         }
 
-        foreach (var authOption in options.AuthenticationOptions)
+        foreach (var authOption in Options.AuthenticationOptions)
         {
             switch (authOption)
             {
@@ -178,7 +253,7 @@ public class BaseApi<TOptions>
                     break;
 
                 default:
-                    logger.LogWarning("Unsupported authentication type: {AuthenticationType}", authOption.GetType().Name);
+                    LogUnsupportedAuthenticationType(logger, authOption.GetType().Name, null);
                     break;
             }
         }
@@ -194,20 +269,20 @@ public class BaseApi<TOptions>
         var apiKey = options.GetApiKeyAsString();
         if (!string.IsNullOrEmpty(apiKey))
         {
-            if (options.Location == Configuration.ApiKeyLocation.QueryParameter)
+            if (options.Location == ApiKeyLocation.QueryParameter)
             {
-                request.AddQueryParameter(options.HeaderName, apiKey);
-                logger.LogDebug("Added API key authentication as query parameter");
+                _ = request.AddQueryParameter(options.HeaderName, apiKey);
+                LogApiKeyAddedAsQueryParameter(logger, null);
             }
             else
             {
-                request.AddHeader(options.HeaderName, apiKey);
-                logger.LogDebug("Added API key authentication as header");
+                _ = request.AddHeader(options.HeaderName, apiKey);
+                LogApiKeyAddedAsHeader(logger, null);
             }
         }
         else
         {
-            logger.LogWarning("API key authentication requested but no API key is configured");
+            LogApiKeyRequestedButNotConfigured(logger, null);
         }
     }
 
@@ -231,13 +306,13 @@ public class BaseApi<TOptions>
                 throw new InvalidOperationException("IApiTokenProvider not available for Entra ID authentication");
             }
 
-            string accessToken = await apiTokenProvider.GetAccessTokenAsync(options.ApiAudience, cancellationToken).ConfigureAwait(false);
-            request.AddHeader(AuthorizationHeaderName, $"{BearerTokenPrefix}{accessToken}");
-            logger.LogDebug("Added Entra ID token authentication for audience '{Audience}'", options.ApiAudience);
+            var accessToken = await apiTokenProvider.GetAccessTokenAsync(options.ApiAudience, cancellationToken).ConfigureAwait(false);
+            _ = request.AddHeader(AuthorizationHeaderName, $"{BearerTokenPrefix}{accessToken}");
+            LogEntraTokenAddedForAudience(logger, options.ApiAudience, null);
         }
         catch (AuthenticationException ex)
         {
-            logger.LogError(ex, "Failed to get authentication token for audience '{Audience}'", options.ApiAudience);
+            LogFailedToGetTokenForAudience(logger, options.ApiAudience, ex);
             throw;
         }
     }
@@ -261,13 +336,13 @@ public class BaseApi<TOptions>
         {
             // Execute the request with retry policy
             var response = await retryPolicy.ExecuteAsync(
-                async (token) => await restClientService.ExecuteAsync(options.BaseUrl, request, token).ConfigureAwait(false),
+                async (token) => await restClientService.ExecuteAsync(Options.BaseUrl, request, token).ConfigureAwait(false),
                 cancellationToken).ConfigureAwait(false);
 
             // Ensure response is not null to prevent NullReferenceException
             if (response is null)
             {
-                logger.LogError("Received null response for {Method} to '{Resource}'", request.Method, request.Resource);
+                LogReceivedNullResponse(logger, request.Method, request.Resource, null);
                 throw new HttpRequestException($"Failed {request.Method} to '{request.Resource}' - received null response");
             }
 
@@ -275,7 +350,7 @@ public class BaseApi<TOptions>
         }
         catch (OperationCanceledException)
         {
-            logger.LogInformation("Request to '{Resource}' was canceled", request.Resource);
+            LogRequestCanceled(logger, request.Resource, null);
             throw;
         }
         catch (HttpRequestException)
@@ -290,8 +365,7 @@ public class BaseApi<TOptions>
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Unexpected error executing {Method} request to '{Resource}'",
-                request.Method, request.Resource);
+            LogUnexpectedErrorExecutingRequest(logger, request.Method, request.Resource, ex);
             throw;
         }
     }
@@ -311,8 +385,7 @@ public class BaseApi<TOptions>
         }
         else
         {
-            logger.LogError("HTTP error {StatusCode} for {Method} to '{Resource}': {Content}",
-                response.StatusCode, request.Method, request.Resource, response.Content);
+            LogHttpError(logger, response.StatusCode, request.Method, request.Resource, response.Content, null);
             throw new HttpRequestException(
                 $"Failed {request.Method} to '{request.Resource}' with status code {response.StatusCode}: {response.Content}");
         }

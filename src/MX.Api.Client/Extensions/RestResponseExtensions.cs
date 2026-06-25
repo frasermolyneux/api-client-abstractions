@@ -42,8 +42,10 @@ public static class RestResponseExtensions
 
         if (string.IsNullOrWhiteSpace(response.Content))
         {
-            var apiResponse = new ApiResponse();
-            apiResponse.Errors = [new ApiError("NullContent", NullContentError)];
+            var apiResponse = new ApiResponse
+            {
+                Errors = [new ApiError("NullContent", NullContentError)]
+            };
             httpResponse.Result = apiResponse;
             return httpResponse;
         }
@@ -59,15 +61,19 @@ public static class RestResponseExtensions
                 if (dynamicObj != null)
                 {
                     // Valid JSON but not in ApiResponse format
-                    var errorResponse = new ApiResponse();
-                    errorResponse.Errors = [new ApiError("DeserializationError", DeserializationError)];
+                    var errorResponse = new ApiResponse
+                    {
+                        Errors = [new ApiError("DeserializationError", DeserializationError)]
+                    };
                     httpResponse.Result = errorResponse;
                     return httpResponse;
                 }
 
                 // If both attempts failed, create a generic error response
-                var nullResponse = new ApiResponse();
-                nullResponse.Errors = [new ApiError("DeserializationError", DeserializationError)];
+                var nullResponse = new ApiResponse
+                {
+                    Errors = [new ApiError("DeserializationError", DeserializationError)]
+                };
                 httpResponse.Result = nullResponse;
                 return httpResponse;
             }
@@ -77,15 +83,19 @@ public static class RestResponseExtensions
         }
         catch (JsonException ex)
         {
-            var errorResponse = new ApiResponse();
-            errorResponse.Errors = [new ApiError("JsonError", $"JSON deserialization error: {ex.Message}")];
+            var errorResponse = new ApiResponse
+            {
+                Errors = [new ApiError("JsonError", $"JSON deserialization error: {ex.Message}")]
+            };
             httpResponse.Result = errorResponse;
             return httpResponse;
         }
         catch (Exception ex)
         {
-            var errorResponse = new ApiResponse();
-            errorResponse.Errors = [new ApiError("UnexpectedError", $"Unexpected error during response processing: {ex.Message}")];
+            var errorResponse = new ApiResponse
+            {
+                Errors = [new ApiError("UnexpectedError", $"Unexpected error during response processing: {ex.Message}")]
+            };
             httpResponse.Result = errorResponse;
             return httpResponse;
         }
@@ -107,8 +117,10 @@ public static class RestResponseExtensions
 
         if (string.IsNullOrWhiteSpace(response.Content))
         {
-            var apiResponse = new ApiResponse<T>();
-            apiResponse.Errors = [new ApiError("NullContent", NullContentError)];
+            var apiResponse = new ApiResponse<T>
+            {
+                Errors = [new ApiError("NullContent", NullContentError)]
+            };
             httpResponse.Result = apiResponse;
             return httpResponse;
         }
@@ -124,15 +136,19 @@ public static class RestResponseExtensions
                 if (dynamicObj != null)
                 {
                     // Valid JSON but not in ApiResponse format
-                    var errorResponse = new ApiResponse<T>();
-                    errorResponse.Errors = [new ApiError("DeserializationError", DeserializationError)];
+                    var errorResponse = new ApiResponse<T>
+                    {
+                        Errors = [new ApiError("DeserializationError", DeserializationError)]
+                    };
                     httpResponse.Result = errorResponse;
                     return httpResponse;
                 }
 
                 // If both attempts failed, create a generic error response
-                var nullResponse = new ApiResponse<T>();
-                nullResponse.Errors = [new ApiError("DeserializationError", DeserializationError)];
+                var nullResponse = new ApiResponse<T>
+                {
+                    Errors = [new ApiError("DeserializationError", DeserializationError)]
+                };
                 httpResponse.Result = nullResponse;
                 return httpResponse;
             }
@@ -142,15 +158,19 @@ public static class RestResponseExtensions
         }
         catch (JsonException ex)
         {
-            var errorResponse = new ApiResponse<T>();
-            errorResponse.Errors = [new ApiError("JsonError", $"JSON deserialization error: {ex.Message}")];
+            var errorResponse = new ApiResponse<T>
+            {
+                Errors = [new ApiError("JsonError", $"JSON deserialization error: {ex.Message}")]
+            };
             httpResponse.Result = errorResponse;
             return httpResponse;
         }
         catch (Exception ex)
         {
-            var errorResponse = new ApiResponse<T>();
-            errorResponse.Errors = [new ApiError("UnexpectedError", $"Unexpected error during response processing: {ex.Message}")];
+            var errorResponse = new ApiResponse<T>
+            {
+                Errors = [new ApiError("UnexpectedError", $"Unexpected error during response processing: {ex.Message}")]
+            };
             httpResponse.Result = errorResponse;
             return httpResponse;
         }

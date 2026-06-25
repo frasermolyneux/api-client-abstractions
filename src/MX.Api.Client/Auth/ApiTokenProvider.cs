@@ -10,12 +10,29 @@ namespace MX.Api.Client.Auth;
 /// </summary>
 public class ApiTokenProvider : IApiTokenProvider
 {
+    private static readonly Action<ILogger, string, Exception?> LogUsingCachedToken =
+        LoggerMessage.Define<string>(
+            LogLevel.Debug,
+            new EventId(1, nameof(LogUsingCachedToken)),
+            "Using cached token for audience '{Audience}'");
+
+    private static readonly Action<ILogger, string, DateTimeOffset, Exception?> LogAcquiredAndCachedToken =
+        LoggerMessage.Define<string, DateTimeOffset>(
+            LogLevel.Debug,
+            new EventId(2, nameof(LogAcquiredAndCachedToken)),
+            "Acquired and cached new token for audience '{Audience}' that expires at {ExpiryTime}");
+
+    private static readonly Action<ILogger, string, Exception?> LogFailedToGetIdentityToken =
+        LoggerMessage.Define<string>(
+            LogLevel.Error,
+            new EventId(3, nameof(LogFailedToGetIdentityToken)),
+            "Failed to get identity token for audience: '{Audience}'");
+
     private readonly ILogger<ApiTokenProvider> logger;
     private readonly IMemoryCache memoryCache;
     private readonly ITokenCredentialProvider tokenCredentialProvider;
     private readonly TimeSpan tokenExpiryBuffer;
 
-    private const string DefaultScopeFormat = "{0}/.default";
     private static readonly TimeSpan DefaultExpiryBuffer = TimeSpan.FromMinutes(5);
 
     /// <summary>
@@ -80,7 +97,7 @@ public class ApiTokenProvider : IApiTokenProvider
         // Try to get token from cache
         if (memoryCache.TryGetValue(cacheKey, out string? cachedToken) && cachedToken != null)
         {
-            logger.LogDebug("Using cached token for audience '{Audience}'", audience);
+            LogUsingCachedToken(logger, audience, null);
             return cachedToken;
         }
 
@@ -88,8 +105,9 @@ public class ApiTokenProvider : IApiTokenProvider
         try
         {
             var credential = await tokenCredentialProvider.GetTokenCredentialAsync(cancellationToken).ConfigureAwait(false);
+            var scope = $"{audience}/.default";
             var tokenResult = await credential.GetTokenAsync(
-                new TokenRequestContext([string.Format(DefaultScopeFormat, audience)]),
+                new TokenRequestContext([scope]),
                 cancellationToken).ConfigureAwait(false);
 
             // Cache token with buffer time
@@ -99,16 +117,15 @@ public class ApiTokenProvider : IApiTokenProvider
                 Priority = CacheItemPriority.High
             };
 
-            memoryCache.Set(cacheKey, tokenResult.Token, cacheOptions);
+            _ = memoryCache.Set(cacheKey, tokenResult.Token, cacheOptions);
 
-            logger.LogDebug("Acquired and cached new token for audience '{Audience}' that expires at {ExpiryTime}",
-                audience, tokenResult.ExpiresOn);
+            LogAcquiredAndCachedToken(logger, audience, tokenResult.ExpiresOn, null);
 
             return tokenResult.Token;
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to get identity token for audience: '{Audience}'", audience);
+            LogFailedToGetIdentityToken(logger, audience, ex);
             throw new AuthenticationException($"Failed to acquire authentication token for audience: '{audience}'", ex);
         }
     }

@@ -3,18 +3,14 @@ namespace MX.Api.IntegrationTests.Clients.UserApiClient;
 /// <summary>
 /// User API client implementation using versioned approach
 /// </summary>
-public class UserApiClient : IUserApiClient
+/// <remarks>
+/// Initializes a new instance of the UserApiClient
+/// </remarks>
+public class UserApiClient(IVersionedUserApi versionedUserApi) : IUserApiClient
 {
-    /// <summary>
-    /// Initializes a new instance of the UserApiClient
-    /// </summary>
-    public UserApiClient(IVersionedUserApi versionedUserApi)
-    {
-        Users = versionedUserApi;
-    }
 
     /// <summary>
     /// Gets the versioned User API
     /// </summary>
-    public IVersionedUserApi Users { get; }
+    public IVersionedUserApi Users { get; } = versionedUserApi;
 }

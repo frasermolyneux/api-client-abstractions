@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace MX.Api.Client.Configuration;
 
 /// <summary>

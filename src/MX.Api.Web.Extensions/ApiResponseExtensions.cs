@@ -70,21 +70,9 @@ public static class ApiResponseExtensions
     {
         ArgumentNullException.ThrowIfNull(apiResponse);
 
-        HttpStatusCode statusCode;
-
-        if (apiResponse.Errors?.Length > 0)
-        {
-            statusCode = HttpStatusCode.BadRequest;
-        }
-        else if (apiResponse.Data == null)
-        {
-            statusCode = HttpStatusCode.NotFound;
-        }
-        else
-        {
-            statusCode = HttpStatusCode.OK;
-        }
-
+        var statusCode = apiResponse.Errors?.Length > 0
+            ? HttpStatusCode.BadRequest
+            : apiResponse.Data == null ? HttpStatusCode.NotFound : HttpStatusCode.OK;
         return new ApiResult<T>(statusCode, apiResponse);
     }
 

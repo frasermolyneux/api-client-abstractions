@@ -1,6 +1,3 @@
-using System.Net;
-using System.Collections.Generic;
-
 namespace MX.Api.Abstractions.Tests;
 
 public class ApiResponseTests
@@ -46,7 +43,7 @@ public class ApiResponseTests
         // Assert
         Assert.Null(response.Data);
         Assert.NotNull(response.Errors);
-        Assert.Single(response.Errors);
+        _ = Assert.Single(response.Errors);
         Assert.Equal(error, response.Errors[0]);
         Assert.Null(response.Pagination);
         Assert.Null(response.Metadata);
@@ -109,7 +106,7 @@ public class ApiResponseTests
         // Assert
         Assert.Equal(data, response.Data);
         Assert.NotNull(response.Errors);
-        Assert.Single(response.Errors);
+        _ = Assert.Single(response.Errors);
         Assert.Equal(error, response.Errors[0]);
         Assert.Null(response.Pagination);
         Assert.Null(response.Metadata);
@@ -186,7 +183,7 @@ public class ApiResponseNonGenericTests
 
         // Assert
         Assert.NotNull(response.Errors);
-        Assert.Single(response.Errors);
+        _ = Assert.Single(response.Errors);
         Assert.Equal(error, response.Errors[0]);
         Assert.Null(response.Metadata);
     }
@@ -215,14 +212,14 @@ public class ApiResponseNonGenericTests
     public void Constructor_WithNullError_ThrowsArgumentNullException()
     {
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new ApiResponse((ApiError)null!));
+        _ = Assert.Throws<ArgumentNullException>(() => new ApiResponse((ApiError)null!));
     }
 
     [Fact]
     public void Constructor_WithNullErrors_ThrowsArgumentNullException()
     {
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => new ApiResponse((ApiError[])null!));
+        _ = Assert.Throws<ArgumentNullException>(() => new ApiResponse((ApiError[])null!));
     }
 
     [Fact]

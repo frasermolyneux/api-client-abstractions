@@ -1,5 +1,3 @@
-using MX.Api.Abstractions;
-
 namespace MX.Api.IntegrationTests.TestApp;
 
 /// <summary>
@@ -12,11 +10,11 @@ public class TestStartup
     /// </summary>
     public void ConfigureServices(IServiceCollection services)
     {
-        services.AddControllers();
-        services.AddLogging(builder => builder.AddConsole());
+        _ = services.AddControllers();
+        _ = services.AddLogging(builder => builder.AddConsole());
 
         // Add controllers from all dummy API assemblies
-        services.AddMvc()
+        _ = services.AddMvc()
             .AddApplicationPart(typeof(DummyApis.WeatherApi.Controllers.WeatherController).Assembly)
             .AddApplicationPart(typeof(DummyApis.UserApi.Controllers.UsersController).Assembly)
             .AddApplicationPart(typeof(DummyApis.ProductApi.Controllers.ProductsController).Assembly);
@@ -29,13 +27,13 @@ public class TestStartup
     {
         if (env.IsDevelopment())
         {
-            app.UseDeveloperExceptionPage();
+            _ = app.UseDeveloperExceptionPage();
         }
 
-        app.UseRouting();
-        app.UseEndpoints(endpoints =>
+        _ = app.UseRouting();
+        _ = app.UseEndpoints(endpoints =>
         {
-            endpoints.MapControllers();
+            _ = endpoints.MapControllers();
         });
     }
 }

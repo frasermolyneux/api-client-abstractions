@@ -1,4 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
 using MX.Api.Client.Extensions;
 using MX.Api.IntegrationTests.Clients.UserApiClient.Api.V1;
 using MX.Api.IntegrationTests.Clients.UserApiClient.Interfaces.V1;
@@ -22,7 +21,7 @@ public static class UserApiServiceCollectionExtensions
         string baseUrl,
         string apiToken)
     {
-        services.AddTypedApiClient<IUserApiV1, UserApiV1, UserApiOptions, UserApiOptionsBuilder>(builder => builder
+        _ = services.AddTypedApiClient<IUserApiV1, UserApiV1, UserApiOptions, UserApiOptionsBuilder>(builder => builder
             .WithBaseUrl(baseUrl)
             .WithApiKeyAuthentication(apiToken)
             .WithUserCaching(30)
@@ -31,10 +30,10 @@ public static class UserApiServiceCollectionExtensions
             .WithMaxPageSize(50));
 
         // Register versioned API wrapper
-        services.AddScoped<IVersionedUserApi, VersionedUserApi>();
+        _ = services.AddScoped<IVersionedUserApi, VersionedUserApi>();
 
         // Register main client
-        services.AddScoped<IUserApiClient, UserApiClient>();
+        _ = services.AddScoped<IUserApiClient, UserApiClient>();
 
         return services;
     }
@@ -49,14 +48,14 @@ public static class UserApiServiceCollectionExtensions
         this IServiceCollection services,
         Action<UserApiOptionsBuilder> configureOptions)
     {
-        services.AddTypedApiClient<IUserApiV1, UserApiV1, UserApiOptions, UserApiOptionsBuilder>(configureOptions);
+        _ = services.AddTypedApiClient<IUserApiV1, UserApiV1, UserApiOptions, UserApiOptionsBuilder>(configureOptions);
 
         // Build options using builder pattern
         var builder = new UserApiOptionsBuilder();
         configureOptions(builder);
         var options = builder.Build();
 
-        services.Configure<UserApiOptions>(opts =>
+        _ = services.Configure<UserApiOptions>(opts =>
         {
             opts.BaseUrl = options.BaseUrl;
             opts.EnableUserCaching = options.EnableUserCaching;
@@ -67,10 +66,10 @@ public static class UserApiServiceCollectionExtensions
         });
 
         // Register versioned API wrapper
-        services.AddScoped<IVersionedUserApi, VersionedUserApi>();
+        _ = services.AddScoped<IVersionedUserApi, VersionedUserApi>();
 
         // Register main client
-        services.AddScoped<IUserApiClient, UserApiClient>();
+        _ = services.AddScoped<IUserApiClient, UserApiClient>();
 
         return services;
     }

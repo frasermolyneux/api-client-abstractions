@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Logging;
 using Moq;
-using MX.Api.Client.Auth;
 using MX.Api.Client.Configuration;
 using MX.Api.Client.Tests.TestClients;
 using RestSharp;
@@ -115,7 +114,7 @@ public class BaseApiAuthenticationTests
 
         // Assert
         var authParams = request.Parameters.Where(p =>
-            p.Type == ParameterType.HttpHeader || p.Type == ParameterType.QueryString).ToList();
+            p.Type is ParameterType.HttpHeader or ParameterType.QueryString).ToList();
         Assert.Empty(authParams);
     }
 

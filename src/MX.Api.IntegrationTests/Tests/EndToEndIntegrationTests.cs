@@ -1,14 +1,7 @@
-using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Extensions.DependencyInjection;
-using MX.Api.Abstractions;
 using MX.Api.Client;
-using MX.Api.Client.Auth;
-using MX.Api.Client.Configuration;
-using MX.Api.Client.Extensions;
 using MX.Api.IntegrationTests.Clients.ProductApiClient;
 using MX.Api.IntegrationTests.Clients.UserApiClient;
 using MX.Api.IntegrationTests.Clients.WeatherApiClient;
-using MX.Api.IntegrationTests.DummyApis.UserApi.Models;
 using Xunit;
 
 namespace MX.Api.IntegrationTests.Tests;
@@ -35,7 +28,7 @@ public class EndToEndIntegrationTests : IClassFixture<CustomWebApplicationFactor
 
         // Act & Assert - Health Check (no auth required)
         var healthResponse = await _httpClient.GetAsync("/api/weather/health");
-        healthResponse.EnsureSuccessStatusCode();
+        _ = healthResponse.EnsureSuccessStatusCode();
 
         var healthContent = await healthResponse.Content.ReadAsStringAsync();
         Assert.Contains("Weather API is healthy", healthContent);
@@ -46,14 +39,14 @@ public class EndToEndIntegrationTests : IClassFixture<CustomWebApplicationFactor
 
         // Act & Assert - Get Current Weather
         var currentWeatherResponse = await authenticatedClient.GetAsync("/api/weather/current?location=London");
-        currentWeatherResponse.EnsureSuccessStatusCode();
+        _ = currentWeatherResponse.EnsureSuccessStatusCode();
 
         var currentWeatherContent = await currentWeatherResponse.Content.ReadAsStringAsync();
         Assert.Contains("London", currentWeatherContent);
 
         // Act & Assert - Get Forecast
         var forecastResponse = await authenticatedClient.GetAsync("/api/weather/forecast?location=Paris&days=3");
-        forecastResponse.EnsureSuccessStatusCode();
+        _ = forecastResponse.EnsureSuccessStatusCode();
 
         var forecastContent = await forecastResponse.Content.ReadAsStringAsync();
         Assert.Contains("Paris", forecastContent);
@@ -66,11 +59,11 @@ public class EndToEndIntegrationTests : IClassFixture<CustomWebApplicationFactor
 
         // Arrange
         var services = new ServiceCollection();
-        services.AddLogging();
-        services.AddSingleton<IRestClientService, RestClientService>();
+        _ = services.AddLogging();
+        _ = services.AddSingleton<IRestClientService, RestClientService>();
 
         // Configure the Weather API client using streamlined registration
-        services.AddWeatherApiClient("https://api.example.com", "test-key");
+        _ = services.AddWeatherApiClient("https://api.example.com", "test-key");
 
         // Act
         var serviceProvider = services.BuildServiceProvider();
@@ -80,7 +73,7 @@ public class EndToEndIntegrationTests : IClassFixture<CustomWebApplicationFactor
         Assert.NotNull(weatherClient);
 
         // Verify the client is of the correct type
-        Assert.IsType<WeatherApiClient>(weatherClient);
+        _ = Assert.IsType<WeatherApiClient>(weatherClient);
     }
 
     [Fact]
@@ -95,17 +88,17 @@ public class EndToEndIntegrationTests : IClassFixture<CustomWebApplicationFactor
 
         // Act & Assert - Get Users
         var usersResponse = await authenticatedClient.GetAsync("/api/users?page=1&pageSize=2");
-        usersResponse.EnsureSuccessStatusCode();
+        _ = usersResponse.EnsureSuccessStatusCode();
 
         var usersContent = await usersResponse.Content.ReadAsStringAsync();
-        Assert.Contains("items", usersContent.ToLower());
+        Assert.Contains("items", usersContent.ToLowerInvariant());
 
         // Act & Assert - Get Specific User
         var userResponse = await authenticatedClient.GetAsync("/api/users/1");
-        userResponse.EnsureSuccessStatusCode();
+        _ = userResponse.EnsureSuccessStatusCode();
 
         var userContent = await userResponse.Content.ReadAsStringAsync();
-        Assert.Contains("\"id\":", userContent.ToLower());
+        Assert.Contains("\"id\":", userContent.ToLowerInvariant());
 
         // Act & Assert - Create User (POST)
         var createUserJson = """
@@ -119,7 +112,7 @@ public class EndToEndIntegrationTests : IClassFixture<CustomWebApplicationFactor
 
         var createContent = new StringContent(createUserJson, System.Text.Encoding.UTF8, "application/json");
         var createResponse = await authenticatedClient.PostAsync("/api/users", createContent);
-        createResponse.EnsureSuccessStatusCode();
+        _ = createResponse.EnsureSuccessStatusCode();
 
         var createResponseContent = await createResponse.Content.ReadAsStringAsync();
         Assert.Contains("testuser_12345", createResponseContent);
@@ -132,11 +125,11 @@ public class EndToEndIntegrationTests : IClassFixture<CustomWebApplicationFactor
 
         // Arrange
         var services = new ServiceCollection();
-        services.AddLogging();
-        services.AddSingleton<IRestClientService, RestClientService>();
+        _ = services.AddLogging();
+        _ = services.AddSingleton<IRestClientService, RestClientService>();
 
         // Configure the User API client with streamlined registration
-        services.AddUserApiClient(options => options
+        _ = services.AddUserApiClient(options => options
             .WithBaseUrl("https://api.example.com")
             .WithBasicAuth("user-test-token")
             .WithUserCaching(30)
@@ -152,7 +145,7 @@ public class EndToEndIntegrationTests : IClassFixture<CustomWebApplicationFactor
         Assert.NotNull(userClient);
 
         // Verify the client is of the correct type
-        Assert.IsType<UserApiClient>(userClient);
+        _ = Assert.IsType<UserApiClient>(userClient);
 
         return Task.CompletedTask;
     }
@@ -169,19 +162,19 @@ public class EndToEndIntegrationTests : IClassFixture<CustomWebApplicationFactor
 
         // Act & Assert - Get Products
         var productsResponse = await authenticatedClient.GetAsync("/api/products");
-        productsResponse.EnsureSuccessStatusCode();
+        _ = productsResponse.EnsureSuccessStatusCode();
 
         var productsContent = await productsResponse.Content.ReadAsStringAsync();
-        Assert.Contains("items", productsContent.ToLower());
-        Assert.Contains("laptop", productsContent.ToLower());
+        Assert.Contains("items", productsContent.ToLowerInvariant());
+        Assert.Contains("laptop", productsContent.ToLowerInvariant());
 
         // Act & Assert - Get Specific Product
         var productResponse = await authenticatedClient.GetAsync("/api/products/1");
-        productResponse.EnsureSuccessStatusCode();
+        _ = productResponse.EnsureSuccessStatusCode();
 
         var productContent = await productResponse.Content.ReadAsStringAsync();
-        Assert.Contains("\"id\":", productContent.ToLower());
-        Assert.Contains("laptop", productContent.ToLower());
+        Assert.Contains("\"id\":", productContent.ToLowerInvariant());
+        Assert.Contains("laptop", productContent.ToLowerInvariant());
     }
 
     [Fact]
@@ -191,11 +184,11 @@ public class EndToEndIntegrationTests : IClassFixture<CustomWebApplicationFactor
 
         // Arrange
         var services = new ServiceCollection();
-        services.AddLogging();
-        services.AddSingleton<IRestClientService, RestClientService>();
+        _ = services.AddLogging();
+        _ = services.AddSingleton<IRestClientService, RestClientService>();
 
         // Configure the Product API client with streamlined registration
-        services.AddProductApiClient(
+        _ = services.AddProductApiClient(
             "https://api.example.com",
             "test-product-key");
 
@@ -207,7 +200,7 @@ public class EndToEndIntegrationTests : IClassFixture<CustomWebApplicationFactor
         Assert.NotNull(productClient);
 
         // Verify the client is of the correct type
-        Assert.IsType<ProductApiClient>(productClient);
+        _ = Assert.IsType<ProductApiClient>(productClient);
 
         return Task.CompletedTask;
     }
@@ -233,24 +226,24 @@ public class EndToEndIntegrationTests : IClassFixture<CustomWebApplicationFactor
         var usersTask = userClient.GetAsync("/api/users?page=1&pageSize=5");
         var productsTask = productClient.GetAsync("/api/products");
 
-        await Task.WhenAll(weatherTask, usersTask, productsTask);
+        _ = await Task.WhenAll(weatherTask, usersTask, productsTask);
 
         // Assert
         var weatherResponse = await weatherTask;
         var usersResponse = await usersTask;
         var productsResponse = await productsTask;
 
-        weatherResponse.EnsureSuccessStatusCode();
-        usersResponse.EnsureSuccessStatusCode();
-        productsResponse.EnsureSuccessStatusCode();
+        _ = weatherResponse.EnsureSuccessStatusCode();
+        _ = usersResponse.EnsureSuccessStatusCode();
+        _ = productsResponse.EnsureSuccessStatusCode();
 
         var weatherContent = await weatherResponse.Content.ReadAsStringAsync();
         var usersContent = await usersResponse.Content.ReadAsStringAsync();
         var productsContent = await productsResponse.Content.ReadAsStringAsync();
 
         Assert.Contains("Tokyo", weatherContent);
-        Assert.Contains("items", usersContent.ToLower());
-        Assert.Contains("laptop", productsContent.ToLower());
+        Assert.Contains("items", usersContent.ToLowerInvariant());
+        Assert.Contains("laptop", productsContent.ToLowerInvariant());
     }
 
     [Fact]
@@ -280,19 +273,19 @@ public class EndToEndIntegrationTests : IClassFixture<CustomWebApplicationFactor
 
         // Arrange
         var services = new ServiceCollection();
-        services.AddLogging();
-        services.AddSingleton<IRestClientService, RestClientService>();
+        _ = services.AddLogging();
+        _ = services.AddSingleton<IRestClientService, RestClientService>();
 
         // Configure all three API clients with streamlined registration
-        services.AddWeatherApiClient("https://weather.example.com", "weather-key");
+        _ = services.AddWeatherApiClient("https://weather.example.com", "weather-key");
 
-        services.AddUserApiClient(options => options
+        _ = services.AddUserApiClient(options => options
             .WithBaseUrl("https://users.example.com")
             .WithBasicAuth("user-token")
             .WithUserCaching(30)
             .WithDefaultRole("TestUser"));
 
-        services.AddProductApiClient("https://products.example.com", "product-key");
+        _ = services.AddProductApiClient("https://products.example.com", "product-key");
 
         // Act
         var serviceProvider = services.BuildServiceProvider();
@@ -306,9 +299,9 @@ public class EndToEndIntegrationTests : IClassFixture<CustomWebApplicationFactor
         Assert.NotNull(userClient);
         Assert.NotNull(productClient);
 
-        Assert.IsType<WeatherApiClient>(weatherClient);
-        Assert.IsType<UserApiClient>(userClient);
-        Assert.IsType<ProductApiClient>(productClient);
+        _ = Assert.IsType<WeatherApiClient>(weatherClient);
+        _ = Assert.IsType<UserApiClient>(userClient);
+        _ = Assert.IsType<ProductApiClient>(productClient);
 
         // Verify they are all different instances
         Assert.NotEqual(weatherClient.GetType(), userClient.GetType());
@@ -370,13 +363,13 @@ public class EndToEndIntegrationTests : IClassFixture<CustomWebApplicationFactor
 
         // Act - Request 10 users, but the API should apply a max limit
         var response = await authenticatedClient.GetAsync("/api/users?page=1&pageSize=10");
-        response.EnsureSuccessStatusCode();
+        _ = response.EnsureSuccessStatusCode();
 
         var content = await response.Content.ReadAsStringAsync();
 
         // Assert - The API should respect its internal max page size limits
         // Note: This assumes the User API controller has reasonable max page size validation
-        Assert.Contains("items", content.ToLower());
-        Assert.Contains("totalcount", content.ToLower());
+        Assert.Contains("items", content.ToLowerInvariant());
+        Assert.Contains("totalcount", content.ToLowerInvariant());
     }
 }

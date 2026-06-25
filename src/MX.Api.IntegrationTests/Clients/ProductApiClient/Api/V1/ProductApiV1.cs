@@ -1,9 +1,6 @@
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using MX.Api.Abstractions;
 using MX.Api.Client;
 using MX.Api.Client.Auth;
-using MX.Api.Client.Configuration;
 using MX.Api.Client.Extensions;
 using MX.Api.IntegrationTests.Clients.ProductApiClient.Interfaces.V1;
 using MX.Api.IntegrationTests.DummyApis.ProductApi.Models;
@@ -14,16 +11,12 @@ namespace MX.Api.IntegrationTests.Clients.ProductApiClient.Api.V1;
 /// <summary>
 /// Implementation of Product API version 1
 /// </summary>
-public class ProductApiV1 : BaseApi<ProductApiOptions>, IProductApiV1
+public class ProductApiV1(
+    ILogger<BaseApi<ProductApiOptions>> logger,
+    IApiTokenProvider apiTokenProvider,
+    IRestClientService restClientService,
+    ProductApiOptions options) : BaseApi<ProductApiOptions>(logger, apiTokenProvider, restClientService, options), IProductApiV1
 {
-    public ProductApiV1(
-        ILogger<BaseApi<ProductApiOptions>> logger,
-        IApiTokenProvider apiTokenProvider,
-        IRestClientService restClientService,
-        ProductApiOptions options)
-        : base(logger, apiTokenProvider, restClientService, options)
-    {
-    }
 
     /// <summary>
     /// Get all products

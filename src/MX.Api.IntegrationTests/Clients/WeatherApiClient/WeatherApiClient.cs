@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Logging;
+using System.Globalization;
 using MX.Api.Abstractions;
 using MX.Api.Client;
 using MX.Api.Client.Auth;
@@ -12,19 +12,15 @@ namespace MX.Api.IntegrationTests.Clients.WeatherApiClient;
 /// <summary>
 /// Weather API client implementation using the standard ApiClientOptions
 /// </summary>
-public class WeatherApiClient : BaseApi<ApiClientOptions>, IWeatherApiClient
+/// <remarks>
+/// Initializes a new instance of the WeatherApiClient
+/// </remarks>
+public class WeatherApiClient(
+    ILogger<BaseApi<ApiClientOptions>> logger,
+    IApiTokenProvider? apiTokenProvider,
+    IRestClientService restClientService,
+    ApiClientOptions options) : BaseApi<ApiClientOptions>(logger, apiTokenProvider, restClientService, options), IWeatherApiClient
 {
-    /// <summary>
-    /// Initializes a new instance of the WeatherApiClient
-    /// </summary>
-    public WeatherApiClient(
-        ILogger<BaseApi<ApiClientOptions>> logger,
-        IApiTokenProvider? apiTokenProvider,
-        IRestClientService restClientService,
-        ApiClientOptions options)
-        : base(logger, apiTokenProvider, restClientService, options)
-    {
-    }
 
     /// <inheritdoc />
     public async Task<ApiResult<IEnumerable<WeatherForecast>>> GetForecastAsync(
@@ -33,8 +29,8 @@ public class WeatherApiClient : BaseApi<ApiClientOptions>, IWeatherApiClient
         CancellationToken cancellationToken = default)
     {
         var request = await CreateRequestAsync("api/weather/forecast", Method.Get, cancellationToken);
-        request.AddQueryParameter("location", location);
-        request.AddQueryParameter("days", days.ToString());
+        _ = request.AddQueryParameter("location", location);
+        _ = request.AddQueryParameter("days", days.ToString(CultureInfo.InvariantCulture));
 
         var response = await ExecuteAsync(request, cancellationToken);
         return response.ToApiResult<IEnumerable<WeatherForecast>>();
@@ -46,7 +42,7 @@ public class WeatherApiClient : BaseApi<ApiClientOptions>, IWeatherApiClient
         CancellationToken cancellationToken = default)
     {
         var request = await CreateRequestAsync("api/weather/current", Method.Get, cancellationToken);
-        request.AddQueryParameter("location", location);
+        _ = request.AddQueryParameter("location", location);
 
         var response = await ExecuteAsync(request, cancellationToken);
         return response.ToApiResult<WeatherForecast>();
