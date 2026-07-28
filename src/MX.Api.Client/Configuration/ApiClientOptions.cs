@@ -1,4 +1,4 @@
-﻿namespace MX.Api.Client.Configuration;
+namespace MX.Api.Client.Configuration;
 
 /// <summary>
 /// Standard API client options that inherit from the base options class.
