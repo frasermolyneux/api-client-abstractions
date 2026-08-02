@@ -1,7 +1,7 @@
 using MX.Api.Abstractions;
+using MX.Api.Client.Serialization;
 
 using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
 
 using RestSharp;
 
@@ -14,12 +14,6 @@ public static class RestResponseExtensions
 {
     private const string NullContentError = "Response content received by client api was null. (client error).";
     private const string DeserializationError = "Response received by client api could not be transformed into API response. (client error).";
-
-    private static readonly JsonSerializerSettings DefaultSerializerSettings = new()
-    {
-        ContractResolver = new CamelCasePropertyNamesContractResolver(),
-        NullValueHandling = NullValueHandling.Ignore
-    };
 
     /// <summary>
     /// Converts a RestResponse to an ApiResult containing an ApiResponse.
@@ -52,7 +46,7 @@ public static class RestResponseExtensions
         try
         {
             // Try to deserialize directly to ApiResponse
-            var apiResponse = JsonConvert.DeserializeObject<ApiResponse>(response.Content, DefaultSerializerSettings);
+            var apiResponse = JsonConvert.DeserializeObject<ApiResponse>(response.Content, NewtonsoftJsonSettings.Create());
 
             if (apiResponse is null)
             {
@@ -127,7 +121,7 @@ public static class RestResponseExtensions
         try
         {
             // Try to deserialize directly to ApiResponse<T>
-            var apiResponse = JsonConvert.DeserializeObject<ApiResponse<T>>(response.Content, DefaultSerializerSettings);
+            var apiResponse = JsonConvert.DeserializeObject<ApiResponse<T>>(response.Content, NewtonsoftJsonSettings.Create());
 
             if (apiResponse is null)
             {

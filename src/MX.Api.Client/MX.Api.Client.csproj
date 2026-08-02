@@ -19,12 +19,15 @@
   <ItemGroup>
 	<PackageReference Include="Azure.Identity" Version="1.21.0" />
 	<PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="10.0.10" />
+  <PackageReference Include="Microsoft.Extensions.Caching.Hybrid" Version="9.3.0" />
 	<PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.0.10" />
 	<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.10" />
 	<PackageReference Include="Microsoft.Extensions.Http" Version="10.0.10" />
 	<PackageReference Include="Microsoft.Extensions.Http.Polly" Version="10.0.10" />
 	<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.10" />
 	<PackageReference Include="Microsoft.Extensions.Options" Version="10.0.10" />
+  <PackageReference Include="MX.Caching" Version="0.1.5" />
+  <PackageReference Include="MX.Caching.Abstractions" Version="0.1.5" />
 	<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
 	<PackageReference Include="Polly" Version="8.7.0" />
 	<PackageReference Include="RestSharp" Version="114.0.0" />
@@ -32,6 +35,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MX.Api.Abstractions\MX.Api.Abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="MX.Api.Client.Tests" />
   </ItemGroup>
 
   <ItemGroup>

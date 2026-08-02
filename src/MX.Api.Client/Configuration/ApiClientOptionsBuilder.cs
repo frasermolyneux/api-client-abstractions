@@ -9,6 +9,8 @@ public abstract class ApiClientOptionsBuilder<TOptions, TBuilder>
     where TOptions : ApiClientOptionsBase, new()
     where TBuilder : ApiClientOptionsBuilder<TOptions, TBuilder>
 {
+    private Type? _configuredClientType;
+
     /// <summary>
     /// The options instance being configured
     /// </summary>
@@ -43,6 +45,37 @@ public abstract class ApiClientOptionsBuilder<TOptions, TBuilder>
     {
         Options.MaxRetryCount = maxRetryCount;
         return (TBuilder)this;
+    }
+
+    /// <summary>
+    /// Sets the stable, non-secret partition used to isolate cached responses.
+    /// </summary>
+    /// <param name="cachePartition">An opaque caller, tenant, or authentication identity.</param>
+    /// <returns>The builder instance for method chaining.</returns>
+    public TBuilder WithCachePartition(string cachePartition)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(cachePartition);
+        Options.CachePartition = cachePartition;
+        return (TBuilder)this;
+    }
+
+    /// <summary>
+    /// Configures caching policies for selected API methods.
+    /// </summary>
+    /// <param name="configure">The cache policy configuration callback.</param>
+    /// <returns>The current options builder.</returns>
+    public TBuilder WithCaching(Action<CacheBuilder> configure)
+    {
+        ArgumentNullException.ThrowIfNull(configure);
+
+        configure(new CacheBuilder(Options, _configuredClientType));
+        return (TBuilder)this;
+    }
+
+    internal void SetConfiguredClientType(Type configuredClientType)
+    {
+        ArgumentNullException.ThrowIfNull(configuredClientType);
+        _configuredClientType = configuredClientType;
     }
 
     /// <summary>

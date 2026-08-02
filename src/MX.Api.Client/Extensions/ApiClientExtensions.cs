@@ -1,8 +1,13 @@
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MX.Api.Client.Auth;
+using MX.Api.Client.Caching;
 using MX.Api.Client.Configuration;
+using MX.Api.Client.Serialization;
+using MX.Caching;
 using Polly;
 using Polly.Extensions.Http;
 
@@ -13,6 +18,30 @@ namespace MX.Api.Client.Extensions;
 /// </summary>
 public static class ApiClientExtensions
 {
+    /// <summary>
+    /// Registers the default cache policies supplied by a typed API client library.
+    /// </summary>
+    /// <typeparam name="TClient">The typed API client contract.</typeparam>
+    /// <param name="services">The service collection to add the defaults to.</param>
+    /// <param name="configure">The cache policy configuration action.</param>
+    /// <returns>The service collection for chaining.</returns>
+    public static IServiceCollection AddDefaultCachePolicies<TClient>(
+        this IServiceCollection services,
+        Action<CacheBuilder> configure)
+        where TClient : class
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(configure);
+
+        var options = new ApiClientOptions();
+        configure(new CacheBuilder(options, typeof(TClient)));
+
+        var defaultPolicies = new DefaultCachePolicies<TClient>(options.CachePolicies);
+        GetSerializerTypeRegistry(services)?.AddMethods(defaultPolicies.Policies.Keys);
+
+        return services.AddSingleton(defaultPolicies);
+    }
+
     /// <summary>
     /// Adds a typed API client to the service collection with default options configuration.
     /// This is a simplified version of AddTypedApiClient that uses default ApiClientOptions and ApiClientOptionsBuilder.
@@ -113,8 +142,35 @@ public static class ApiClientExtensions
 
         // Create and configure options using the builder
         var builder = new TBuilder();
+        builder.SetConfiguredClientType(typeof(TClient));
         configureOptions(builder);
         var options = builder.Build();
+
+        var hasCacheParticipation = options.CachePolicyOperations.Count > 0
+            || options.UseLibraryCacheDefaults;
+
+        if (hasCacheParticipation)
+        {
+            _ = services.AddMxCaching();
+            var typeRegistry = GetSerializerTypeRegistry(services);
+            if (typeRegistry is null)
+            {
+                typeRegistry = new HybridCacheSerializerTypeRegistry();
+                _ = services.AddSingleton(typeRegistry);
+            }
+
+            typeRegistry.AddMethods(options.CachePolicyOperations.Keys);
+            var defaultPolicies = services
+                .LastOrDefault(descriptor => descriptor.ServiceType == typeof(DefaultCachePolicies<TClient>))?
+                .ImplementationInstance as DefaultCachePolicies<TClient>;
+            if (defaultPolicies is not null)
+            {
+                typeRegistry.AddMethods(defaultPolicies.Policies.Keys);
+            }
+
+            services.TryAddEnumerable(
+                ServiceDescriptor.Singleton<IHybridCacheSerializerFactory, NewtonsoftJsonHybridCacheSerializerFactory>());
+        }
 
         // Register the options as a singleton
         _ = services.AddSingleton(options);
@@ -174,10 +230,26 @@ public static class ApiClientExtensions
             var restClientService = serviceProvider.GetRequiredService<IRestClientService>();
             var clientOptions = serviceProvider.GetRequiredService<TOptions>();
 
-            return Activator.CreateInstance(typeof(TImplementation), logger, apiTokenProvider, restClientService, clientOptions) as TClient
+            var client = Activator.CreateInstance(typeof(TImplementation), logger, apiTokenProvider, restClientService, clientOptions) as TClient
                 ?? throw new InvalidOperationException($"Could not create instance of {typeof(TImplementation).Name} as {typeof(TClient).Name}.");
+
+            return !hasCacheParticipation
+                ? client
+                : CachedApiClientProxy<TClient>.Create(
+                    client,
+                    clientOptions,
+                    serviceProvider.GetRequiredService<MX.Caching.Abstractions.IMxCache>(),
+                    serviceProvider.GetRequiredService<MX.Caching.Abstractions.ICachePolicyResolver>(),
+                    serviceProvider.GetService<DefaultCachePolicies<TClient>>());
         });
 
         return services;
+    }
+
+    private static HybridCacheSerializerTypeRegistry? GetSerializerTypeRegistry(IServiceCollection services)
+    {
+        return services
+            .LastOrDefault(descriptor => descriptor.ServiceType == typeof(HybridCacheSerializerTypeRegistry))?
+            .ImplementationInstance as HybridCacheSerializerTypeRegistry;
     }
 }

@@ -1,10 +1,12 @@
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 using MX.Api.Client.Auth;
 using MX.Api.Client.Configuration;
 using MX.Api.Client.Extensions;
+using MX.Api.Client.Serialization;
 using MX.Api.Client.Tests.TestClients;
 using Xunit;
 
@@ -273,6 +275,217 @@ public class ApiClientExtensionsTests
         Assert.NotSame(testClient, standardClient);
     }
 
+    [Fact]
+    public void AddTypedApiClient_WithoutCacheParticipation_DoesNotRegisterHybridCacheSerializerFactory()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+
+        // Act
+        _ = services.AddTypedApiClient<ITestApiClient, TestApiClient, TestApiOptions, TestApiOptionsBuilder>(options => options
+            .WithBaseUrl("https://api.example.com"));
+
+        // Assert
+        Assert.DoesNotContain(services, descriptor =>
+            descriptor.ServiceType == typeof(IHybridCacheSerializerFactory));
+    }
+
+    [Fact]
+    public void AddDefaultCachePolicies_WithoutCacheParticipation_DoesNotRegisterCachingInfrastructure()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+
+        // Act
+        _ = services.AddDefaultCachePolicies<ITestApiClient>(caching => caching
+            .InMemory<ITestApiClient, Task<string>>(
+                client => client.GetDataAsync(default),
+                TimeSpan.FromMinutes(5)));
+
+        // Assert
+        Assert.DoesNotContain(services, descriptor =>
+            descriptor.ServiceType == typeof(HybridCacheSerializerTypeRegistry));
+        Assert.DoesNotContain(services, descriptor =>
+            descriptor.ServiceType == typeof(IHybridCacheSerializerFactory));
+    }
+
+    [Fact]
+    public void AddTypedApiClient_DefaultsRegisteredBeforeParticipant_RegistersDefaultPayloadType()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        _ = services.AddDefaultCachePolicies<ITestApiClient>(caching => caching
+            .InMemory<ITestApiClient, Task<string>>(
+                client => client.GetDataAsync(default),
+                TimeSpan.FromMinutes(5)));
+
+        // Act
+        _ = services.AddTypedApiClient<ITestApiClient, TestApiClient, TestApiOptions, TestApiOptionsBuilder>(options => options
+            .WithBaseUrl("https://api.example.com")
+            .WithCachePartition("test")
+            .WithCaching(caching => caching.UseLibraryDefaults()));
+
+        // Assert
+        var registry = Assert.IsType<HybridCacheSerializerTypeRegistry>(Assert.Single(services, descriptor =>
+            descriptor.ServiceType == typeof(HybridCacheSerializerTypeRegistry)).ImplementationInstance);
+        Assert.True(registry.Contains(typeof(string)));
+    }
+
+    [Fact]
+    public void AddDefaultCachePolicies_RegisteredAfterParticipant_RegistersDefaultPayloadType()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        _ = services.AddTypedApiClient<ITestApiClient, TestApiClient, TestApiOptions, TestApiOptionsBuilder>(options => options
+            .WithBaseUrl("https://api.example.com")
+            .WithCachePartition("test")
+            .WithCaching(caching => caching.UseLibraryDefaults()));
+
+        // Act
+        _ = services.AddDefaultCachePolicies<ITestApiClient>(caching => caching
+            .InMemory<ITestApiClient, Task<string>>(
+                client => client.GetDataAsync(default),
+                TimeSpan.FromMinutes(5)));
+
+        // Assert
+        var registry = Assert.IsType<HybridCacheSerializerTypeRegistry>(Assert.Single(services, descriptor =>
+            descriptor.ServiceType == typeof(HybridCacheSerializerTypeRegistry)).ImplementationInstance);
+        Assert.True(registry.Contains(typeof(string)));
+    }
+
+    [Fact]
+    public void AddTypedApiClient_WithCacheParticipation_RegistersHybridCacheSerializerFactory()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+
+        // Act
+        _ = services.AddTypedApiClient<ITestApiClient, TestApiClient, TestApiOptions, TestApiOptionsBuilder>(options => options
+            .WithBaseUrl("https://api.example.com")
+            .WithCachePartition("test")
+            .WithCaching(caching => caching.InMemory<ITestApiClient, Task<string>>(
+                client => client.GetDataAsync(default),
+                TimeSpan.FromMinutes(5))));
+
+        // Assert
+        _ = Assert.Single(services, descriptor =>
+            descriptor.ServiceType == typeof(IHybridCacheSerializerFactory)
+            && descriptor.ImplementationType == typeof(NewtonsoftJsonHybridCacheSerializerFactory));
+    }
+
+    [Fact]
+    public void AddTypedApiClient_WithCachePolicyForUnrelatedInterface_ThrowsArgumentException()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+
+        // Act & Assert
+        _ = Assert.Throws<ArgumentException>(() =>
+            services.AddTypedApiClient<ITestApiClient, TestApiClient, TestApiOptions, TestApiOptionsBuilder>(options => options
+                .WithBaseUrl("https://api.example.com")
+                .WithCaching(caching => caching.InMemory<IUnrelatedApiClient, Task<int>>(
+                    client => client.GetValueAsync(default),
+                    TimeSpan.FromMinutes(5)))));
+    }
+
+    [Fact]
+    public void AddTypedApiClient_WithCachePolicyForDirectInterface_AcceptsPolicy()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+
+        // Act
+        _ = services.AddTypedApiClient<ITestApiClient, TestApiClient, TestApiOptions, TestApiOptionsBuilder>(options => options
+            .WithBaseUrl("https://api.example.com")
+            .WithCachePartition("test")
+            .WithCaching(caching => caching.InMemory<ITestApiClient, Task<string>>(
+                client => client.GetDataAsync(default),
+                TimeSpan.FromMinutes(5))));
+
+        // Assert
+        var options = Assert.Single(services, descriptor =>
+            descriptor.ServiceType == typeof(TestApiOptions)).ImplementationInstance;
+        Assert.NotNull(options);
+    }
+
+    [Fact]
+    public void AddTypedApiClient_WithCachePolicyForInheritedInterface_AcceptsPolicy()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+
+        // Act
+        _ = services.AddTypedApiClient<IInheritedTestApiClient, InheritedTestApiClient, TestApiOptions, TestApiOptionsBuilder>(options => options
+            .WithBaseUrl("https://api.example.com")
+            .WithCachePartition("test")
+            .WithCaching(caching => caching.InMemory<IInheritedTestApiClient, Task<string>>(
+                client => client.GetDataAsync(default),
+                TimeSpan.FromMinutes(5))));
+
+        // Assert
+        var options = Assert.Single(services, descriptor =>
+            descriptor.ServiceType == typeof(TestApiOptions)).ImplementationInstance;
+        Assert.NotNull(options);
+    }
+
+    [Fact]
+    public void AddTypedApiClient_MultipleCacheParticipants_RegistersOneHybridCacheSerializerFactory()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+
+        // Act
+        _ = services.AddTypedApiClient<ITestApiClient, TestApiClient, TestApiOptions, TestApiOptionsBuilder>(options => options
+            .WithBaseUrl("https://api1.example.com")
+            .WithCachePartition("test-api-1")
+            .WithCaching(caching => caching.InMemory<ITestApiClient, Task<string>>(
+                client => client.GetDataAsync(default),
+                TimeSpan.FromMinutes(5))));
+
+        _ = services.AddTypedApiClient<IStandardTestApiClient, StandardTestApiClient, ApiClientOptions, ApiClientOptionsBuilder>(options => options
+            .WithBaseUrl("https://api2.example.com")
+            .WithCachePartition("test-api-2")
+            .WithCaching(caching => caching.InMemory<IStandardTestApiClient, Task<string>>(
+                client => client.GetDataAsync(default),
+                TimeSpan.FromMinutes(5))));
+
+        // Assert
+        _ = Assert.Single(services, descriptor =>
+            descriptor.ServiceType == typeof(IHybridCacheSerializerFactory)
+            && descriptor.ImplementationType == typeof(NewtonsoftJsonHybridCacheSerializerFactory));
+    }
+
+    [Fact]
+    public void AddTypedApiClient_MultipleCacheParticipants_ShareSerializerRegistryWithDistinctPayloadTypes()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+
+        // Act
+        _ = services.AddTypedApiClient<ITestApiClient, TestApiClient, TestApiOptions, TestApiOptionsBuilder>(options => options
+            .WithBaseUrl("https://api.example.com")
+            .WithCachePartition("test")
+            .WithCaching(caching => caching.InMemory<ITestApiClient, Task<string>>(
+                client => client.GetDataAsync(default),
+                TimeSpan.FromMinutes(5))));
+        _ = services.AddDefaultCachePolicies<IIntegerPayloadApiClient>(caching => caching
+            .InMemory<IIntegerPayloadApiClient, Task<int>>(
+                client => client.GetValueAsync(default),
+                TimeSpan.FromMinutes(5)));
+
+        // Assert
+        var registryDescriptor = Assert.Single(services, descriptor =>
+            descriptor.ServiceType == typeof(HybridCacheSerializerTypeRegistry));
+        var registry = Assert.IsType<HybridCacheSerializerTypeRegistry>(registryDescriptor.ImplementationInstance);
+        Assert.True(registry.Contains(typeof(string)));
+        Assert.True(registry.Contains(typeof(int)));
+
+        var factory = new NewtonsoftJsonHybridCacheSerializerFactory(registry);
+        Assert.True(factory.TryCreateSerializer<string>(out _));
+        Assert.True(factory.TryCreateSerializer<int>(out _));
+        Assert.False(factory.TryCreateSerializer<Guid>(out _));
+    }
+
     #region AddApiClient (Simplified Registration) Tests
 
     [Fact]
@@ -469,5 +682,24 @@ public class ApiClientExtensionsTests
     }
 
     #endregion
+
+    private interface IIntegerPayloadApiClient
+    {
+        Task<int> GetValueAsync(CancellationToken cancellationToken = default);
+    }
+
+    private interface IUnrelatedApiClient
+    {
+        Task<int> GetValueAsync(CancellationToken cancellationToken = default);
+    }
+
+    private interface IInheritedTestApiClient : ITestApiClient;
+
+    private sealed class InheritedTestApiClient(
+        ILogger<BaseApi<TestApiOptions>> logger,
+        IApiTokenProvider? apiTokenProvider,
+        IRestClientService restClientService,
+        TestApiOptions options)
+        : TestApiClient(logger, apiTokenProvider, restClientService, options), IInheritedTestApiClient;
 
 }
