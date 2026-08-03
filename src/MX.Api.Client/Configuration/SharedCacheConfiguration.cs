@@ -16,9 +16,18 @@ namespace MX.Api.Client.Configuration;
 /// </para>
 /// <para>
 /// After all typed clients are registered, call <see cref="ValidateAllOperationsMatched"/> to surface real
-/// typos: any operation whose declaring interface never matched a registered client will throw a descriptive
-/// <see cref="InvalidOperationException"/>. Single-client scope safety in the existing
-/// <see cref="ApiClientOptionsBuilder{TOptions, TBuilder}.WithCaching(Action{CacheBuilder})"/> is unchanged.
+/// typos: any operation whose declaring interface is not assignable from any registered client's typed
+/// interface will throw a descriptive <see cref="InvalidOperationException"/>. Single-client scope safety
+/// in the existing <see cref="ApiClientOptionsBuilder{TOptions, TBuilder}.WithCaching(Action{CacheBuilder})"/>
+/// is unchanged.
+/// </para>
+/// <para>
+/// Instances are stateful: <see cref="ApplyTo"/> records which captured operations have matched a typed
+/// client, so a single instance is intended for one registration pass against one
+/// <see cref="Microsoft.Extensions.DependencyInjection.IServiceCollection"/>. Do not share an instance across
+/// independent DI compositions — reusing an already-applied configuration in a second composition would leave
+/// the earlier match records in place and could mask real typos. Instances are not thread-safe; the expected
+/// usage is synchronous DI registration on a single thread.
 /// </para>
 /// </remarks>
 public sealed class SharedCacheConfiguration
@@ -81,7 +90,8 @@ public sealed class SharedCacheConfiguration
     /// </summary>
     /// <exception cref="InvalidOperationException">
     /// Thrown when the shared configuration was never applied to a typed client, or when one or more operations target
-    /// an interface that was not registered as a typed client.
+    /// a declaring interface that is not assignable from any registered typed client's interface (for example, no
+    /// registered sub-API implements or inherits the operation's declaring interface).
     /// </exception>
     public void ValidateAllOperationsMatched()
     {
@@ -108,12 +118,23 @@ public sealed class SharedCacheConfiguration
 
         var summary = string.Join(
             Environment.NewLine,
-            unmatched.Select(op => $"  - {op.Method.DeclaringType?.FullName}.{op.Method.Name}"));
+            unmatched.Select(op => "  - " + FormatMethodSignature(op.Method)));
 
         throw new InvalidOperationException(
             "The following shared cache operations did not match any typed API client registered via WithSharedCaching. " +
-            "Verify that each declaring interface is registered as a typed API client and that the shared configuration " +
-            "is passed to every registration:" + Environment.NewLine + summary);
+            "Verify that each declaring interface is assignable from a registered typed API client's interface " +
+            "(either the same interface or one it inherits) and that the shared configuration is passed to every registration:"
+            + Environment.NewLine + summary);
+    }
+
+    private static string FormatMethodSignature(MethodInfo method)
+    {
+        var declaringName = method.DeclaringType?.FullName ?? "<unknown>";
+        var parameters = string.Join(
+            ", ",
+            method.GetParameters().Select(p => p.ParameterType.FullName ?? p.ParameterType.Name));
+        var returnName = method.ReturnType.FullName ?? method.ReturnType.Name;
+        return $"{returnName} {declaringName}.{method.Name}({parameters})";
     }
 
     private readonly record struct CapturedOperation(MethodInfo Method, CachePolicyOperation Operation);
