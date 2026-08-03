@@ -72,6 +72,29 @@ public abstract class ApiClientOptionsBuilder<TOptions, TBuilder>
         return (TBuilder)this;
     }
 
+    /// <summary>
+    /// Applies a <see cref="SharedCacheConfiguration"/> captured once and reused across multiple typed API client
+    /// registrations. Only operations whose declaring interface is assignable from the current typed client are
+    /// applied; expressions targeting sibling sub-APIs are skipped rather than throwing.
+    /// </summary>
+    /// <param name="sharedConfiguration">A cache configuration captured once for a "unified" set of typed API clients.</param>
+    /// <returns>The builder instance for method chaining.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="sharedConfiguration"/> is <see langword="null"/>.</exception>
+    /// <remarks>
+    /// Use this method when a single consumer delegate registers cache policies against several typed sub-API interfaces
+    /// (for example, a repository client that composes many sub-APIs sharing one options / builder type). Call
+    /// <see cref="SharedCacheConfiguration.ValidateAllOperationsMatched"/> after all typed clients are registered to
+    /// surface typos where an operation targets an interface that was never registered. For genuine single-client
+    /// configuration, prefer <see cref="WithCaching(Action{CacheBuilder})"/>, which continues to throw on scope mismatch.
+    /// </remarks>
+    public TBuilder WithSharedCaching(SharedCacheConfiguration sharedConfiguration)
+    {
+        ArgumentNullException.ThrowIfNull(sharedConfiguration);
+
+        sharedConfiguration.ApplyTo(Options, _configuredClientType);
+        return (TBuilder)this;
+    }
+
     internal void SetConfiguredClientType(Type configuredClientType)
     {
         ArgumentNullException.ThrowIfNull(configuredClientType);
