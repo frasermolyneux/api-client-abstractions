@@ -1,9 +1,13 @@
 <Solution>
   <Configurations>
+    <Configuration Name="Debug" />
+    <Configuration Name="Release" />
+  </Configurations>
+  <Platforms>
     <Platform Name="Any CPU" />
     <Platform Name="x64" />
     <Platform Name="x86" />
-  </Configurations>
+  </Platforms>
   <Project Path="MX.Api.Abstractions.Tests/MX.Api.Abstractions.Tests.csproj" />
   <Project Path="MX.Api.Abstractions/MX.Api.Abstractions.csproj" />
   <Project Path="MX.Api.Client.Tests/MX.Api.Client.Tests.csproj" />
