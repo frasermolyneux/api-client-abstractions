@@ -5,7 +5,7 @@ This repository publishes the shared `MX.Api.*` libraries used for response enve
 ## Runtime and layout
 
 - SDK: `10.0.301` from `global.json`; package and test projects target `net9.0` and `net10.0`.
-- Solution: `src/MX.Api.Abstractions.sln`.
+- Solution: `src/MX.Api.Abstractions.slnx`.
 - Packages: `src/MX.Api.Abstractions`, `src/MX.Api.Client`, and `src/MX.Api.Web.Extensions`.
 - Unit tests use matching `*.Tests` projects; integration coverage is isolated in `src/MX.Api.IntegrationTests`.
 
@@ -21,10 +21,10 @@ This repository publishes the shared `MX.Api.*` libraries used for response enve
 ## Validation
 
 ```pwsh
-dotnet build src/MX.Api.Abstractions.sln
-dotnet test src/MX.Api.Abstractions.sln --filter "FullyQualifiedName!~IntegrationTests"
-dotnet test src/MX.Api.Abstractions.sln --filter "FullyQualifiedName~MyTestClass.MyTestMethod"
-dotnet format src/MX.Api.Abstractions.sln --verify-no-changes
+dotnet build src/MX.Api.Abstractions.slnx
+dotnet test src/MX.Api.Abstractions.slnx --filter "FullyQualifiedName!~IntegrationTests"
+dotnet test src/MX.Api.Abstractions.slnx --filter "FullyQualifiedName~MyTestClass.MyTestMethod"
+dotnet format src/MX.Api.Abstractions.slnx --verify-no-changes
 ```
 
 Run integration tests only when the changed behavior requires them. Detailed design and maintenance guidance is in `docs/`.

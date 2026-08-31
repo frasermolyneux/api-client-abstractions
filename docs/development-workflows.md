@@ -5,10 +5,10 @@ NuGet-focused repository for shared API client abstractions and web extensions. 
 ## Branch Strategy & Triggers
 
 ### Feature Development (feature/*, bugfix/*, hotfix/*)
-- **build-and-test.yml**: Runs on push; executes dotnet-ci across net9.0/net10.0. No publishing.
+- **build-and-test.yml**: Runs on push; executes dotnet-ci and the runtime integration suite across net9.0/net10.0. No publishing.
 
 ### Pull Requests → main
-- **pr-verify.yml**: Runs on PR open/update/reopen/ready for review; executes dotnet-ci for the solution. No NuGet packaging or tagging.
+- **pr-verify.yml**: Runs on PR open/update/reopen/ready for review; executes dotnet-ci and the runtime integration suite for the solution. No NuGet publishing or tagging.
 
 ### Main Branch (on merge)
 - **release-version-and-tag.yml**: Triggered by push to `main` affecting `src/**` or manual dispatch. Computes Nerdbank.GitVersioning output, reruns dotnet-ci with `BUILD_VERSION_OVERRIDE`, and creates `v<SemVer>` tag only for public releases.
@@ -24,9 +24,9 @@ NuGet-focused repository for shared API client abstractions and web extensions. 
 ## Standard Developer Flow
 
 ```bash
-dotnet build src/MX.Api.Abstractions.sln
-dotnet test src/MX.Api.Abstractions.sln --filter "FullyQualifiedName!~IntegrationTests"
-dotnet test src/MX.Api.Abstractions.sln --filter "FullyQualifiedName~IntegrationTests"
+dotnet build src/MX.Api.Abstractions.slnx
+dotnet test src/MX.Api.Abstractions.slnx --filter "FullyQualifiedName!~IntegrationTests"
+dotnet test src/MX.Api.Abstractions.slnx --filter "FullyQualifiedName~IntegrationTests"
 ```
 
 ## Quick Reference

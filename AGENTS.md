@@ -4,7 +4,7 @@ Shared .NET libraries for API response envelopes, typed client execution, and AS
 
 ## Locations
 
-- Solution and projects: `src/MX.Api.Abstractions.sln`
+- Solution and projects: `src/MX.Api.Abstractions.slnx`
 - Unit tests: matching `*.Tests` projects under `src/`
 - Integration tests: `src/MX.Api.IntegrationTests`
 - Package and architecture guidance: `docs/`
@@ -12,10 +12,10 @@ Shared .NET libraries for API response envelopes, typed client execution, and AS
 ## Commands
 
 ```pwsh
-dotnet build src/MX.Api.Abstractions.sln
-dotnet test src/MX.Api.Abstractions.sln --filter "FullyQualifiedName!~IntegrationTests"
-dotnet test src/MX.Api.Abstractions.sln --filter "FullyQualifiedName~MyTestClass.MyTestMethod"
-dotnet format src/MX.Api.Abstractions.sln --verify-no-changes
+dotnet build src/MX.Api.Abstractions.slnx
+dotnet test src/MX.Api.Abstractions.slnx --filter "FullyQualifiedName!~IntegrationTests"
+dotnet test src/MX.Api.Abstractions.slnx --filter "FullyQualifiedName~MyTestClass.MyTestMethod"
+dotnet format src/MX.Api.Abstractions.slnx --verify-no-changes
 ```
 
 ## Constraints

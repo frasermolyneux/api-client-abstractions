@@ -20,7 +20,7 @@ Only run the script when you need an expedited update outside Dependabot’s cad
 What the script does:
 
 1. Restores the local `.config/dotnet-tools.json` manifest and installs `dotnet-outdated-tool`.
-2. Executes `dotnet-outdated --upgrade` against `src/MX.Api.Abstractions.sln`, ensuring both target frameworks receive the same versions (the tool does not touch lock files; this repo relies on PackageReference flow only). Any tool failure stops the script immediately so you can resolve TFM-specific issues before proceeding.
+2. Executes `dotnet-outdated --upgrade` against `src/MX.Api.Abstractions.slnx`, ensuring both target frameworks receive the same versions (the tool does not touch lock files; this repo relies on PackageReference flow only). Any tool failure stops the script immediately so you can resolve TFM-specific issues before proceeding.
 3. Builds and tests the solution (skipping `IntegrationTests`) so regressions in either `net9.0` or `net10.0` are caught immediately.
 
 ### Optional Parameters
