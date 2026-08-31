@@ -91,6 +91,9 @@ jobs:
             10.0.x
           src-folder: "src"
 
+      - name: Run integration tests
+        run: dotnet test src/MX.Api.IntegrationTests/MX.Api.IntegrationTests.csproj --configuration Release --no-build
+
   tag-release:
     permissions:
       contents: write
