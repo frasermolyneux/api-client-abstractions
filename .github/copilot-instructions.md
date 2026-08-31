@@ -1,29 +1,24 @@
 # Copilot Instructions
 
-This repository provides the shared MX.Api.* .NET libraries used for API result envelopes, typed client execution, and ASP.NET response mapping.
+This repository publishes the shared `MX.Api.*` libraries used for response envelopes, typed API clients, and ASP.NET response translation.
 
-## Org conventions via MCP (when available)
+## Runtime and layout
 
-If a `frasermolyneux-copilot` MCP server is configured in your client (`~/.copilot/mcp-config.json`, VS Code user `mcp.json`, or an equivalent stdio MCP wire-up), **prefer its catalog tools** over your own assumptions when answering questions about org standards, branching, workflows, Terraform, .NET projects, Azure patterns, or shared library / platform consumption contracts. The catalog source-of-truth lives in `frasermolyneux/.github-copilot` — see `mcp-server/README.md` there for the tool contract.
+- SDK: `10.0.301` from `global.json`; package and test projects target `net9.0` and `net10.0`.
+- Solution: `src/MX.Api.Abstractions.sln`.
+- Packages: `src/MX.Api.Abstractions`, `src/MX.Api.Client`, and `src/MX.Api.Web.Extensions`.
+- Unit tests use matching `*.Tests` projects; integration coverage is isolated in `src/MX.Api.IntegrationTests`.
 
-This is **complementary** to the file-load model: if `./.github-copilot/` is checked out in the runner (per `copilot-setup-steps.yml`), continue to read those files directly. If both are available, prefer MCP for freshness. If no MCP server is configured in your client, treat this section as a no-op and fall back to the file paths above.
+## Repository rules
 
-## Architecture
+- Keep envelope behavior consistent across `ApiResponse<T>`, `ApiResult<T>`, and `IApiResult<T>`.
+- Centralize client execution changes in `BaseApi.cs`; keep authentication, DI registration, request creation, retries, and response mapping aligned.
+- Keep ASP.NET translation helpers consistent with the shared envelope contract.
+- Public types, interfaces, serialization behavior, and testing helpers are consumer-facing contracts.
+- Package IDs, target frameworks, generated package metadata, and NBGV configuration in `version.json` are release boundaries.
+- Never add credentials or publish packages as part of routine validation.
 
-- Solution: `src/MX.Api.Abstractions.sln`
-- Packages: `src/MX.Api.Abstractions`, `src/MX.Api.Client`, `src/MX.Api.Web.Extensions`
-- Tests: matching `*.Tests` projects; integration coverage in `src/MX.Api.IntegrationTests`
-- Supporting docs: top-level guidance in `docs/`
-
-## Key conventions
-
-- Keep response-envelope behavior consistent across packages (`ApiResponse<T>`, `ApiResult<T>`, `IApiResult<T>` in `src/MX.Api.Abstractions`).
-- Keep client execution flow centralized in `src/MX.Api.Client/BaseApi.cs` (options validation, auth setup, request creation, retry-backed execution).
-- Keep DI and auth wiring aligned with `src/MX.Api.Client/Extensions/ApiClientExtensions.cs` and `src/MX.Api.Client/Auth`.
-- Use client extension helpers in `src/MX.Api.Client/Extensions` for request/response mapping consistency.
-- Keep ASP.NET translation helpers in `src/MX.Api.Web.Extensions/ApiResponseExtensions.cs` and `src/MX.Api.Web.Extensions/HttpResponseExtensions.cs` aligned with the shared envelope contract.
-
-## Build and validation
+## Validation
 
 ```pwsh
 dotnet build src/MX.Api.Abstractions.sln
@@ -32,8 +27,4 @@ dotnet test src/MX.Api.Abstractions.sln --filter "FullyQualifiedName~MyTestClass
 dotnet format src/MX.Api.Abstractions.sln --verify-no-changes
 ```
 
-## Related standards
-
-- `.github-copilot/.github/instructions/dotnet-nuget-library.instructions.md`
-- `.github-copilot/.github/instructions/dotnet-api-client-libraries.instructions.md`
-- `.github-copilot/.github/instructions/patterns.api-client.instructions.md`
+Run integration tests only when the changed behavior requires them. Detailed design and maintenance guidance is in `docs/`.
