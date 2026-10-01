@@ -72,12 +72,18 @@ updates:
 GitHub Actions workflows install both SDK versions and run builds/tests for both frameworks:
 
 ```yaml
-- uses: frasermolyneux/actions/dotnet-ci@dotnet-ci/v1.1
+- uses: frasermolyneux/actions/dotnet-ci@dotnet-ci/v2.1
   with:
+    test-reporting: "true"
     dotnet-version: |
       9.0.x
-      10.0.x-preview
+      10.0.x
     src-folder: "src"
 ```
+
+Unit and integration invocations retain separate TRX artifacts with every target-framework
+execution. The PR workflow publishes their bounded counts and artifact links through the shared
+test-results summary action; build/test failures remain authoritative. See the
+[shared reporting contract](https://github.com/frasermolyneux/actions/blob/main/docs/dotnet-test-reporting.md).
 
 For detailed dependency maintenance procedures, see [package-maintenance.md](package-maintenance.md).
