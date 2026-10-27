@@ -7,6 +7,7 @@ using MX.Api.Client.Configuration;
 using Polly;
 using Polly.Retry;
 using RestSharp;
+using MX.Api.Client.Extensions;
 
 namespace MX.Api.Client;
 
@@ -386,8 +387,10 @@ public class BaseApi<TOptions>
         else
         {
             LogHttpError(logger, response.StatusCode, request.Method, request.Resource, response.Content, null);
-            throw new HttpRequestException(
-                $"Failed {request.Method} to '{request.Resource}' with status code {response.StatusCode}: {response.Content}");
+            throw new ApiHttpRequestException(
+                $"Failed {request.Method} to '{request.Resource}' with status code {response.StatusCode}: {response.Content}",
+                response.StatusCode,
+                response.ToApiResult().Result);
         }
     }
 

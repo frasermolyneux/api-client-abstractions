@@ -9,6 +9,48 @@ namespace MX.Api.Client.Tests;
 
 public class BaseApiAuthenticationTests
 {
+    [Theory]
+    [InlineData(System.Net.HttpStatusCode.BadRequest)]
+    [InlineData(System.Net.HttpStatusCode.UnprocessableEntity)]
+    [InlineData(System.Net.HttpStatusCode.Unauthorized)]
+    public async Task ExecuteAsync_HttpFailureRetainsStructuredErrorsAndStatus(System.Net.HttpStatusCode status)
+    {
+        var client = CreateClient(new TestApiOptions { BaseUrl = "https://api.example.com" });
+        var response = new RestResponse
+        {
+            StatusCode = status,
+            Content = Newtonsoft.Json.JsonConvert.SerializeObject(new Abstractions.ApiResponse(
+                new Abstractions.ApiError("GAME_TYPE_MISMATCH", "Choose a compatible server.", "GameServerId")))
+        };
+        _ = _restClientServiceMock.Setup(x => x.ExecuteAsync(
+            It.IsAny<string>(), It.IsAny<RestRequest>(), It.IsAny<CancellationToken>())).ReturnsAsync(response);
+
+        var failure = await Assert.ThrowsAsync<ApiHttpRequestException>(() =>
+            client.ExecuteAsync(new RestRequest("assignments", Method.Post)));
+
+        _ = Assert.IsAssignableFrom<HttpRequestException>(failure);
+        Assert.Equal(status, failure.StatusCode);
+        var error = Assert.Single(failure.ErrorResponse!.Errors!);
+        Assert.Equal("GAME_TYPE_MISMATCH", error.Code);
+        Assert.Equal("GameServerId", error.Target);
+        _restClientServiceMock.Verify(x => x.ExecuteAsync(
+            It.IsAny<string>(), It.IsAny<RestRequest>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_NonJsonFailureStillThrowsWithActualStatus()
+    {
+        var client = CreateClient(new TestApiOptions { BaseUrl = "https://api.example.com" });
+        _ = _restClientServiceMock.Setup(x => x.ExecuteAsync(
+            It.IsAny<string>(), It.IsAny<RestRequest>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new RestResponse { StatusCode = System.Net.HttpStatusCode.BadRequest, Content = "<html>Invalid request</html>" });
+
+        var failure = await Assert.ThrowsAsync<ApiHttpRequestException>(() =>
+            client.ExecuteAsync(new RestRequest("assignments", Method.Post)));
+
+        Assert.Equal(System.Net.HttpStatusCode.BadRequest, failure.StatusCode);
+    }
+
     private readonly Mock<ILogger<BaseApi<TestApiOptions>>> _loggerMock = new();
     private readonly Mock<IRestClientService> _restClientServiceMock = new();
 
