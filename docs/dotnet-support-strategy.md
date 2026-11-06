@@ -72,7 +72,7 @@ updates:
 GitHub Actions workflows install both SDK versions and run builds/tests for both frameworks:
 
 ```yaml
-- uses: frasermolyneux/actions/dotnet-ci@dotnet-ci/v2.1
+- uses: frasermolyneux/actions/dotnet-ci@a6271c58ed8e8f3b6fbdb738ac7566863fdc38c8 # dotnet-ci/v2.1.2
   with:
     test-reporting: "true"
     dotnet-version: |

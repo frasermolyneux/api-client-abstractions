@@ -21,7 +21,7 @@ jobs:
       integration_test_report: ${{ steps.integration-tests.outputs.report }}
     steps:
       - id: shared-tests-1
-        uses: frasermolyneux/actions/dotnet-ci@dotnet-ci/v2.1
+        uses: frasermolyneux/actions/dotnet-ci@a6271c58ed8e8f3b6fbdb738ac7566863fdc38c8 # dotnet-ci/v2.1.2
         with:
           test-reporting: "true"
           dotnet-version: |
@@ -31,7 +31,7 @@ jobs:
 
       - name: Run integration tests
         id: integration-tests
-        uses: frasermolyneux/actions/dotnet-test@dotnet-test/v1
+        uses: frasermolyneux/actions/dotnet-test@c4dcaf4142a2e56a5c50af52c7c9eb8c441ebfab # dotnet-test/v1.1.1
         with:
           suite: Integration
           project: MX.Api.IntegrationTests/MX.Api.IntegrationTests.csproj
@@ -49,6 +49,6 @@ jobs:
       group: test-results-${{ github.repository }}-${{ github.event.pull_request.number }}
       cancel-in-progress: false
     steps:
-      - uses: frasermolyneux/actions/test-results-summary@test-results-summary/v1
+      - uses: frasermolyneux/actions/test-results-summary@28f6613d746ec836d245f10259ea124897d8254a # test-results-summary/v1.1.0
         with:
           jobs: ${{ toJSON(needs) }}
