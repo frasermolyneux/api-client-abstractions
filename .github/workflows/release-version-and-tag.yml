@@ -93,7 +93,7 @@ jobs:
           src-folder: "src"
 
       - name: Run integration tests
-        uses: frasermolyneux/actions/dotnet-test@c4dcaf4142a2e56a5c50af52c7c9eb8c441ebfab # dotnet-test/v1.1.1
+        uses: frasermolyneux/actions/dotnet-test@b86f0707e0bf5bc7de100cd43351dcc3b8971914 # dotnet-test/v1.3.1
         with:
           suite: Integration
           project: MX.Api.IntegrationTests/MX.Api.IntegrationTests.csproj
