@@ -31,7 +31,7 @@ jobs:
 
       - name: Run integration tests
         id: integration-tests
-        uses: frasermolyneux/actions/dotnet-test@b86f0707e0bf5bc7de100cd43351dcc3b8971914 # dotnet-test/v1.3.1
+        uses: frasermolyneux/actions/dotnet-test@a6271c58ed8e8f3b6fbdb738ac7566863fdc38c8 # dotnet-test/v3.0.1
         with:
           suite: Integration
           project: MX.Api.IntegrationTests/MX.Api.IntegrationTests.csproj
